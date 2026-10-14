@@ -2,19 +2,17 @@
 
 Hackathon 2026 project: recommend the best credit card for a user based on their spending habits and goals.
 
-## Status
-
-The stack isn't chosen yet. It may be a browser extension (TypeScript) or a web app (Python or Node). Once it's decided, add how to install, run, and test the project here.
-
-## Workflow
-
-- Branch off `main` as `feature/<short-name>` and open a pull request into `main`.
-- Push branches to this repo, not a fork. Pull requests from forks don't get the review bot's secret, so they aren't reviewed.
-- Open a pull request as a draft while you're still working, then mark it ready for review. Claude reviews it once at that point. For another review after you push fixes, comment `@claude review the latest changes`.
-- A teammate approves every pull request before it merges. Claude's review doesn't replace that.
-
 ## Rules
 
 - Never commit secrets: API keys, tokens, or `.env` files. Put placeholder values in `.env.example`.
 - Never put real card numbers, account numbers, or personal financial data in code, tests, fixtures, or logs. Use sample data that is obviously fake.
 - Keep card data (reward rates, annual fees, bonus categories) in one data file. Don't hard-code it in the recommendation logic.
+
+## Working with Claude
+
+- When a step doesn't need our input, keep going. Stop and ask only when you can't continue without us, or before anything destructive or hard to undo: force-pushing, deleting branches or files, rewriting history, or changing repo settings or secrets.
+- For long, multi-step tasks, keep a checklist in `TASKS.md` and update it as you go, so progress survives when older context gets summarized. `TASKS.md` is gitignored, so don't commit it.
+- When you use subagents, check the evidence they report before you accept it.
+- When you review code, list only problems you'd block the merge for. For each one, give the file and line, and how to show it fails.
+- When you report facts or research, mark anything you couldn't confirm and say where you looked.
+- End each task with three short headings: **Blocked on me** (what you need from us, or "nothing"), **Changed**, and **Found**.

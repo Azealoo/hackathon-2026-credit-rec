@@ -7,6 +7,7 @@ Hackathon 2026 project: recommend the best credit card for a user based on their
 - [@Azealoo](https://github.com/Azealoo)
 - [@Carolzhxxx](https://github.com/Carolzhxxx)
 - [@Michelle111213](https://github.com/Michelle111213)
+- [@wena04](https://github.com/wena04)
 - [@xiuyuan114514](https://github.com/xiuyuan114514)
 
 ## Getting started

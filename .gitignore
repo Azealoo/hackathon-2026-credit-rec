@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Claude's per-session task checklist (see CLAUDE.md)
+TASKS.md
+
 # OS / editor
 .DS_Store
 .vscode/

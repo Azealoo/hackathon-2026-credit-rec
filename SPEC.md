@@ -1,4 +1,4 @@
-# Fine Print — Product Spec
+# Paywise — Product Spec
 
 **Version:** 2.0 (Oct 15, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa (track name and prompt **(u)**, see §11.0)
 **Status:** Product-form decision after a 7-reviewer product-form review (product manager, interaction designer, form-factor designer, student user, competitive analyst, hackathon/Visa judge, iOS engineering lead), a PM decision and a challenge round. Items marked **(u)** are unverified and must be tested before we rely on them.
@@ -23,10 +23,10 @@
 
 ## 0. TL;DR
 
-**One line:** Press one button at checkout and Fine Print tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. When it does break, it tells you whether you can claim.
+**One line:** Press one button at checkout and Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. When it does break, it tells you whether you can claim.
 
 **Pitch (3 sentences):**
-Your cards come with theft cover and extra warranty years buried in the fine print, but you never see them when you pay and almost never claim them afterwards. Press the Action Button on any checkout and Fine Print reads the cart on your iPhone, then tells you, before you tap Pay, which card covers this item and what that costs in cash back. It keeps the purchase and its coverage dates, and if the item breaks or is stolen it tells you honestly whether you're covered, cites the clause, and lists what to send.
+Your cards come with theft cover and extra warranty years buried in the fine print, but you never see them when you pay and almost never claim them afterwards. Press the Action Button on any checkout and Paywise reads the cart on your iPhone, then tells you, before you tap Pay, which card covers this item and what that costs in cash back. It keeps the purchase and its coverage dates, and if the item breaks or is stolen it tells you honestly whether you're covered, cites the clause, and lists what to send.
 
 **Tagline:** *The perks buried in your card's fine print — at the moment you pay.*
 
@@ -35,7 +35,7 @@ Your cards come with theft cover and extra warranty years buried in the fine pri
 | | |
 |---|---|
 | **What it is** | A per-purchase protection checker. At checkout it names the card whose fine print covers *this* item (theft/damage cover with its cap, an extra warranty year) and what that costs in cash back. It saves the purchase with its coverage dates. Later, "Can I claim?" answers *may be eligible* / *not covered* / *need more info*, citing the clause. |
-| **Where it lives** | A native iOS 27 app plus one App Intent (`CheckCheckoutIntent`), run by a "Fine Print" Shortcut that takes a screenshot of the current screen. Answers appear over whatever app or site you're in. Purchases and claims live in the app. A small backend reads the cart. |
+| **Where it lives** | A native iOS 27 app plus one App Intent (`CheckCheckoutIntent`), run by a "Paywise" Shortcut that takes a screenshot of the current screen. Answers appear over whatever app or site you're in. Purchases and claims live in the app. A small backend reads the cart. |
 | **How it's triggered** | On the checkout screen, press and hold the **Action Button** (iPhone 15 Pro and later). Back Tap runs the same Shortcut on other iPhones. "Check a screenshot" in the app needs no setup. |
 | **What you see when you pay** | **Switch:** a snippet at the top of the screen: "Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash", plus [Paying with Freedom] to save the purchase. **Keep:** "✓ Keep Apple Card ••5678" flashes silently in the Dynamic Island and clears itself. Then you pay in the store's own flow. |
 
@@ -195,7 +195,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 ### 5.1 Onboarding (target ≤2:00 including the trigger; first result ≤60 s)
 1. **Add my cards:** pick your cards from tiles and set your default. Last 4 is optional and stays on the phone. (P1: Settings-screenshot onboarding.)
 2. **First result:** run the sample check on a built-in $1,499 laptop checkout → a real result with your own cards.
-3. **"Make it one press"** (skippable): install the Shortcut from a link, then set the Action Button (Settings › Action Button › Shortcut › Fine Print). Back Tap (Settings › Accessibility › Touch › Back Tap) is shown on iPhones without an Action Button. Offered again after the 2nd in-app check.
+3. **"Make it one press"** (skippable): install the Shortcut from a link, then set the Action Button (Settings › Action Button › Shortcut › Paywise). Back Tap (Settings › Accessibility › Touch › Back Tap) is shown on iPhones without an Action Button. Offered again after the 2nd in-app check.
 4. **Practice press** on the sample checkout; this also clears Shortcuts' first-run prompts.
 
 ### 5.2 Payment moment (targets; unmeasured until spike S1)
@@ -205,7 +205,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 | t (s) | Hand and eyes | Surface | What shows |
 |---|---|---|---|
 | 0.0 | Press and hold the Action Button (~0.5 s) | — | — |
-| ≤1.0 | Eyes at top | Island compact | Fine Print glyph + progress ring (*Checking*, no alert) |
+| ≤1.0 | Eyes at top | Island compact | Paywise glyph + progress ring (*Checking*, no alert) |
 | 1.0–3.0 | — | On device | Crop the top strip, OCR, checkout gate, redaction (~0.4 s); upload, LLM parse, engine (~1.5–2 s); write `CheckRecord`; **end the Live Activity** |
 | ≈3.0–3.5 | Eyes at top | **Snippet** (result) | §6.3 *Switch* |
 | ≈3.5–4.5 | Reads line 1 (≈0.75 s), then line 2 | Snippet | — |
@@ -249,7 +249,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 | not_covered, maker route | Stops working at month 8 | **Not covered by your card yet: it's still under the maker's warranty.** Contact the manufacturer first. The card's extra year starts Oct 17, 2027. |
 | need_more_info | "Left them on the bus" (earbuds, week 6) | **Need more info.** Theft and "involuntary and accidental parting" may be covered within 120 days; simply losing something may not be. See the cited clause. |
 
-Footer on every verdict: "Only the benefit administrator decides claims. Fine Print never files for you." Photo analysis is P2; the claim PDF is P1.
+Footer on every verdict: "Only the benefit administrator decides claims. Paywise never files for you." Photo analysis is P2; the claim PDF is P1.
 
 ---
 
@@ -267,7 +267,7 @@ Footer on every verdict: "Only the benefit administrator decides claims. Fine Pr
 - **The 3-second rule:** line 1 is the verdict, at most 4 words plus `••last4`, next to the card art, starting with a verb. Lines 2 and 3 are ≤44 characters each. The instruction line is ≤48 characters, in secondary style. At most 2 numbers in lines 1–3 (not counting last 4).
 - **Content:** never blend cash and protection into one number. Always state the protection cap when it's verified.
 - **Cost line:** compares against the wallet's cash-best card. If the default ties for cash-best, it names the default. If the pick is also cash-best, it says "Also earns the most cash back here".
-- **Island:** before each `Activity.request`, end every existing Fine Print activity with `.immediate`. Every request and update sets `staleDate = now + 2 min`. **The intent always ends its activity before `perform()` returns.** On app launch, end any leftover activities.
+- **Island:** before each `Activity.request`, end every existing Paywise activity with `.immediate`. Every request and update sets `staleDate = now + 2 min`. **The intent always ends its activity before `perform()` returns.** On app launch, end any leftover activities.
 - **Timing:** the backend request times out at **6.0 s**, and *Couldn't check* shows at once. The intent never runs past 30 s.
 
 ### 6.3 Copy and behaviour for every state
@@ -292,7 +292,7 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 | No checkout, from backend | Text was sent; screen is not a checkout or unreadable | Same | No checkout total found | Scroll to the total and press again | — | — | Same | Same |
 | No checkout, already paid | Order confirmation screen | Same | Already paid? | Press on the checkout, before you pay | — | — | Same | Same |
 | **Couldn't check** | 6.0 s timeout, no network or 5xx | Same | Couldn't check this time | No connection · press again *(or: Took too long · press again)* | — | — | Same | Held 4 s, then `.immediate` |
-| Not set up | Intent ran with no image | Static snippet (`ShowsSnippetView`) | Use the Fine Print shortcut | It reads the screen for you | Set it up in the Fine Print app | Done | none | Done |
+| Not set up | Intent ran with no image | Static snippet (`ShowsSnippetView`) | Use the Paywise shortcut | It reads the screen for you | Set it up in the Paywise app | Done | none | Done |
 | Switch fallback (G2 fails) | Snippet doesn't appear | Island, alert | Lines 1–3 as Switch | | | none (save later with "I bought this") | `.default` | Held 8 s, then `.immediate` |
 | Receipt saved (P1) | Press on an order confirmation | Island, alert | ✓ Receipt saved | Aero 14 · Freedom ••{last4} | Purchase confirmed | — | silent | Held 4 s |
 | Balance guard (P1) | User said they carry a balance | Island, alert | Pay down your balance first | Interest costs more than any reward | — | — | silent | Held 4 s |
@@ -300,10 +300,10 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 **Where S1's numbers come from:** Active Cash 2% = $29.98, Freedom 1.5% = $22.49, Apple Card typed 1% = $14.99. Each card's cash is rounded to cents (half-up) before subtracting, which gives −$7.49 vs Active Cash and +$7.50 vs the default. Renewed ($1,099): Active Cash $21.98 vs Apple Card typed $10.99. Nike ($180): 3% = $5.40. Purchase protection runs 120 days from Oct 17, 2026 to Feb 14, 2027. The warranty year runs to Oct 17, 2028, assuming a 12-month maker warranty. The comprehension test (§13) checks that users don't read the cost line as "earns less than my card".
 
 ### 6.4 Presentations and accessibility
-- **Minimal** (another app's Live Activity is running): Fine Print glyph during Checking, ✓ for Keep, ⚠ for errors.
+- **Minimal** (another app's Live Activity is running): Paywise glyph during Checking, ✓ for Keep, ⚠ for errors.
 - **Limited width / landscape** (28-pt circle): leading view only.
-- **Lock Screen:** "Fine Print is checking" / "Fine Print checked this screen". No card, no amount, no store. Hide content when Always-On (`isLuminanceReduced`).
-- **Stale** (`isStale`): bare Fine Print glyph.
+- **Lock Screen:** "Paywise is checking" / "Paywise checked this screen". No card, no amount, no store. Hide content when Always-On (`isLuminanceReduced`).
+- **Stale** (`isStale`): bare Paywise glyph.
 - **Card art:** generic team-made card shapes, not issuer artwork, exported @3x at the exact compact and expanded sizes and no larger. The snippet uses the same art.
 - **VoiceOver (Switch):** "Use Freedom, card ending 1 2 3 4. Adds a warranty year and up to 500 dollars of theft cover. 7 dollars 49 less cash back than Active Cash."
 - **Color** is never the only cue (art + digits + ✓ / ⚠ / shield). Dynamic Type drops secondary lines first.
@@ -403,9 +403,9 @@ Everything lives in **one data file**, `data/cards.json`: cards, earn rules, pro
 ## 9. Architecture
 
 ### 9.1 iOS app (SwiftUI, iOS 27 only)
-- **The "Fine Print" Shortcut:** if it has input (shared from the Share Sheet) → Check Checkout(input); otherwise → Take Screenshot → Check Checkout. Bound to the Action Button (and Back Tap).
+- **The "Paywise" Shortcut:** if it has input (shared from the Share Sheet) → Check Checkout(input); otherwise → Take Screenshot → Check Checkout. Bound to the Action Button (and Back Tap).
 - **`CheckCheckoutIntent`** (`AppIntent` + `LiveActivityIntent`, `supportedModes = [.background]`, `IntentFile` image parameter):
-  1. End any Fine Print activity.
+  1. End any Paywise activity.
   2. Start *Checking*.
   3. Crop the top strip, run OCR, the checkout gate and redaction.
   4. POST `/v1/check` (6.0 s timeout; replay lookup on failure).
@@ -444,7 +444,7 @@ Press + Shortcut start + screenshot + intent launch ~0.5–1.0 s · crop + OCR +
 - **Accidental presses:** an on-device checkout test runs first, and nothing is uploaded from non-checkout screens.
 - **Lock Screen:** no amounts, cards or store names.
 - **Claims:** free; uses only facts the user confirms; the user submits. Wording is "may be eligible", never "you're covered", "filed", "guaranteed" or "best card".
-- **Disclaimer:** "Estimates only, not financial, legal or insurance advice. Values use public card terms (last checked [date]) and the assumptions shown. Fine Print can't see your caps, activations or balances. Warranty and purchase protection are insurance benefits with limits and exclusions; only your card's benefit administrator decides claims. If you carry a balance, interest will likely cost more than any reward. Not affiliated with or paid by any issuer."
+- **Disclaimer:** "Estimates only, not financial, legal or insurance advice. Values use public card terms (last checked [date]) and the assumptions shown. Paywise can't see your caps, activations or balances. Warranty and purchase protection are insurance benefits with limits and exclusions; only your card's benefit administrator decides claims. If you carry a balance, interest will likely cost more than any reward. Not affiliated with or paid by any issuer."
 - **Test data:** real-app screenshots used for accuracy testing never live in the repo (§15.2).
 - **Onboarding privacy copy:**
   > We only look when you press. Never in the background.
@@ -470,7 +470,7 @@ Decision (which card covers this) → checkout (change card / pay) → post-purc
 - Never say "Visa-verified". Devpost line: "Visa Acceptance runs the demo merchant's payment. In production, benefit data would come from Visa's benefits APIs (VDBP; sandbox shown if P1 ships)."
 
 ### 11.3 Neutrality framing
-The engine recommends whatever is truly best. The demo's winning card is a Visa (Freedom Unlimited vs Active Cash, both Visa; tiers to re-verify): "same network, different fine print." Protections are issuer-optional, so we say: "Visa built the benefit tiers; Fine Print shows them at the moment you buy."
+The engine recommends whatever is truly best. The demo's winning card is a Visa (Freedom Unlimited vs Active Cash, both Visa; tiers to re-verify): "same network, different fine print." Protections are issuer-optional, so we say: "Visa built the benefit tiers; Paywise shows them at the moment you buy."
 
 ### 11.4 Why Visa benefits
 Benefits get used (engagement), fewer misfiled claims, and an inclusive story: free for students, no paid ranking.
@@ -551,7 +551,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | 3-second comprehension | UX | ≥8/10 non-teammates name the card after a 3 s view of the Switch snippet; ≥6/10 name one reason; ≤2/10 say "it earns less than my card" | Sat 8–9 PM at the venue (D) |
 | Stranger trigger | UX | ≥9/10 first-time presses by non-teammates start a check | Same session (D) |
 | Right card used | UX | ≥9/10 trials end with the recommended card selected on the demo store | Same session (D) |
-| Time to "am I covered + what do I send?" | User value | Fine Print ≤60 s vs a measured manual baseline | Stopwatch, 3 non-teammates (D) |
+| Time to "am I covered + what do I send?" | User value | Paywise ≤60 s vs a measured manual baseline | Stopwatch, 3 non-teammates (D) |
 | Correct pick | User value | ≥20/22 scenarios | `pytest` over `fixtures/scenarios.json` (B runs; D wrote it) |
 | **False switches** | Trust | 0/22 scenarios; ≤1/30 real screenshots | Same + accuracy set (A) |
 | **Protection drops** | Trust | 0: never recommend a card that loses a protection the default has on a qualifying item | Scenarios 5, 21, 22 + harness (B) |
@@ -611,7 +611,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 - **Signing:** done (paid Apple Developer account). Install Xcode 27; enable Developer Mode on the demo iPhones.
 - **Accounts:** Visa Acceptance sandbox and LLM key tonight; hosting; Stripe only for P1.
 - **Discord questions:** the '26 Visa prompt and rubric; title vs side track; do Visa judges visit tables; deadline (Devpost 10:00 AM vs site 10:30 AM, treat 10:00 as hard); video length.
-- **Repo hygiene:** add Xcode entries (`xcuserdata/`, `DerivedData/`, `*.xcuserstate`) to `.gitignore`; add `THIRD_PARTY.md`; rewrite the README for Fine Print (it still describes a different product). Real-app screenshots live in `~/fineprint-private/`, never in the repo.
+- **Repo hygiene:** add Xcode entries (`xcuserdata/`, `DerivedData/`, `*.xcuserstate`) to `.gitignore`; add `THIRD_PARTY.md`; rewrite the README for Paywise (it still describes a different product). Real-app screenshots live in `~/paywise-private/`, never in the repo.
 
 ### 14.3 Event timeline (Sat 12:30 PM → Sun; internal hard deadline 10:00 AM)
 
@@ -679,7 +679,7 @@ This section lists exactly what to build first. A separate session can start fro
 ### 15.2 Repo layout
 
 ```
-README.md            rewrite: Fine Print; how to run backend, store, tests
+README.md            rewrite: Paywise; how to run backend, store, tests
 THIRD_PARTY.md       licenses for any seeded data
 .env.example         placeholders only (§15.5)
 .gitignore           + xcuserdata/, DerivedData/, *.xcuserstate (.env is already ignored)
@@ -721,12 +721,12 @@ demo-store/            index.html, checkout.html, confirm.html, store.css, store
                        (fictional "Northbay Electronics"; page header starts below 80 pt)
 
 ios/
-  FinePrint.xcodeproj
-  FinePrint/           app target: intents, onboarding, wallet, purchases, claim input, What we sent
+  Paywise.xcodeproj
+  Paywise/             app target: intents, onboarding, wallet, purchases, claim input, What we sent
   Shared/              App Group code: CheckStore, Purchase model, CheckResultView (app + widget)
-  FinePrintWidgets/    widget extension (Live Activity views)
-  FinePrintTests/
-  Shortcut/README.md   how to rebuild and share the "Fine Print" iCloud Shortcut (with the input branch)
+  PaywiseWidgets/      widget extension (Live Activity views)
+  PaywiseTests/
+  Shortcut/README.md   how to rebuild and share the "Paywise" iCloud Shortcut (with the input branch)
 
 docs/
   spikes.md            S0–S6 results, timings, gate decisions
@@ -734,7 +734,7 @@ docs/
 ```
 
 - The iOS app bundles `data/cards.json` as a **file reference** (Copy Bundle Resources). There is no second copy.
-- Real-app screenshots and their labels **never live inside the repo directory**. Keep them in `~/fineprint-private/`, mask them on the phone before export, and delete them after the event.
+- Real-app screenshots and their labels **never live inside the repo directory**. Keep them in `~/paywise-private/`, mask them on the phone before export, and delete them after the event.
 
 ### 15.3 The one card-data file: `data/cards.json`
 - **Format:** JSON, UTF-8, validated against `data/cards.schema.json` at backend start and in `test_catalog.py`. A Swift `Codable` model mirrors it.
@@ -833,7 +833,7 @@ Request:
 ```json
 {
   "requestId": "5f0c…uuid",
-  "client": {"app": "fineprint-ios", "version": "0.1.0"},
+  "client": {"app": "paywise-ios", "version": "0.1.0"},
   "clientDate": "2026-10-17",
   "screen": {
     "ocrText": "Northbay Electronics\nCheckout\nAero 14 Laptop, 14-inch (New)  $1,499.00\nTotal  $1,499.00\nPay with Mastercard [CARD]\nChange\nShip to [ADDRESS]\nPlace order",
@@ -962,7 +962,7 @@ Response:
 
 **Intents** (main app target only via `allowedExecutionTargets`; none registered in `AppShortcutsProvider`)
 - **`CheckCheckoutIntent : AppIntent, LiveActivityIntent`** — `supportedModes = [.background]`; `@Parameter(title: "Screenshot") var image: IntentFile?`; `perform() -> some IntentResult & ShowsSnippetIntent` (the not-set-up path returns a static `ShowsSnippetView` result). Steps, in order:
-  1. End all Fine Print activities.
+  1. End all Paywise activities.
   2. Request *Checking*.
   3. Crop the top strip.
   4. OCR, gate, redaction.
@@ -987,7 +987,7 @@ Response:
   "last4": "5678",
   "line1": "✓ Keep Apple Card ••5678",
   "line2": "Best of your 3 cards here",
-  "lockScreenText": "Fine Print checked this screen"
+  "lockScreenText": "Paywise checked this screen"
 }
 ```
 
@@ -1023,7 +1023,7 @@ Response (`?format=json`; `?format=html` renders the same data through `template
   "checklist": ["Itemized receipt", "Card statement showing the purchase", "Original manufacturer warranty", "Repair estimate"],
   "deadline": {"type": "unknown", "date": null, "note": "Check the notice deadline in your Guide to Benefits"},
   "contact": {"administrator": "…", "url": "…"},
-  "disclaimer": "Only the benefit administrator decides claims. Fine Print never files for you."
+  "disclaimer": "Only the benefit administrator decides claims. Paywise never files for you."
 }
 ```
 `verdict`: may_be_eligible / not_covered / need_more_info. `benefit`: purchase_protection / extended_warranty / none. `route`: card_extended_warranty / card_purchase_protection / manufacturer / none. `deadline.type`: notify_by / file_by / unknown. For case 13: `"limit": {"perItemUsd": 500, "payoutCapUsd": 500, "appliesTo": "item"}`, and the headline adds "up to $500 of the $1,499". Date and window math happens in code; the LLM only classifies the cause (the user confirms) and drafts `why`.
@@ -1061,7 +1061,7 @@ Implement §7.2 exactly (rules 0–9, thresholds in `policy.py`). The copy templ
 | 3 | Fixtures (§15.4): 7 wallets, 22 scenarios, 13 cases, demo OCR text + carts, replay files | D | 4 | any | Committed **before** step 4 merges; each expectation hand-computed; `test_privacy.py` finds no real names, addresses or ≥12-digit runs, and no file matching the real-app pattern (`realapp-*`, `*-private*`) |
 | 4 | `engine.py` (§7.2) + `copy.py` (§6.3) + `parser_rules.py` + `POST /v1/check` | B | 5 | any | `test_scenarios.py` ≥20/22 with **0 false switches and 0 protection drops** (5, 21, 22 pass); S1 returns the exact §6.3 copy; ≥12-digit bodies → 400 privacy_rejected; p50 < 50 ms locally |
 | 5 | Demo store: `checkout.html?item=` laptop / laptop-renewed / earbuds / mug, saved-card selector (Mastercard ••5678 default, Visa ••4321, Visa ••1234), `confirm.html`; static deploy Thu; served by the backend at `/store/` on Fri | D | 3.5 (+B 0.5) | any | Loads over HTTPS on cellular by Thu 11 PM; Change card works; the 7 screenshots captured; page header starts below 80 pt |
-| 6 | iOS **S1 chain**: app + widget extension + App Group; `CheckCheckoutIntent` as in §15.5 with a fake result; Shortcut "Fine Print" with the input branch, bound to the Action Button and Back Tap; os_signpost per link | C | 4 | Mac | **G1:** ≥9/10 Action Button presses over the deployed store and 2 real apps show the correct underlying screenshot in a debug list and show the island; Back Tap tallied; timings in `docs/spikes.md` |
+| 6 | iOS **S1 chain**: app + widget extension + App Group; `CheckCheckoutIntent` as in §15.5 with a fake result; Shortcut "Paywise" with the input branch, bound to the Action Button and Back Tap; os_signpost per link | C | 4 | Mac | **G1:** ≥9/10 Action Button presses over the deployed store and 2 real apps show the correct underlying screenshot in a debug list and show the island; Back Tap tallied; timings in `docs/spikes.md` |
 | 7 | **S2/S3/S6**: Pattern A (`ShowsSnippetIntent` + `CheckResultSnippetIntent` + `SavePurchaseIntent` button + reload) and Pattern B; `.named("silent.caf")` alert; `.transient` probe; island state 5 min after Done; Shortcuts indicator during the 4-s Keep hold; capture via wired QuickTime / AirPlay; Share Sheet branch | C | 3.5 | Mac | `docs/spikes.md` records Y/N + counts for each item; G2/G3 decided per §6.6 |
 | 8 | On-device top-strip crop (`TOP_CROP_PT = 62` × scale, tuned here) + OCR (Vision `RecognizeDocumentsRequest` or `VNRecognizeTextRequest`) + checkout gate (money total + a checkout keyword) + redaction (Luhn-valid runs, any ≥12-digit run, "ending in dddd" → `[CARD]`, emails, phones, lines after "Ship to" / "Deliver to" / "Name") | A | 5 | Mac (regexes: any) | On the 7 demo screenshots: merchant + total kept 7/7; no status-bar text in the output; 0 digit runs ≥12, 0 emails, 0 phones, 0 "Alex Doe" or address lines; p50 ≤400 ms inside the background intent; the feed is rejected on device |
 | 9 | `parser_llm.py`: schema-constrained Cart JSON; reads numbers, never computes; Σ items vs total checked in code | A | 3 | any | On `fixtures/ocr/*`: merchant + total 100%, items + condition ≥85%; latency logged; `PARSER_MODE` switch works |
@@ -1113,7 +1113,7 @@ Settings-screenshot onboarding · receipt press on the confirmation · Why sheet
 4. **Track:** where did "Visa: Reimagine Shopping" come from? Paste the prompt and rubric. Is Visa a title track or a side prize in '26, and do Visa judges visit tables?
 5. **Roster:** the README lists 5 handles; teams are capped at 4 ('24 rule). Who are the 4?
 6. **Hours:** the plan assumes ≈8.5–11 ph each before Saturday (≈40 total). If anyone has less, say so tonight so the low-case plan applies.
-7. **Demo phone:** may we bind its Action Button to Fine Print? Case or mount? Laptop + USB-C cable for mirroring?
+7. **Demo phone:** may we bind its Action Button to Paywise? Case or mount? Laptop + USB-C cable for mirroring?
 8. **Real Wallet cards (P1 only):** does any teammate's phone hold cards that fit an Apple Pay version of S1?
 9. **Interviews:** may D approach 10–12 UW students on Thu/Fri for 5 minutes, asking only which card *products* they hold and recording aggregate counts?
 

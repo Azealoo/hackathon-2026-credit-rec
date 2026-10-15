@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /v1/coverage request",
+  "description": "Sent only when the user runs a check on one purchase (SPEC.md §15.5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["purchase", "incident", "asOf"],
+  "properties": {
+    "purchase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cardId", "merchant", "item", "category", "condition", "priceUsd", "purchaseDate", "status",
+        "manufacturerWarrantyMonths", "manufacturerWarrantySource", "paidWith"
+      ],
+      "properties": {
+        "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
+        "merchant": {"type": "string"},
+        "item": {"type": "string"},
+        "category": {"$ref": "common.schema.json#/$defs/itemCategoryId"},
+        "condition": {"$ref": "common.schema.json#/$defs/itemCondition"},
+        "priceUsd": {"$ref": "common.schema.json#/$defs/usd"},
+        "purchaseDate": {"$ref": "common.schema.json#/$defs/date"},
+        "status": {"$ref": "common.schema.json#/$defs/purchaseStatus"},
+        "manufacturerWarrantyMonths": {"type": ["integer", "null"], "minimum": 0},
+        "manufacturerWarrantySource": {
+          "description": "\"Don't know\" sends 12 months, assumed.",
+          "type": "string",
+          "enum": ["user", "assumed"]
+        },
+        "paidWith": {"type": "string", "enum": ["card_full", "card_partial", "bnpl", "unknown"]}
+      }
+    },
+    "incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "description", "cause", "causeSource"],
+      "properties": {
+        "date": {"$ref": "common.schema.json#/$defs/date"},
+        "description": {"type": "string"},
+        "cause": {
+          "description": "null means the server classifies it.",
+          "enum": ["failure", "accidental_damage", "theft", "loss", "cosmetic", "unknown", null]
+        },
+        "causeSource": {"enum": ["user_confirmed", "llm", null]}
+      }
+    },
+    "asOf": {"$ref": "common.schema.json#/$defs/date"}
+  }
+}

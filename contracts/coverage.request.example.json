@@ -1,0 +1,10 @@
+{
+  "purchase": {"cardId": "chase-freedom-unlimited", "merchant": "Northbay Electronics",
+               "item": "Aero 14 Laptop, 14-inch", "category": "computers", "condition": "new",
+               "priceUsd": 1499.00, "purchaseDate": "2026-10-17", "status": "confirmed",
+               "manufacturerWarrantyMonths": 12, "manufacturerWarrantySource": "user",
+               "paidWith": "card_full"},
+  "incident": {"date": "2027-12-17", "description": "Lines across the screen. Never dropped.",
+               "cause": "failure", "causeSource": "user_confirmed"},
+  "asOf": "2027-12-18"
+}

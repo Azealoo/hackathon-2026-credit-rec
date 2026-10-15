@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /v1/store/pay request",
+  "description": "Demo store only (SPEC.md §15.5). savedCardId maps to a processor test card only through DEMO_TEST_CARD_MAP in the deployed environment.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["orderId", "savedCardId", "amountUsd"],
+  "properties": {
+    "orderId": {"type": "string", "minLength": 1},
+    "savedCardId": {"type": "string", "pattern": "^demo-[a-z]+-[0-9]{4}$"},
+    "amountUsd": {"type": "number", "exclusiveMinimum": 0}
+  }
+}

@@ -24,3 +24,9 @@ dist/
 build/
 .next/
 npm-debug.log*
+.pytest_cache/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate

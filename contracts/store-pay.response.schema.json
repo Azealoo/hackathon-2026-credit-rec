@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /v1/store/pay response",
+  "description": "Demo store only (SPEC.md §15.5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "processor", "transactionId", "cardLabel"],
+  "properties": {
+    "status": {"type": "string", "enum": ["approved", "declined", "error"]},
+    "processor": {"type": "string", "enum": ["visa_acceptance_sandbox", "mock"]},
+    "transactionId": {"type": ["string", "null"]},
+    "cardLabel": {"type": ["string", "null"]}
+  }
+}

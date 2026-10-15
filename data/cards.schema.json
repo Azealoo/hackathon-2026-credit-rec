@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fine Print card catalog",
+  "description": "Structure of data/cards.json, the one card-data file (SPEC.md §15.3). Display rule (§8.2): copy states a value as fact only when its status is verified.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "catalogVersion", "cards", "merchants", "itemCategories"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": 1},
+    "catalogVersion": {"$ref": "#/$defs/date"},
+    "cards": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/card"}},
+    "merchants": {"type": "array", "items": {"$ref": "#/$defs/merchant"}},
+    "itemCategories": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/itemCategory"}}
+  },
+  "$defs": {
+    "date": {"type": "string", "format": "date"},
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "itemCategoryId": {"type": "string", "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$"},
+    "status": {"type": "string", "enum": ["verified", "partial", "unverified"]},
+    "usdOrNull": {"type": ["number", "null"], "minimum": 0},
+    "monthsOrNull": {"type": ["integer", "null"], "minimum": 0},
+    "daysOrNull": {"type": ["integer", "null"], "minimum": 1},
+    "notes": {
+      "description": "Open questions and caveats for the team (G5). Never shown to users.",
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "issuer", "product", "displayName", "shortName", "network", "networkTier", "annualFeeUsd",
+        "rewardCurrency", "pointValueCents", "foreignTransactionFeePct", "art", "earn", "protections", "sources"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "issuer": {"type": ["string", "null"]},
+        "product": {"type": "string"},
+        "displayName": {"type": "string"},
+        "shortName": {"type": "string", "description": "The card name in copy (§6.3)."},
+        "network": {"type": "string", "enum": ["visa", "mastercard", "discover", "amex"]},
+        "networkTier": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "status"],
+          "properties": {
+            "value": {"type": ["string", "null"]},
+            "status": {"$ref": "#/$defs/status"}
+          }
+        },
+        "annualFeeUsd": {"$ref": "#/$defs/usdOrNull"},
+        "rewardCurrency": {"type": "string", "enum": ["cash_back", "points"]},
+        "pointValueCents": {"type": ["number", "null"], "minimum": 0, "description": "null for cash back."},
+        "foreignTransactionFeePct": {"type": ["number", "null"], "minimum": 0},
+        "art": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["assetName", "color"],
+          "properties": {
+            "assetName": {"type": "string", "description": "Team-made generic card art in the iOS asset catalog (§6.4)."},
+            "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+          }
+        },
+        "earn": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["baseRatePct", "baseRateStatus", "rules"],
+          "properties": {
+            "baseRatePct": {"type": "number", "minimum": 0},
+            "baseRateStatus": {"$ref": "#/$defs/status"},
+            "rules": {"type": "array", "items": {"$ref": "#/$defs/earnRule"}}
+          }
+        },
+        "protections": {"type": "array", "items": {"$ref": "#/$defs/protection"}},
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "notes": {"$ref": "#/$defs/notes"}
+      },
+      "if": {"properties": {"rewardCurrency": {"const": "cash_back"}}},
+      "then": {"properties": {"pointValueCents": {"type": "null"}}}
+    },
+    "earnRule": {
+      "description": "Rate precedence: merchant rule > category rule > base (§7.2 rule 1).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "merchantIds", "paymentMethods", "ratePct", "cap", "needsActivation", "status"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "category": {"anyOf": [{"$ref": "#/$defs/itemCategoryId"}, {"type": "null"}]},
+        "merchantIds": {"anyOf": [{"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}}, {"type": "null"}]},
+        "paymentMethods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "enum": ["apple_pay", "card", "any"]}
+        },
+        "ratePct": {"type": "number", "minimum": 0},
+        "cap": {"type": "null", "description": "Caps aren't modeled in v1 (§7.2 rule 9)."},
+        "needsActivation": {"const": false, "description": "Activation isn't modeled in v1 (§7.2 rule 9)."},
+        "status": {"$ref": "#/$defs/status"}
+      }
+    },
+    "protection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type", "summary", "covers", "excludes", "limits", "eligibility", "notice", "claim", "source", "verification"
+      ],
+      "properties": {
+        "type": {"type": "string", "enum": ["purchase_protection", "extended_warranty", "cell_phone_protection"]},
+        "summary": {"type": "string"},
+        "covers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "enum": ["theft", "accidental_damage", "involuntary_parting", "failure"]}
+        },
+        "excludes": {"type": "array", "items": {"type": "string"}},
+        "windowDays": {"$ref": "#/$defs/daysOrNull"},
+        "windowDaysByState": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[A-Z]{2}$"},
+          "additionalProperties": {"type": "integer", "minimum": 1}
+        },
+        "extendsByMonths": {"$ref": "#/$defs/monthsOrNull"},
+        "maxOriginalWarrantyMonths": {"$ref": "#/$defs/monthsOrNull"},
+        "maxTotalFromPurchaseMonths": {"$ref": "#/$defs/monthsOrNull"},
+        "limits": {
+          "description": "Required for any protection shown in copy.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["perItemUsd", "perClaimUsd", "perAccountUsd", "appliesTo"],
+          "properties": {
+            "perItemUsd": {"$ref": "#/$defs/usdOrNull"},
+            "perClaimUsd": {"$ref": "#/$defs/usdOrNull"},
+            "perAccountUsd": {"$ref": "#/$defs/usdOrNull"},
+            "appliesTo": {"enum": ["item", "claim", null]}
+          }
+        },
+        "eligibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["conditionsAllowed", "paymentRequirement", "excludedCategories"],
+          "properties": {
+            "conditionsAllowed": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"type": "string", "enum": ["new", "renewed", "used"]}
+            },
+            "paymentRequirement": {"enum": ["some_portion", "full", null]},
+            "excludedCategories": {"type": "array", "items": {"$ref": "#/$defs/itemCategoryId"}}
+          }
+        },
+        "notice": {
+          "description": "null until verified.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["notifyWithinDays", "submitDocsWithinDays"],
+          "properties": {
+            "notifyWithinDays": {"$ref": "#/$defs/daysOrNull"},
+            "submitDocsWithinDays": {"$ref": "#/$defs/daysOrNull"}
+          }
+        },
+        "claim": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["administrator", "url", "phone"],
+          "properties": {
+            "administrator": {"type": ["string", "null"]},
+            "url": {"type": ["string", "null"]},
+            "phone": {"type": ["string", "null"]}
+          }
+        },
+        "source": {"$ref": "#/$defs/source"},
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "checkedBy", "checkedOn", "note"],
+          "properties": {
+            "status": {"$ref": "#/$defs/status"},
+            "checkedBy": {"type": ["string", "null"]},
+            "checkedOn": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+            "note": {"type": ["string", "null"]}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"type": {"const": "purchase_protection"}}},
+          "then": {"required": ["windowDays", "windowDaysByState"]}
+        },
+        {
+          "if": {"properties": {"type": {"const": "extended_warranty"}}},
+          "then": {"required": ["extendsByMonths", "maxOriginalWarrantyMonths", "maxTotalFromPurchaseMonths"]}
+        },
+        {
+          "description": "Gate G5: a verified protection cites a dated section and names who checked it.",
+          "if": {"properties": {"verification": {"properties": {"status": {"const": "verified"}}}}},
+          "then": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "document": {"type": "string"},
+                  "section": {"type": "string"},
+                  "versionDate": {"type": "string"}
+                }
+              },
+              "verification": {
+                "properties": {
+                  "checkedBy": {"type": "string"},
+                  "checkedOn": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document", "section", "versionDate", "url", "quote"],
+      "properties": {
+        "document": {"type": ["string", "null"]},
+        "section": {"type": ["string", "null"]},
+        "versionDate": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+        "url": {"type": ["string", "null"]},
+        "quote": {"type": ["string", "null"]}
+      }
+    },
+    "merchant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "names", "domains", "category", "acceptsApplePay", "isDemo"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "names": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "domains": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$"}},
+        "category": {"$ref": "#/$defs/itemCategoryId"},
+        "acceptsApplePay": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value", "status"],
+          "properties": {
+            "value": {"type": ["boolean", "null"]},
+            "status": {"$ref": "#/$defs/status"}
+          }
+        },
+        "isDemo": {"type": "boolean"},
+        "notes": {"$ref": "#/$defs/notes"}
+      }
+    },
+    "itemCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "warrantyRelevant", "theftDamageRelevant"],
+      "properties": {
+        "id": {"$ref": "#/$defs/itemCategoryId"},
+        "warrantyRelevant": {"type": "boolean"},
+        "theftDamageRelevant": {"type": "boolean"}
+      }
+    }
+  }
+}

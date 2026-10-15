@@ -36,7 +36,7 @@ Not verified: Render's real cold-start latency on Starter after a deploy or main
 
 Tonight, for the static store:
 1. Sign up at render.com with GitHub (`Azealoo`). Add a card only when the dashboard asks.
-2. Install the Render GitHub app on `Azealoo/credit-rec` (limit it to that repo).
+2. Install the Render GitHub app on `Azealoo/hackathon-2026-credit-rec` (limit it to that repo).
 3. **New → Static Site** → select the repo. Branch `main`. Build command empty. **Publish directory `demo-store`**. Create.
    - If `demo-store/` isn't merged yet, tell Claude and it will point the service at the right branch.
 4. Open the `https://<name>.onrender.com` URL on your iPhone **on cellular (Wi-Fi off)** and load `checkout.html?item=laptop`. That is the Thu 11 PM gate. Paste the URL into the team chat.

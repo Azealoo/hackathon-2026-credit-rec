@@ -1,0 +1,130 @@
+{
+  "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+  "screenType": "checkout",
+  "cart": {
+    "merchant": {
+      "name": "Northbay Electronics",
+      "merchantId": "northbay-electronics"
+    },
+    "items": [
+      {
+        "name": "Wireless Earbuds, Noise-Cancelling",
+        "priceUsd": 249.0,
+        "quantity": 1,
+        "category": "audio",
+        "condition": "new",
+        "seller": "merchant",
+        "isGiftCard": false,
+        "isServicePlan": false
+      }
+    ],
+    "totalUsd": 249.0,
+    "currency": "USD",
+    "paymentOptionsVisible": [
+      "saved_card"
+    ],
+    "selectedPayment": {
+      "kind": "saved_card",
+      "network": "mastercard"
+    },
+    "upsells": {
+      "protectionPlanUsd": null
+    },
+    "bnplVisible": false,
+    "confidence": {
+      "merchant": 0.97,
+      "total": 0.98,
+      "items": 0.92
+    }
+  },
+  "decision": {
+    "kind": "switch",
+    "reason": "protection",
+    "presentation": "snippet",
+    "recommendedCardId": "chase-freedom-unlimited",
+    "defaultCardId": "apple-card",
+    "cashBestCardId": "wf-active-cash",
+    "paymentPath": "saved_card",
+    "instruction": "change_saved_card",
+    "cash": {
+      "byCard": {
+        "apple-card": 2.49,
+        "wf-active-cash": 4.98,
+        "chase-freedom-unlimited": 3.74
+      },
+      "deltaVsCashBest": -1.24,
+      "deltaVsDefault": 1.25
+    },
+    "protectionsGained": [
+      {
+        "type": "purchase_protection",
+        "windowDays": 120,
+        "limit": {
+          "amountUsd": 500.0,
+          "appliesTo": "item"
+        },
+        "verification": "verified"
+      },
+      {
+        "type": "extended_warranty",
+        "extendsByMonths": 12,
+        "limit": {
+          "amountUsd": 10000.0,
+          "appliesTo": "item"
+        },
+        "verification": "verified"
+      }
+    ],
+    "protectionsLost": [],
+    "eligibilityNotes": [],
+    "confidence": "high",
+    "copy": {
+      "line1": "Use Freedom ••{last4:chase-freedom-unlimited}",
+      "line2": "Adds a warranty year + $500 theft cover",
+      "line3": "$1.24 less cash back than Active Cash",
+      "instruction": "Change card to Visa ••{last4:chase-freedom-unlimited}, then place order",
+      "primaryButton": "Paying with Freedom"
+    }
+  },
+  "purchaseDraft": {
+    "merchant": "Northbay Electronics",
+    "item": "Wireless Earbuds, Noise-Cancelling",
+    "category": "audio",
+    "condition": "new",
+    "priceUsd": 249.0,
+    "purchaseDate": "2026-10-17",
+    "cardId": "chase-freedom-unlimited",
+    "coverage": [
+      {
+        "type": "purchase_protection",
+        "until": "2027-02-14",
+        "limitUsd": 500.0
+      },
+      {
+        "type": "extended_warranty",
+        "until": "2028-10-17",
+        "assumesManufacturerWarrantyMonths": 12
+      }
+    ]
+  },
+  "sources": [
+    {
+      "cardId": "chase-freedom-unlimited",
+      "document": "Chase Freedom Guide to Benefits (BGC11366)",
+      "section": "Purchase Protection, pp. 9-11",
+      "versionDate": "2024-10-01",
+      "verification": "verified"
+    },
+    {
+      "cardId": "chase-freedom-unlimited",
+      "document": "Chase Freedom Guide to Benefits (BGC11366)",
+      "section": "Extended Warranty Protection, pp. 6-8",
+      "versionDate": "2024-10-01",
+      "verification": "verified"
+    }
+  ],
+  "timingMs": {
+    "parse": 0,
+    "engine": 0
+  }
+}

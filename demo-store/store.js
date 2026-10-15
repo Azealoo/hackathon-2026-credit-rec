@@ -12,9 +12,9 @@
  *   POST /v1/store/pay shapes. §15.8: the client-side mock is allowed for the static site.
  *
  * Switching PAY_MODE:
- * - For everyone: set PAY_MODE below to "mock" or "backend" and redeploy. Use "backend"
- *   only where the FastAPI app serves this folder at /store/, so /v1/store/pay is the
- *   same origin (§15.7 step 13).
+ * - By where the page is served: under the FastAPI app's /store/ path the default is
+ *   "backend", because /v1/store/pay is then the same origin (§15.7 step 13). Anywhere
+ *   else (the Render static site, a local file server) the default is "mock".
  * - For one page load: add ?pay=backend or ?pay=mock to checkout.html, for example
  *   checkout.html?item=laptop&pay=backend. Any other value is ignored.
  *
@@ -25,8 +25,9 @@
 "use strict";
 
 // Payment mode. "mock" = client-side approval (Thursday static site, SPEC §15.8).
-// "backend" = POST /v1/store/pay on the same origin (Friday, when the backend serves /store/; SPEC §15.5).
-const PAY_MODE = "mock";
+// "backend" = POST /v1/store/pay on the same origin (when the backend serves this folder at /store/; SPEC §15.5).
+const BACKEND_STORE_PATH = /^\/store\//;
+const PAY_MODE = BACKEND_STORE_PATH.test(location.pathname) ? "backend" : "mock";
 const PAY_URL = "/v1/store/pay";
 const PAY_TIMEOUT_MS = 10000;
 const MOCK_DELAY_MS = 700;

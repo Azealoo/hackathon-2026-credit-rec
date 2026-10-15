@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#ffffff">
+<title>Feed</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="store.css">
+<script src="store.js" defer></script>
+</head>
+<body data-page="feed">
+<!--
+  A fictional social feed for the feed-not-checkout fixture screenshot (SPEC v2.1 §15.4, ruling R1).
+  The on-device gate must reject it, so it has no prices, totals or shopping words. Not linked from the shop.
+-->
+
+<div class="page" id="page">
+  <header class="site-header">
+    <span class="feed-mark">Feed</span>
+  </header>
+
+  <main>
+    <article class="post">
+      <div class="post-head">
+        <svg class="avatar" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <circle cx="20" cy="20" r="20" fill="#e8956b"/>
+          <circle cx="20" cy="16" r="7" fill="#ffffff"/>
+          <path d="M7 34c2-7 7-10 13-10s11 3 13 10z" fill="#ffffff"/>
+        </svg>
+        <div>
+          <p class="post-name">Jordan Sample</p>
+          <p class="post-time">2h</p>
+        </div>
+      </div>
+      <p class="post-text">Made it to the top of the ridge before sunrise. Worth every early alarm.</p>
+      <svg class="post-picture" viewBox="0 0 360 180" role="img" aria-label="Green hills under a morning sun">
+        <rect width="360" height="180" fill="#cfe3f2"/>
+        <circle cx="276" cy="52" r="22" fill="#f6c453"/>
+        <path d="M0 180L96 70l58 62 54-48 152 96z" fill="#5d7f6e"/>
+        <path d="M150 180l90-82 120 82z" fill="#3f5f50"/>
+      </svg>
+      <p class="post-meta">128 likes · 14 comments</p>
+    </article>
+
+    <article class="post">
+      <div class="post-head">
+        <svg class="avatar" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <circle cx="20" cy="20" r="20" fill="#6f8fd6"/>
+          <circle cx="20" cy="16" r="7" fill="#ffffff"/>
+          <path d="M7 34c2-7 7-10 13-10s11 3 13 10z" fill="#ffffff"/>
+        </svg>
+        <div>
+          <p class="post-name">Riley Example</p>
+          <p class="post-time">3h</p>
+        </div>
+      </div>
+      <p class="post-text">New pasta recipe tonight. Ten out of ten, would burn the garlic again.</p>
+      <p class="post-meta">86 likes · 9 comments</p>
+    </article>
+
+    <article class="post">
+      <div class="post-head">
+        <svg class="avatar" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <circle cx="20" cy="20" r="20" fill="#8cbf7a"/>
+          <circle cx="20" cy="16" r="7" fill="#ffffff"/>
+          <path d="M7 34c2-7 7-10 13-10s11 3 13 10z" fill="#ffffff"/>
+        </svg>
+        <div>
+          <p class="post-name">Casey Test</p>
+          <p class="post-time">5h</p>
+        </div>
+      </div>
+      <p class="post-text">Rainy Sunday, good book, big blanket. Not moving until Monday.</p>
+      <svg class="post-picture" viewBox="0 0 360 180" role="img" aria-label="Rain on a window next to an open book">
+        <rect width="360" height="180" fill="#9fb0c2"/>
+        <rect x="40" y="24" width="120" height="132" rx="6" fill="#d9e2ea"/>
+        <path d="M100 24v132M40 90h120" stroke="#9fb0c2" stroke-width="6"/>
+        <path d="M60 40l-6 14M84 60l-6 14M124 44l-6 14M140 100l-6 14M70 112l-6 14" stroke="#7b8ea3" stroke-width="3" stroke-linecap="round"/>
+        <rect x="214" y="96" width="96" height="60" rx="4" fill="#c46b52"/>
+        <rect x="220" y="102" width="84" height="48" rx="2" fill="#f3ede4"/>
+        <path d="M262 102v48" stroke="#c46b52" stroke-width="3"/>
+      </svg>
+      <p class="post-meta">214 likes · 31 comments</p>
+    </article>
+
+    <article class="post">
+      <div class="post-head">
+        <svg class="avatar" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <circle cx="20" cy="20" r="20" fill="#e8956b"/>
+          <circle cx="20" cy="16" r="7" fill="#ffffff"/>
+          <path d="M7 34c2-7 7-10 13-10s11 3 13 10z" fill="#ffffff"/>
+        </svg>
+        <div>
+          <p class="post-name">Jordan Sample</p>
+          <p class="post-time">1d</p>
+        </div>
+      </div>
+      <p class="post-text">Who else has a dog that steals socks? Asking for a friend.</p>
+      <p class="post-meta">42 likes · 5 comments</p>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>A fictional feed made for a hackathon demo.</p>
+  </footer>
+</div>
+
+</body>
+</html>

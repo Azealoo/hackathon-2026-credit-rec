@@ -1,0 +1,594 @@
+/*
+ * Northbay Electronics demo store styles (docs/design.md §2 "Store and stage", §3, §8).
+ * Always light. Built for OCR: real text, high contrast, no overlapping text, and the whole
+ * checkout on the first screen of a 393 x 852 iPhone.
+ */
+
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --label: #000000;
+  /* design.md's secondary rgba(60,60,67,.6) is about 3.4:1 on white; this grey is about 6.7:1. */
+  --secondary: #5b5b60;
+  /* design.md's tertiary rgba(60,60,67,.3) is about 1.7:1; this lighter grey still passes 4.5:1. */
+  --tertiary: #6e6e73;
+  --separator: rgba(60, 60, 67, 0.18);
+  --fill: #f2f2f7;
+  --accent: #0d7a5f;
+  --ink: #111214;
+  --ink-busy: #4a4b4f;
+  --error: #c4291d;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* --top-gap keeps the header below the 62 pt strip the app crops: about 59 pt status bar + 32 px. */
+body {
+  --top-gap: 32px;
+  margin: 0;
+  padding-top: var(--top-gap);
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.sheet-open {
+  overflow: hidden;
+}
+
+/* Fixture switch for the blurry-unreadable screenshot (checkout.html?blur=1). */
+body.is-blurred .page {
+  filter: blur(6px);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+}
+
+.accent-text {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Holds the <symbol>s that thumbnails and card glyphs reuse; takes no space. */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Page frame: phone width, centred, so a desktop browser looks like the phone. */
+.page {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 0 16px 26px;
+}
+
+/* Header */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 12px 0;
+  color: var(--label);
+  text-decoration: none;
+}
+
+.brand-mark {
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 800;
+  letter-spacing: 2.6px;
+}
+
+.brand-sub {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.feed-mark {
+  padding: 12px 0;
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+/* Titles and labels */
+
+.page-title {
+  margin: 14px 0 10px;
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+}
+
+.tagline {
+  margin-bottom: 6px;
+  color: var(--secondary);
+}
+
+.label {
+  margin: 0 0 3px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+/* Item row (checkout and confirmation) */
+
+.item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.thumb {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--fill);
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.item-meta {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--secondary);
+}
+
+.item-price {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Blocks: ship to, contact, delivery */
+
+.block {
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+/* Pay with: Mastercard ••5678 [Change] */
+
+.pay-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.pay-row .label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.pay-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+/* Keep "Mastercard ••5678" on one line so OCR reads network and last 4 together. */
+#card-label {
+  white-space: nowrap;
+}
+
+/* Under 360 px the row can't hold all four parts, so "Pay with" moves above the card. */
+@media (max-width: 359px) {
+  .pay-row {
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding-top: 10px;
+  }
+
+  .pay-row .label {
+    flex-basis: 100%;
+  }
+}
+
+.card-glyph {
+  flex: none;
+  width: 28px;
+  height: 20px;
+}
+
+.link-button {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px 0 12px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.link-button:disabled {
+  color: var(--secondary);
+  cursor: default;
+}
+
+/* Summary: Shipping / Total, Paid with / Total */
+
+.summary {
+  margin: 0;
+  padding: 12px 0 14px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.summary-row + .summary-row {
+  margin-top: 6px;
+}
+
+.summary dt,
+.summary dd {
+  margin: 0;
+}
+
+.summary dt {
+  color: var(--secondary);
+}
+
+.summary dd {
+  font-weight: 600;
+  text-align: right;
+}
+
+.summary .total-row dt,
+.summary .total-row dd {
+  font-size: 19px;
+  line-height: 24px;
+  font-weight: 700;
+  color: var(--label);
+}
+
+/* Buttons */
+
+.primary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #ffffff;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary-button:disabled {
+  background: var(--ink-busy);
+  cursor: progress;
+}
+
+.pay-error {
+  margin-top: 10px;
+  color: var(--error);
+  font-weight: 500;
+  text-align: center;
+}
+
+.pay-error:empty {
+  display: none;
+}
+
+/* Shop front */
+
+.products {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+/* The footer's top rule closes the list. */
+.product:last-child {
+  border-bottom: 0;
+}
+
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-price {
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+.buy-button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Confirmation */
+
+.confirm-hero {
+  padding-top: 14px;
+}
+
+.check-badge {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+
+.confirm-hero .page-title {
+  margin: 10px 0 3px;
+}
+
+.order-number {
+  margin-top: 6px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--separator);
+  font-weight: 600;
+}
+
+.status-line {
+  margin: 14px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--fill);
+  font-size: 14px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+}
+
+/* Not found */
+
+.not-found p {
+  margin-bottom: 14px;
+  color: var(--secondary);
+}
+
+/* Footer */
+
+.site-footer {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 0.5px solid var(--separator);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--tertiary);
+}
+
+/* Saved-card bottom sheet */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 6px 16px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 16px 16px 0 0;
+  background: var(--bg);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.sheet:not([hidden]) {
+  animation: sheet-up 200ms ease-out;
+}
+
+.sheet-backdrop:not([hidden]) {
+  animation: fade-in 200ms ease-out;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet:not([hidden]),
+  .sheet-backdrop:not([hidden]) {
+    animation: none;
+  }
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+.card-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 0.5px solid var(--separator);
+  background: none;
+  color: var(--label);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-option[aria-checked="true"] {
+  font-weight: 600;
+}
+
+.radio-mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border: 2px solid #8e8e93;
+  border-radius: 50%;
+}
+
+.card-option[aria-checked="true"] .radio-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 4px var(--bg);
+}
+
+/* Feed (feed.html, a fictional social app for the feed-not-checkout fixture) */
+
+.post {
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.post-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+.post-name {
+  font-weight: 600;
+}
+
+.post-time {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--secondary);
+}
+
+.post-text {
+  margin-top: 8px;
+}
+
+.post-picture {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 12px;
+}
+
+.post-meta {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--secondary);
+}

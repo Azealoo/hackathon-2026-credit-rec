@@ -1,6 +1,6 @@
-# Fine Print
+# Paywise
 
-DubHacks '26 project: at checkout, Fine Print tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. Spec: `SPEC.md`.
+DubHacks '26 project: at checkout, Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. Spec: `SPEC.md`.
 
 ## Rules
 

@@ -4,7 +4,7 @@
   "sentPayload": {
     "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
     "client": {
-      "app": "fineprint-ios",
+      "app": "paywise-ios",
       "version": "0.1.0"
     },
     "clientDate": "2026-10-17",

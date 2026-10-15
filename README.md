@@ -1,8 +1,8 @@
-# Fine Print
+# Paywise
 
 *The perks buried in your card's fine print, at the moment you pay.*
 
-Press one button at checkout and Fine Print tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. It saves the purchase with its coverage dates. If the item later breaks or is stolen, it tells you whether you may be able to claim, cites the clause, and lists what to send.
+Press one button at checkout and Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. It saves the purchase with its coverage dates. If the item later breaks or is stolen, it tells you whether you may be able to claim, cites the clause, and lists what to send.
 
 DubHacks '26 (Oct 17–18) project: a native iOS 27 app with one App Intent, run from the Action Button, plus a small FastAPI backend that reads the cart. The full product spec is [SPEC.md](SPEC.md); §15 is the build plan.
 

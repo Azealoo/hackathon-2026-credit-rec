@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Fine Print card catalog",
+  "title": "Paywise card catalog",
   "description": "Structure of data/cards.json, the one card-data file (SPEC.md §15.3). Display rule (§8.2): copy states a value as fact only when its status is verified.",
   "type": "object",
   "additionalProperties": false,

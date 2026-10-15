@@ -1,4 +1,4 @@
-# Fine Print: Design
+# Paywise: Design
 
 Shared style reference for the iOS app, the Northbay Electronics demo store and the HTML claim verdict. It records the look of the concept film (SPEC.md §12; the film's code is local to the owner's Mac and is not in this repo) as tokens. Copy lives in SPEC.md §5.5, §6.3 and §15.4; this doc doesn't repeat it.
 
@@ -45,7 +45,7 @@ Color is never the only cue (SPEC §6.4): verdicts pair green with a filled shie
 
 ### Store and stage
 
-- Demo store: white page, black text, one store accent `#0d7a5f` (delivery line, "Change"), black `#111214` pill "Place order". Deliberately unlike Fine Print's indigo so the two never blur.
+- Demo store: white page, black text, one store accent `#0d7a5f` (delivery line, "Change"), black `#111214` pill "Place order". Deliberately unlike Paywise's indigo so the two never blur.
 - Concept-film stage (for the video and Devpost images only): white `#ffffff` for purchase and end card, black `#000000` for "14 months later"; ink `#1d1d1f` / `#6e6e73`, paper `#f5f5f7` / `#86868b`.
 
 ## 3. Type
@@ -142,7 +142,7 @@ SPEC §6.4 (card art, minimal/stale glyph), §9.1 (art bundled in the asset cata
 | **Card art ×5**, compact | @3x PNG (or vector, rasterized to the exact size), **52.33 × 36.67 pt = 157 × 110 px** (393-pt screens); 62.33 × 36.67 pt = **187 × 110 px** for 430-pt | SPEC §6.1 sizes. The compact slot is wider (1.43) than a card (1.586), so crop or letterbox. Don't ship larger; oversize art can make Live Activity start fail |
 | **Card art ×5**, expanded | @3x, exact size of the expanded leading slot | §6.1 gives only the container (371 or 408 × 84–160 pt), not the art. **C to give the slot size before D exports.** The film draws it at 52 × 32.8 pt |
 | **Card art ×5**, snippet | Same files as expanded (SPEC §6.4: "the snippet uses the same art") | Film size 52 pt wide |
-| **Fine Print glyph** | Template (single-color) PDF/SVG vector at 24×24 grid, plus @3x PNGs at 22 pt and 36.67 pt for island/minimal | Section 5 |
+| **Paywise glyph** | Template (single-color) PDF/SVG vector at 24×24 grid, plus @3x PNGs at 22 pt and 36.67 pt for island/minimal | Section 5 |
 | **App icon** | 1024×1024 standard, dark and tinted variants; no transparency | Section 5 |
 | **`silent.caf`** | Silent audio, ≤30 s as Apple requires for notification sounds (a few ms of true silence is fine), linear PCM or IMA4, mono 44.1 kHz, in the app *and* widget bundle as the spike needs | Used by `.named("silent.caf")` for the Keep and error island alerts (SPEC §6.3). Check on a device that the island expands with no sound; if not, SPEC §6.6 falls back to `.default` |
 

@@ -68,7 +68,7 @@ Sat morning: Render dashboard → service → Metrics; confirm the instance type
 ```yaml
 services:
   - type: web
-    name: fineprint
+    name: paywise
     runtime: python
     plan: starter
     region: oregon

@@ -1,6 +1,6 @@
 {
   "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
-  "client": {"app": "fineprint-ios", "version": "0.1.0"},
+  "client": {"app": "paywise-ios", "version": "0.1.0"},
   "clientDate": "2026-10-17",
   "screen": {
     "ocrText": "Northbay Electronics\nCheckout\nAero 14 Laptop, 14-inch (New)  $1,499.00\nTotal  $1,499.00\nPay with Mastercard [CARD]\nChange\nShip to [ADDRESS]\nPlace order",

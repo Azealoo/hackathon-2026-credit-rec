@@ -1,9 +1,18 @@
 # Paywise — Product Spec
 
-**Version:** 2.0 (Oct 15, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa (track name and prompt **(u)**, see §11.0)
+**Version:** 2.1 (Oct 15, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
 **Status:** Product-form decision after a 7-reviewer product-form review (product manager, interaction designer, form-factor designer, student user, competitive analyst, hackathon/Visa judge, iOS engineering lead), a PM decision and a challenge round. Items marked **(u)** are unverified and must be tested before we rely on them.
 
 ## Changelog
+
+**v2.1 (Oct 15, 2026): decisions from the pre-build research docs**
+- **Name:** Fine Print → **Paywise** (#12). The lowercase phrase "fine print" stays where it means card terms. App identifiers: bundle ID `com.azealoo.paywise`, App Group `group.com.azealoo.paywise` (§9.1, §15.2).
+- **Benefits (G5, #11):** §8.1 now holds verified values. Active Cash and Apple Card have no purchase protection or extended warranty, and Freedom's $500 cap is per item. Notice deadlines are 90 days to notify and 120 days for documents. The payout cap includes the amount charged to the card. §5.5 has the theft checklist and a New York note. The Renewed beat is now "Renewed · no warranty", because Chase covers refurbished items that come with a warranty. Both license notes in §8.4 are resolved.
+- **LLM (#6):** Claude Haiku 5.5 through the Anthropic API, with Sonnet 5.5 as the fallback. §10 privacy copy is rewritten for Anthropic (no training; 30-day default deletion, **(u)** until re-read).
+- **Hosting (#7):** Render. A free Static Site on Thursday, then a paid Starter web service; never the Free web service.
+- **Visa (#8):** the sandbox setup lives in `docs/visa-sandbox.md`. Hard stop is Fri Oct 16, 12 PM.
+- **Rules (#9):** §11.0 has the published Visa prompt and the '26 rubric. Visa is a side track, so the team also needs a title track. Team size is capped at 4. The Sat 10:30 PM Devpost draft is now a gate. Deadline conflict: 10:00 vs 10:30 AM, treat 10:00 as hard.
+- **Design (#5):** the "concept" label belongs to the demo and video only, not the app's verdict page (§12.3). `docs/` is listed in §15.2.
 
 **v2.0 (Oct 15, 2026): product-form review**
 - **Centre:** per-purchase protection (pick → proof → claim). Picking a card is the way in, not the product.
@@ -76,7 +85,7 @@ Nobody we found joins **this purchase → its coverage window → an incident ch
 | # | Scenario | Expected answer |
 |---|---|---|
 | S1 | $1,499 laptop, Northbay Electronics (our fictional demo store), saved-card checkout. Wallet: Apple Card (default), Wells Fargo Active Cash, Chase Freedom Unlimited | **Switch → Freedom ••1234:** "Adds a warranty year + $500 theft cover · $7.49 less cash back than Active Cash" |
-| S1-R | Same laptop, Renewed, $1,099 | **Switch → Active Cash** (cash): renewed items get no card warranty |
+| S1-R | Same laptop, listed "Renewed · no warranty", $1,099 | **Switch → Active Cash** (cash): a renewed item with no maker's warranty gets no card cover |
 | S1-K | S1 with Freedom as the default | **Keep Freedom** (already protected); snippet with save |
 | S2 (engine / Q&A) | $180 shoes at Nike, Apple Pay visible | **Keep Apple Card: use Apple Pay** (3% vs 1% typed) |
 | S3 | $249 earbuds stolen at week 6 | **May be eligible:** purchase protection; police report; deadline |
@@ -243,11 +252,15 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 
 | Verdict | Example (laptop bought Oct 17, 2026 with Freedom Unlimited) | Screen copy |
 |---|---|---|
-| may_be_eligible | "Lines across the screen. Never dropped." at 14 months | **May be eligible: Extended warranty (Freedom Unlimited).** The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028. **Notify by {date}** if the deadline is verified; otherwise "Check the notice deadline in your Guide to Benefits". Clause: {document} · {section} · version {date}. Checklist: itemized receipt · card statement showing the purchase · original warranty · repair estimate. You file it yourself at {administrator url}. |
-| may_be_eligible, capped | "Stolen from my bag" at day 30 | **May be eligible: Purchase protection, up to $500 of the $1,499.** Theft is covered within 120 days (to Feb 14, 2027). The checklist adds a police report. |
+| may_be_eligible | "Lines across the screen. Never dropped." at 14 months | **May be eligible: Extended warranty (Freedom Unlimited).** The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028. **Notify by {incident date + 90 days}; send documents by {incident date + 120 days}, or as soon as reasonably possible** (Chase deadlines, verified in G5). Clause: {document} · {section} · version {date}. Checklist: itemized receipt · card statement showing the purchase · original warranty · repair estimate. You file it yourself at {administrator url}. |
+| may_be_eligible, capped | "Stolen from my bag" at day 30 | **May be eligible: Purchase protection, up to $500 of the $1,499.** Theft is covered within 120 days (to Feb 14, 2027). The checklist adds a police report (made within 48 hours if you can); for porch theft, it adds "claim with the carrier or store first". |
 | not_covered | "Cracked it when I dropped it" at 14 months | **Not covered.** Damage was covered for 120 days (to Feb 14, 2027). The extended warranty covers failures, not drops. |
 | not_covered, maker route | Stops working at month 8 | **Not covered by your card yet: it's still under the maker's warranty.** Contact the manufacturer first. The card's extra year starts Oct 17, 2027. |
 | need_more_info | "Left them on the bus" (earbuds, week 6) | **Need more info.** Theft and "involuntary and accidental parting" may be covered within 120 days; simply losing something may not be. See the cited clause. |
+
+**Payout cap:** the lesser of the repair cost, the replacement cost, the amount charged to the card, and the benefit's cap ($500 per item for purchase protection, $10,000 per item for extended warranty). With `paidWith: card_partial`, the cap is the part paid on the card.
+
+**New York:** purchase protection lasts 90 days for New York residents, not 120. The engine doesn't know the user's state, so the claim screen and the Why sheet say "120 days (90 in NY)". Asking for the state once in onboarding is P1.
 
 Footer on every verdict: "Only the benefit administrator decides claims. Paywise never files for you." Photo analysis is P2; the claim PDF is P1.
 
@@ -279,7 +292,7 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 | **Checking** | Intent starts | Island compact (long-press: expanded) | (expanded) Reading this screen… | Only the order summary leaves your phone | — | — | none | Replaced by the result; the intent ends it in every path |
 | **Switch, protection** | Rule P | **Result snippet** | Use Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | $7.49 less cash back than Active Cash · *Change card to Visa ••{last4}, then place order* | [Paying with Freedom] + system Done | snippet presentation only | Done or swipe; the Live Activity is ended before the snippet appears |
 | Switch, protection, pick also cash-best | Rule P | Same | Use Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Also earns the most cash back here · *instruction* | Same | Same | Same |
-| **Switch, cash** | Rule C | Same | Use Active Cash ••{last4} | $10.99 more cash back than Apple Card | Eligibility note if any ("Renewed item: no card adds a warranty") · *Change card to Visa ••{last4}, then place order* | [Paying with Active Cash] + Done | Same | Same |
+| **Switch, cash** | Rule C | Same | Use Active Cash ••{last4} | $10.99 more cash back than Apple Card | Eligibility note if any ("Renewed, no warranty: no card covers it") · *Change card to Visa ••{last4}, then place order* | [Paying with Active Cash] + Done | Same | Same |
 | Switch, Apple Pay path (P1) | Apple Pay button visible | Same | Use Freedom ••{last4} | (gain) | (cost) · *In Apple Pay, swipe to this card* | Same | Same | Same |
 | **Keep, protected** | Guard G, or default protects | **Result snippet** | ✓ Keep Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Save it so you can claim later | [Paying with Freedom] + Done | snippet presentation only | Same as Switch |
 | **Saved** (reload) | `SavePurchaseIntent` done | Same snippet | ✓ Saved: Aero 14 · $1,499 | Theft & damage cover up to $500 to Feb 14, 2027 | Extra warranty year to Oct 17, 2028* · *If the maker's warranty is 1 year. Planned: confirm after you pay.* | [What we sent] + Done | none | Done or swipe |
@@ -358,7 +371,7 @@ The `/v1/check` request (§15.5): redacted OCR text, wallet card IDs with the de
 
 ### 7.3 Where AI is used (and why it isn't a lookup table)
 1. Reading arbitrary checkout screens into a Cart.
-2. Eligibility from the screen: Renewed / refurbished (P0); third-party seller, gift card, protection plan in the cart, BNPL (P1). Demo beat: the Renewed version of the same laptop flips the pick and says why.
+2. Eligibility from the screen: Renewed / refurbished (P0); third-party seller, gift card, protection plan in the cart, BNPL (P1). Demo beat: the same laptop listed "Renewed · no warranty" flips the pick and says why ("Renewed, no warranty: no card covers it"). Chase does cover refurbished items that come with a warranty (G5), so the demo listing must say "no warranty". For real carts (P1), add a condition value such as `refurbished_with_warranty` so the engine doesn't wrongly refuse cover.
 3. Turning Guide to Benefits text into cited, structured rules **before the event (gate G5)**, reviewed by a human.
 4. Coverage: classifying the incident's cause (the user confirms). The verdict comes from date and window rules in code.
 
@@ -375,11 +388,11 @@ The `/v1/check` response (§15.5): `decision` (kind, reason, presentation, recom
 
 | id | shortName | Network | Earn | Protections | Status |
 |---|---|---|---|---|---|
-| `apple-card` | Apple Card | Mastercard | 3% via Apple Pay at select merchants (Nike, Walgreens, Apple…); 2% via Apple Pay; 1% otherwise | none known | Earn confirmed (search). No protections: (u), 2019 reports only → G5 |
-| `wf-active-cash` | Active Cash | Visa | 2% flat (verify) | Cell phone protection (≤$600/claim, $25 deductible). Extended warranty / purchase protection: **(u), sources conflict** | → G5 |
-| `chase-freedom-unlimited` | Freedom | Visa | 1.5% base (bonus categories P2; verify) | Purchase protection: 120 days (90 in NY), up to $500 per item (Chase card page; reviews say per claim, $50K/account). Extended warranty: +1 yr on U.S. warranties ≤3 yr, up to 4 yr from purchase. Charging "some portion" to the card qualifies | Confirmed (Chase page, search); cap basis and notice deadline (90 vs 120 days in reviews) → G5 |
-| `chase-freedom-rise` | Freedom Rise | Visa (u) | 1.5% flat (verify) | Same as Freedom Unlimited per Chase's page | → G5 |
-| `discover-it-student-cash-back` | Discover | Discover | 1% base (5% rotating not modeled) | none (removed Feb 28, 2018) | Confirmed (search) |
+| `apple-card` | Apple Card | Mastercard | 3% on purchases directly from Apple (any method); 3% via Apple Pay at select merchants (Nike, Walgreens, …); 2% via Apple Pay; 1% with the titanium card or virtual card number | None (no purchase protection or extended warranty) | Verified 2026-10-14 (`docs/benefits-verification.md`) |
+| `wf-active-cash` | Active Cash | Visa Signature | 2% flat | Cell phone protection only ($600/claim, $25 deductible, 2 claims and $1,200 per 12 months). **No** extended warranty or purchase protection (WF Guide, in effect 09/15/2025) | Verified |
+| `chase-freedom-unlimited` | Freedom | Visa | 1.5% base; 3% dining and drugstores (P2); 5% Chase Travel (not modeled) | Purchase protection: 120 days (90 in NY); **$500 per item**, $50,000 per account; theft, damage, involuntary and accidental parting. Extended warranty: +1 yr on U.S. manufacturer warranties if all warranties total ≤3 yr; ≤4 yr from purchase; $10,000 per item, $50,000 per account. Charging all or part of the price (or using rewards) qualifies. Refurbished items with a warranty are covered. **Notify within 90 days** of the loss or failure; **documents within 120 days** | Verified (Chase Guide BGC11366, in effect 10/1/24) |
+| `chase-freedom-rise` | Freedom Rise | Visa | 1.5% flat | Same guide and terms as Freedom Unlimited | Verified |
+| `discover-it-student-cash-back` | Discover | Discover | 1% base (5% rotating with activation not modeled) | None (removed Feb 28, 2018, per secondary sources) | Earn and absence verified; removal date partial |
 
 Networks matter: Apple Card is Mastercard, so its perks aren't Visa benefits. P1: one verified non-Chase protection card. P2: more cards (Savor Student, Double Cash, …) after verification.
 
@@ -394,15 +407,16 @@ Everything lives in **one data file**, `data/cards.json`: cards, earn rules, pro
 - `walmart` (Apple Pay in U.S. stores since Aug 24, 2026; online/in-app (u)).
 
 ### 8.4 Sources & licenses
-- Seed earn rates from `novus-tech-tw/CardWise` `cards.json` (MIT) — data only, with the notice in `THIRD_PARTY.md`. **(u)** Confirm the license before copying. Hand-verify every demo card against issuer pages.
+- Seed earn rates from `novus-tech-tw/CardWise` `cards.json` (MIT) — data only, with the notice in `THIRD_PARTY.md`. Hand-verify every demo card against issuer pages.
 - Benefits: public Guide to Benefits PDFs, dated and cited. VDBP sandbox is P1 and returns test data only.
-- MCC reference: `greggles/mcc-codes` (Unlicense). (u) Confirm the license before copying.
+- MCC reference: `greggles/mcc-codes` (Unlicense).
 
 ---
 
 ## 9. Architecture
 
 ### 9.1 iOS app (SwiftUI, iOS 27 only)
+- **Identifiers (decided Oct 15, 2026):** app name **Paywise**; bundle ID `com.azealoo.paywise`; App Group `group.com.azealoo.paywise`. Extension bundle IDs go under the app's ID (for example `com.azealoo.paywise.widgets`).
 - **The "Paywise" Shortcut:** if it has input (shared from the Share Sheet) → Check Checkout(input); otherwise → Take Screenshot → Check Checkout. Bound to the Action Button (and Back Tap).
 - **`CheckCheckoutIntent`** (`AppIntent` + `LiveActivityIntent`, `supportedModes = [.background]`, `IntentFile` image parameter):
   1. End any Paywise activity.
@@ -417,16 +431,17 @@ Everything lives in **one data file**, `data/cards.json`: cards, earn rules, pro
 - **Target and config:** intents live in the main app target only (`allowedExecutionTargets`). `NSSupportsLiveActivities = YES`; check `areActivitiesEnabled` in onboarding. One activity at a time. Do **not** register `CheckCheckoutIntent` in `AppShortcutsProvider`.
 - **Widget extension:** Live Activity views per §6.4. Card art is bundled in the asset catalog; send a `cardId`, not an image.
 - **App screens:** onboarding, wallet, Purchases, What we sent, claim input + HTML verdict. The Why sheet and claim PDF are P1.
-- **Storage:** wallet, `CheckRecord`s (pruned after 24 h) and purchases live on the device (App Group + SwiftData). A purchase is sent to the backend only when the user runs a coverage check.
+- **Storage:** wallet, `CheckRecord`s (pruned after 24 h) and purchases live on the device (App Group `group.com.azealoo.paywise` + SwiftData). A purchase is sent to the backend only when the user runs a coverage check.
 
 ### 9.2 Backend (FastAPI)
-- `POST /v1/check`: redacted text + card IDs → LLM (paid tier, schema-constrained JSON) or the rules parser → engine → result.
+- `POST /v1/check`: redacted text + card IDs → LLM (Claude Haiku 5.5 `claude-haiku-5-5` via the Anthropic API, schema-constrained JSON; Claude Sonnet 5.5 is the one-line fallback; `docs/llm-provider.md`) or the rules parser → engine → result. Before locking in, measure ~20 parses: pass bar p50 ≤1.5 s, p90 ≤3 s **(u: unmeasured)**. The server answers or fails by ~4.5 s (override the SDK's retries and timeout), then falls back to the rules parser.
 - `POST /v1/coverage` (`?format=json|html`): purchase + incident → verdict, citations, checklist, deadline.
 - `POST /v1/store/pay`: the demo store's payment (Visa Acceptance sandbox or mock).
 - No request-body logging. Returns 400 `privacy_rejected` for any body with a run of ≥12 digits. API keys only on the server. Per-device rate limit and budget cap.
+- **Hosting:** Render (`docs/hosting.md`). From Friday, one paid **Starter** web service (about $7/month **(u)**) serves `/v1/*` and `/store/`. Never the Free web service: it sleeps after 15 minutes and takes about a minute to wake, past the phone's 6.0 s timeout. Secrets go in the dashboard as environment variables.
 
 ### 9.3 Demo store (mobile web)
-- Fictional "Northbay Electronics": static HTML with laptop, renewed laptop, earbuds and mug checkouts and a saved-card selector. Deployed to HTTPS on Thursday, later served by the backend at `/store/`.
+- Fictional "Northbay Electronics": static HTML with laptop, renewed laptop (listed "Renewed · no warranty", §7.3), earbuds and mug checkouts and a saved-card selector. Deployed to HTTPS on Thursday as a free Render Static Site, later served by the backend at `/store/`.
 - Payment: Visa Acceptance sandbox (P0, gated) or a mock.
 - Apple Pay via Stripe test mode is P1 (needs a real card in Wallet and a registered domain).
 
@@ -439,8 +454,9 @@ Press + Shortcut start + screenshot + intent launch ~0.5–1.0 s · crop + OCR +
 
 - **What leaves the phone:** only redacted order-summary text (e.g. "Northbay Electronics · Aero 14 Laptop (New) · $1,499.00 · Mastercard [CARD]") and card product IDs. Never the screenshot, never last 4. The status-bar strip is cropped before reading.
 - **"What we sent":** shows the exact payload for every check, in the app and inside the Saved snippet.
-- **Consent screen:** names the AI provider (paid tier) and its retention. A "Keep on device" mode is P2.
-- **Retention copy:** "Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider may keep logs for up to 55 days." (Paid-tier Gemini: no training on prompts; abuse-monitoring logs kept about 55 days. Never the free tier.)
+- **Consent screen:** names the AI provider and its retention. A "Keep on device" mode is P2. Copy:
+  > Paywise sends only a redacted order summary, such as "Northbay Electronics, Aero 14 Laptop (New), $1,499.00, Mastercard", to Anthropic's Claude API so it can read the items and prices. Card numbers, names and addresses are removed on your iPhone first, and your screenshot never leaves your phone. Anthropic doesn't use this text to train its models. It deletes API inputs and outputs within 30 days, and can keep them longer, up to 2 years, if its safety systems flag them. Tap "What we sent" any time to see exactly what was sent.
+- **Retention copy:** "Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider, Anthropic, may keep the redacted order text for up to 30 days, and longer if its safety systems flag it. It isn't used for model training." (Anthropic API: not used for training; 30-day default deletion; up to 2 years if flagged.) **(u)** Before shipping this copy, re-read Anthropic's commercial data retention article to confirm 30 days still holds (so far seen only in a search snippet). Also confirm the Console org is on the standard commercial API terms with no ZDR or other agreement that changes the wording (`docs/llm-provider.md`).
 - **Accidental presses:** an on-device checkout test runs first, and nothing is uploaded from non-checkout screens.
 - **Lock Screen:** no amounts, cards or store names.
 - **Claims:** free; uses only facts the user confirms; the user submits. Wording is "may be eligible", never "you're covered", "filed", "guaranteed" or "best card".
@@ -449,22 +465,26 @@ Press + Shortcut start + screenshot + intent launch ~0.5–1.0 s · crop + OCR +
 - **Onboarding privacy copy:**
   > We only look when you press. Never in the background.
   > Card numbers, names and addresses are removed on your iPhone first.
-  > Only that redacted order summary is sent for analysis; our AI provider may keep it up to 55 days for abuse monitoring.
-- **Judge answer — "Aren't you sending my payment screen to Google?"** "No. The screenshot never leaves your phone. On-device OCR removes anything that identifies you; only something like 'Northbay Electronics, $1,499, 1 laptop' is analyzed. Tap 'What we sent' to see it." *(Say this only if on-device redaction is actually built.)*
+  > Only that redacted order summary is sent for analysis; our AI provider (Anthropic) deletes it within 30 days and doesn't train on it.
+- **Judge answer — "Aren't you sending my payment screen to an AI company?"** "No. The screenshot never leaves your phone. On-device OCR removes anything that identifies you; only something like 'Northbay Electronics, $1,499, 1 laptop' goes to Anthropic's Claude API, which doesn't train on it and deletes it within 30 days. Tap 'What we sent' to see it." *(Say this only if on-device redaction is actually built.)*
 
 ---
 
 ## 11. Visa track fit
 
 ### 11.0 Published criteria
-- **'26 Visa prompt and rubric:** *[paste verbatim, with the source (Devpost / Hacker Guide / Discord) and date]*. Not found yet: devpost.com and dubhacks.co weren't reachable from our research environment, and search found no '26 track text **(u)**.
-- **Until then:** use the '25 rubric weights reported by the judge reviewer **(u)**: Functionality 30%, Creativity 20%, Track Applicability 20%, Design 10%, ~20% unseen. The '24 Hacker Guide describes in-person, expo-style judging with at least one team member present.
+- **Track:** "Visa: Reimagine Shopping", $5,000 cash, 1 winner (Devpost overview, checked 2026-10-14; `docs/dubhacks-2026-rules.md`).
+- **'26 Visa prompt (verbatim, [dh26.dubhacks.co Tracks](https://dh26.dubhacks.co/#tracks), checked 2026-10-14):**
+  > Use generative AI to craft smarter, effortless commerce experiences. Design and build a commerce experience that makes shopping more intuitive and personalized, transforming one or more stages of the journey: discovery, decision-making, personalization, checkout, payments, loyalty and rewards, or post-purchase.
+- **'26 rubric (event-wide; Devpost overview):** Functionality 30%, Track Applicability 30%, Design 20%, Creativity 20%. No Visa-specific rubric is published. The point breakdowns are in the '26 Hacker Guide, which we couldn't read **(u)**.
+- **Generative AI is required by the prompt:** keep the LLM path (cart parsing, cause classification) in the demo, not only `PARSER_MODE=rules`.
+- **Title track:** Visa is a sponsored side track, so the team also needs exactly one title track. Cook Smarter is the suggested fit; the team confirms.
 
 ### 11.1 Commerce journey covered
 Decision (which card covers this) → checkout (change card / pay) → post-purchase (saved purchase, coverage check). Generative AI does the reading, the eligibility judgment and the cause classification.
 
 ### 11.2 Visa APIs
-- **P0 (gated by G4):** a Visa Acceptance (Cybersource) sandbox authorization runs the demo merchant's payment; the confirmation shows the transaction ID.
+- **P0 (gated by G4):** a Visa Acceptance (Cybersource) sandbox authorization runs the demo merchant's payment; the confirmation shows the transaction ID. Sign-up, keys, test cards and the stall plan are in `docs/visa-sandbox.md`. It's an authorization only (`capture: false`, no money moves). Hard stop: if the account can't log in and make a key by Fri Oct 16, 12 PM, set `PAY_MODE=mock` and remove every Visa-API claim.
 - **P1:** the Visa Digital Benefits Platform (VDBP) sandbox, shown as the production path for benefit data (test data, labeled).
 - Skip the VDBP Card Account endpoints (they need the full card number and PCI scope).
 - Never say "Visa-verified". Devpost line: "Visa Acceptance runs the demo merchant's payment. In production, benefit data would come from Visa's benefits APIs (VDBP; sandbox shown if P1 ships)."
@@ -498,7 +518,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | 1:35–1:50 | Contrast: "Cracked when I dropped it" | **Not covered**: damage was covered for 120 days only | Real |
 | 1:50–2:05 | Why Visa / why us: "Card benefits are how cards like this Visa differ, yet cardholders use about 2 of them (J.D. Power 2026). We show them at checkout and turn them into a claim. Visa Acceptance ran this merchant's payment. Free for students, no paid ranking." | One slide or app screen | — |
 | 2:05–2:20 | Close: tagline + one numbers line (measured p50, scenarios including misses, interview stat) | Tagline | Measured |
-| 2:20–2:40 (optional) | **Renewed flip**, only if rehearsals finish by 2:20: tab 2, press | "Use Active Cash ••4321 / $10.99 more cash back than Apple Card / Renewed item: no card adds a warranty" | Real |
+| 2:20–2:40 (optional) | **Renewed flip**, only if rehearsals finish by 2:20: tab 2, press | "Use Active Cash ••4321 / $10.99 more cash back than Apple Card / Renewed, no warranty: no card covers it" | Real |
 | → 3:00 | Buffer / Q&A | — | — |
 
 **Q&A backup cards, in order:**
@@ -531,6 +551,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 ### 12.3 Real vs simulated (say it on Devpost and in the video)
 - **Real:** the Action Button press and Shortcut screenshot; on-device crop, OCR and redaction; the cloud cart parse and engine; the snippet and island; the saved (planned) purchase; the coverage verdict from stored clause data; the Visa Acceptance **sandbox** authorization of the demo merchant's payment.
 - **Simulated or staged:** the store (a fictional merchant we built); the cards (fake saved cards with fake last 4; the processor's test card numbers live only on the server); no money moves; "14 months later" is a date override; no claim is ever submitted; replay mode, if used, is labeled "replayed" in What we sent.
+- **Where the disclosure goes:** Devpost, the video and the live demo say what is real and what is simulated. The app's own screens, including the HTML verdict page, don't call themselves a concept. `docs/design.md` §8 says the verdict page "states it is a concept"; that applies to the demo and video only.
 
 ### 12.4 Table kit
 - Demo iPhone and a spare, both with the build, the seeded wallet, Shortcut first-run prompts cleared, and the Action Button bound.
@@ -538,7 +559,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 - Two hotspots. Replay on-when-offline.
 - No other Live Activities running (music and timers off). Do Not Disturb on.
 - Tab 2 pre-loaded with the renewed checkout. Devpost QR code.
-- At least one person at the table during judging (11:30 AM–2:00 PM per an unofficial schedule, (u)).
+- At least one person at the table during judging (Sun 11:30 AM–2:00 PM, dh26 schedule; whether Visa judges in person or by video is **(u)**).
 
 ---
 
@@ -579,7 +600,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 
 ### 14.2 Before Saturday: pre-event build (Thu Oct 15 evening → Sat 12:30 PM, ≈40 ph)
 
-**Tonight, first 15 minutes (B):** submit the Visa Acceptance (Cybersource) sandbox sign-up (activation can stall); set up paid LLM billing and a key, kept only in the deployed environment and local, uncommitted `.env` files; pick the HTTPS host.
+**Tonight, first 15 minutes (B):** submit the Visa Acceptance (Cybersource) sandbox sign-up (activation can stall); create the Anthropic API key on the Console credits (owner: @Azealoo), kept only in the deployed environment and local, uncommitted `.env` files; set up Render (`docs/hosting.md`).
 
 | When | A: ML/CV (≈8.5 ph) | B: Backend/engine (≈10.5 ph) | C: iOS lead (≈11 ph) | D: Design/web/story (≈10.5 ph) |
 |---|---|---|---|---|
@@ -587,7 +608,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | **Thu 9–11 PM** | OCR on the 7 captured screenshots on a Mac; top-strip crop (1.5) | — | **S1:** chain with a fake result over the *deployed* store (3) | Deploy the static store to HTTPS (0.25); capture the 7 fixture screenshots (0.5); book interviews |
 | **Fri 9 AM–12 PM** | — | Verify demo-card protections against the Guide to Benefits PDFs (2); Visa hello-world **if activated** (1.5) | **Gate G1** runs (1) | `scenarios.json` (2) |
 | **Fri 12–6 PM** | OCR + gate + redaction inside the background intent, with C; label 30 screenshots (real-app ones kept outside the repo) (3) | Engine + `/v1/check` + rules parser + tests (3) | **S2** (snippet patterns A/B, button + reload, silent sound, `.transient` probe, island 5 min after Done, Shortcuts indicator during the Keep hold); **S3** capture rig; **S6** setup + Share Sheet branch (3.5) | `coverage_cases.json` + second check of B's data (2); interviews (2.5) |
-| **Fri 6:00–6:30 PM** | **Gate review (all):** G1–G5. D reports what the '26 rules and Discord say about tracks, deadlines and pre-event work. | ← | ← | ← |
+| **Fri 6:00–6:30 PM** | **Gate review (all):** G1–G5. D reports what the '26 Hacker Guide and Discord say about tracks, deadlines and pre-event work. | ← | ← | ← |
 | **Fri 7–10 PM** | LLM parser prompt + eval on `fixtures/ocr` (1.5) | Deploy the backend; serve `/store/` + `/v1/store/pay` (0.5) | Snippet + Live Activity views skeleton (2) | Copy/design pass with C (0.5) |
 | **Sat 8:30–10:30 AM** | Smoke test (0.5) | Smoke test (0.25) | Wire `/v1/check` into the proven chain (0.5) | Table-kit check (0.25) |
 
@@ -607,10 +628,10 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 **Single-Mac plan (if we have only one Mac):** C owns the Mac. A writes redaction and replay-key logic as portable regexes with tests on any machine, then ports them in two Mac slots (Thu 9–11 PM, Fri 12–3 PM). The P0-10 tile picker is cut (seeded wallet only) and P0-15 moves to P1. The coverage verdict is HTML (no Mac); only its SwiftUI input screen needs the Mac (1.5 h).
 
 **Also before Saturday:**
-- **Roster:** the README lists 5 GitHub handles; DubHacks allows up to 4 per team ('24 rule). Settle the 4.
+- **Roster:** the README lists 5 GitHub handles. Max team size is 4 (Devpost rules); the roster of 4 is the maximum, so no extra member. Settle the 4.
 - **Signing:** done (paid Apple Developer account). Install Xcode 27; enable Developer Mode on the demo iPhones.
-- **Accounts:** Visa Acceptance sandbox and LLM key tonight; hosting; Stripe only for P1.
-- **Discord questions:** the '26 Visa prompt and rubric; title vs side track; do Visa judges visit tables; deadline (Devpost 10:00 AM vs site 10:30 AM, treat 10:00 as hard); video length.
+- **Accounts:** Visa Acceptance sandbox (`docs/visa-sandbox.md`) and the Anthropic API key tonight; Render for hosting; Stripe only for P1.
+- **Discord questions** (full list in `docs/dubhacks-2026-rules.md`): where the '26 Hacker Guide is (its Devpost link is broken); the rubric point breakdowns, and whether Visa uses the same four criteria; is Visa judged in person or by video, and do Visa judges visit tables; final deadline (Devpost overview 10:00 AM vs schedules 10:30 AM; treat 10:00 as hard); video length and format; are "Chef's Kitchen" (Devpost) and "Chef's Choice" (dh26) the same track; are external APIs and sandboxes allowed; are power and Wi-Fi guaranteed at tables for a phone + Mac demo.
 - **Repo hygiene:** add Xcode entries (`xcuserdata/`, `DerivedData/`, `*.xcuserstate`) to `.gitignore`; add `THIRD_PARTY.md`; rewrite the README for Paywise (it still describes a different product). Real-app screenshots live in `~/paywise-private/`, never in the repo.
 
 ### 14.3 Event timeline (Sat 12:30 PM → Sun; internal hard deadline 10:00 AM)
@@ -624,7 +645,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | 7:30 PM | Full arc end to end; first footage | Snippet unreliable → island alerts (§6.6) |
 | 8:00–9:00 PM | Comprehension, stranger-trigger, right-card and setup tests with 10 non-teammates (D) | — |
 | 9:30 PM | Track decision | Default: Visa only |
-| **10:00 PM** | **Devpost draft submitted** (D; B backup); all members accepted invites | Hard 10:30 PM ('25 pattern, (u)) |
+| **10:00 PM** | **Devpost draft submitted** (D; B backup); all members accepted invites | **Gate: Sat 10:30 PM draft** (published): declare tracks (one title track + Visa) and add all 4 members with their Discords. No draft means no judging on Sunday. |
 | 10:00 PM–1:00 AM | P1 window, **only if the arc ran 5/5 clean** | — |
 | 1:00 AM | P0 freeze | — |
 | 1:30–5:30 AM | A & B sleep. C & D film until 3:00, then sleep 3:30–7:30 | — |
@@ -633,8 +654,8 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | 7:30 AM | C & D: video edit | — |
 | 8:45 AM | Video final | — |
 | 9:00 AM | Upload over hotspot | — |
-| 9:30 AM | Submit | **10:00 AM internal hard deadline** (official 10:30 AM per an unofficial schedule, (u)) |
-| 11:30 AM–2:00 PM (u) | Judging: at least one person at the table, table kit, replay armed | — |
+| 9:30 AM | Submit | **10:00 AM internal hard deadline** (Devpost overview: before 10:00 AM; Devpost and dh26 schedules: 10:30 AM; treat 10:00 as hard) |
+| 11:30 AM–2:00 PM | Judging: at least one person at the table, table kit, replay armed | — |
 
 ### 14.4 Cut order (first → last)
 1. Anything P2.
@@ -721,7 +742,7 @@ demo-store/            index.html, checkout.html, confirm.html, store.css, store
                        (fictional "Northbay Electronics"; page header starts below 80 pt)
 
 ios/
-  Paywise.xcodeproj
+  Paywise.xcodeproj    bundle ID com.azealoo.paywise · App Group group.com.azealoo.paywise (§9.1)
   Paywise/             app target: intents, onboarding, wallet, purchases, claim input, What we sent
   Shared/              App Group code: CheckStore, Purchase model, CheckResultView (app + widget)
   PaywiseWidgets/      widget extension (Live Activity views)
@@ -731,6 +752,12 @@ ios/
 docs/
   spikes.md            S0–S6 results, timings, gate decisions
   metrics.md
+  design.md            style tokens and the asset list (D)
+  llm-provider.md      Claude Haiku 5.5 decision, settings, latency check
+  hosting.md           Render setup
+  visa-sandbox.md      Visa Acceptance sandbox sign-up and keys (G4)
+  dubhacks-2026-rules.md   published rules, Visa prompt, rubric, deadlines
+  benefits-verification.md G5 answers and verified card values
 ```
 
 - The iOS app bundles `data/cards.json` as a **file reference** (Copy Bundle Resources). There is no second copy.
@@ -756,6 +783,7 @@ docs/
   - Both true: electronics, computers, phones, audio, cameras, appliances, tools, bikes, instruments.
   - Both false: apparel, home, dining, grocery, pharmacy, gift_card, services, travel, general.
 - **v1 content:** the 5 cards in §8.1, the ~10 merchants in §8.3, and the item categories above. Display rule: §8.2.
+- **Not in the shape yet:** a deductible, a per-period cap (Active Cash: 2 claims and $1,200 per 12 months), and the "or as soon as reasonably possible" softening on notice deadlines. Until fields exist, these go in `summary` and `verification.note` (as in `docs/benefits-verification.md` §7).
 
 ### 15.4 Fixtures (all obviously fake)
 - **Fake identity:** name "Alex Doe"; address "123 Example St, Seattle, WA 98000"; email "alex@example.com"; phone "(555) 010-0000"; last 4 only 1234, 5678 or 4321. No real card numbers anywhere. Processor test card numbers live only in the deployed environment (`DEMO_TEST_CARD_MAP`).
@@ -773,7 +801,7 @@ docs/
 
 - **Screenshots** (393×852 pt @3x, captured on a phone Thursday night), each with a matching `ocr/*.txt` (top strip cropped) and `carts/*.json`:
   - `laptop-checkout`: Aero 14 Laptop, new, $1,499.00, saved Mastercard ••5678.
-  - `laptop-renewed-checkout`: $1,099.00.
+  - `laptop-renewed-checkout`: $1,099.00, listed "Renewed · no warranty".
   - `earbuds-checkout`: $249.00.
   - `mug-checkout`: $18.00.
   - `laptop-confirmation`: order #NB-100234.
@@ -785,7 +813,7 @@ docs/
 | # | Wallet | Cart / path | Expected |
 |---|---|---|---|
 | 1 | demo-3card | laptop $1,499, saved card | switch / protection → FU; −$7.49 vs AC; gains [purchase_protection, extended_warranty] |
-| 2 | demo-3card | renewed laptop $1,099 | switch / cash → AC; +$10.99 vs Apple Card; note "renewed" |
+| 2 | demo-3card | renewed laptop $1,099, no warranty | switch / cash → AC; +$10.99 vs Apple Card; note "Renewed, no warranty: no card covers it" |
 | 3 | demo-3card | earbuds $249 (audio) | switch / protection → FU; −$1.24 vs AC |
 | 4 | demo-3card | mug $18 (home) | keep / below_threshold |
 | 5 | fu-default | laptop $1,499, saved card | **keep / already_protected** (guard; snippet) |
@@ -818,11 +846,11 @@ docs/
 | 5 | FU earbuds | left on a bus at week 6 | need_more_info |
 | 6 | Apple Card laptop | failure at month 14 | not_covered / none |
 | 7 | FU laptop | failure at month 8 | **not_covered / route manufacturer** ("still under the maker's warranty") |
-| 8 | FU renewed laptop | failure at month 14 | not_covered (verify the refurbished exclusion) |
+| 8 | FU renewed laptop, no manufacturer warranty | failure at month 14 | not_covered (no maker's warranty, so nothing for the extended warranty to extend; G5) |
 | 9 | FU earbuds | stolen at day 200 | not_covered |
-| 10 | AC headphones | failure at month 14 | not_covered (if G5 confirms no extended warranty) |
+| 10 | AC headphones | failure at month 14 | not_covered (confirmed in G5: Active Cash has no extended warranty) |
 | 11 | FU laptop | failure at month 30 | not_covered (after the extra year ends) |
-| 12 | FU laptop, `paidWith` card_partial | failure at month 14 | may_be_eligible (Chase: "some portion"; G5) |
+| 12 | FU laptop, `paidWith` card_partial | failure at month 14 | may_be_eligible (charging part of the price qualifies, G5); payout capped at the part paid on the card |
 | 13 | FU laptop | stolen at day 30 | may_be_eligible / purchase_protection; **cap $500 of $1,499** |
 
 ### 15.5 API contracts, on-device records and intents
@@ -1026,7 +1054,7 @@ Response (`?format=json`; `?format=html` renders the same data through `template
   "disclaimer": "Only the benefit administrator decides claims. Paywise never files for you."
 }
 ```
-`verdict`: may_be_eligible / not_covered / need_more_info. `benefit`: purchase_protection / extended_warranty / none. `route`: card_extended_warranty / card_purchase_protection / manufacturer / none. `deadline.type`: notify_by / file_by / unknown. For case 13: `"limit": {"perItemUsd": 500, "payoutCapUsd": 500, "appliesTo": "item"}`, and the headline adds "up to $500 of the $1,499". Date and window math happens in code; the LLM only classifies the cause (the user confirms) and drafts `why`.
+`verdict`: may_be_eligible / not_covered / need_more_info. `benefit`: purchase_protection / extended_warranty / none. `route`: card_extended_warranty / card_purchase_protection / manufacturer / none. `deadline.type`: notify_by / file_by / unknown. For case 13: `"limit": {"perItemUsd": 500, "payoutCapUsd": 500, "appliesTo": "item"}`, and the headline adds "up to $500 of the $1,499". `payoutCapUsd` is the lesser of the benefit cap and the amount charged to the card, so with `card_partial` (case 12) it is at most the part paid on the card (§5.5). Date and window math happens in code; the LLM only classifies the cause (the user confirms) and drafts `why`.
 
 **`POST /v1/store/pay`** (demo store only)
 - Request: `{"orderId": "NB-100234", "savedCardId": "demo-visa-1234", "amountUsd": 1499.00}`
@@ -1035,7 +1063,7 @@ Response (`?format=json`; `?format=html` renders the same data through `template
 
 **`.env.example`** (placeholders only):
 ```
-LLM_PROVIDER=gemini
+LLM_PROVIDER=anthropic
 LLM_API_KEY=changeme
 LLM_MODEL=changeme
 PARSER_MODE=rules|llm
@@ -1088,30 +1116,31 @@ Settings-screenshot onboarding · receipt press on the confirmation · Why sheet
 
 | Risk | Mitigation |
 |---|---|
-| **Pre-event code vs the rules.** The '24 Hacker Guide says "Any projects submitted must be started and completed during the duration of DubHacks '24" and sets a 70-30 rule (at most 30% of code not written during the hackathon). '25 reportedly says the same; '26 rules not seen yet. The required public repo's commit history will show pre-event commits. | The team decided pre-event code is allowed, with no disclosure. D reads the '26 rules on Friday; the team decides whether to ask organizers. |
+| **Pre-event code vs the rules.** The '26 Devpost rules (read Oct 14, 2026) say "Any projects submitted must be started and completed during the duration of DubHacks '26". The rules page has no 30% allowance; the '26 Hacker Guide, which we couldn't read, may still have one **(u)**. The required public repo's commit history shows pre-event commits. | Decided: the team builds before the event, with no disclosure. The owner confirmed this on Oct 14, 2026 after reading the '26 rule. |
 | Take Screenshot from a hardware trigger on iOS 27 captures the app underneath (u) | Gate G1 + §6.6 |
 | Snippet appearance and buttons from an Action Button-run Shortcut (u) | Gate G2 + Pattern B + §6.6 |
 | Silent alert sound (u) | G2; fall back to `.default` |
 | Island / snippet capture for the video (u) | G3; external camera |
 | Visa Acceptance sandbox activation | Sign up Thursday night; G4 |
-| Demo-card benefit data (Active Cash extended warranty / purchase protection; Apple Card; Freedom cap per item vs per claim; notice deadlines) | G5; copy shows verified values only |
+| Demo-card benefit data | G5 answered from primary sources on Oct 14 (`docs/benefits-verification.md`): Active Cash and Apple Card have no purchase protection or extended warranty; Freedom's $500 cap is per item; notify within 90 days, documents within 120. B or D reviews it before the Fri 6 PM gate. Copy shows verified values only. |
 | Few students hold a protection-bearing card | Interviews map card products; P1 non-Chase card; Q&A card on how the catalog generalizes |
 | Apple or wallets add best-card hints (Automatic Selection already surfaces co-brand cards) | Moat = protections + saved purchase + claim check |
 | Latency on venue Wi-Fi | On-device OCR, text-only upload, replay keyed on merchant + total, two hotspots |
 | Only one Mac | Single-Mac plan (§14.2) |
 | Judges: "CardPointers / iOS 27 already do this" | "CardPointers picks by merchant and offers (including Visual Intelligence on screenshots); Apple shows rewards and balances. We read the cart, weigh protections and eligibility, save the purchase and check the claim." |
 | Judges: "Is this just a Chase reminder?" | The engine and data are card-agnostic; v1's 5-card catalog is narrow because each card's benefits are hand-verified. P1 adds a non-Chase card. |
-| Track structure and judging mode in '26 (u) | Confirm on Discord. In '24, each project entered one title track plus optional sponsor tracks, and judging was in person, expo-style. |
+| Track structure and judging mode in '26 | Visa is a sponsored side track, so we also need one title track (Cook Smarter suggested; team decides). Judging is Sun 11:30 AM–2:00 PM. Whether Visa judges in person or by video is **(u)**: ask on Discord. If Visa is a video track, the video becomes the main judged artifact. |
+| Final-deadline conflict and the Saturday draft | The Devpost overview says before 10:00 AM Sunday; the Devpost and dh26 schedules say 10:30 AM. Treat 10:00 AM as hard. The Sat 10:30 PM draft (tracks + all 4 members) is mandatory and is a gate in §14.3. |
 | Live Activity start from a Shortcut-run intent | Apple docs say a `LiveActivityIntent` can start one from the background; spike S1 confirms on device |
 
-**Unverified (test or confirm):** snippet appearance and buttons from a hardware-run Shortcut; Take Screenshot from a hardware trigger on iOS 27; whether the iOS 27 screenshot automation runs without a prompt; Apple Card protections in 2026; Active Cash extended warranty / purchase protection; Amazon in-app Apple Pay; Walmart online/in-app Apple Pay; the '26 rules, Visa prompt and rubric; our island during the Apple Pay sheet / Face ID (P1 only); QuickTime/AirPlay capture of the island and snippet; the J.D. Power "29%" figure.
+**Unverified (test or confirm):** snippet appearance and buttons from a hardware-run Shortcut; Take Screenshot from a hardware trigger on iOS 27; whether the iOS 27 screenshot automation runs without a prompt; Amazon in-app Apple Pay; Walmart online/in-app Apple Pay; the '26 Hacker Guide (point breakdowns, video limit); Claude Haiku 5.5 latency for the cart parse; Anthropic's 30-day retention figure (seen only in a search snippet); Walgreens/DoorDash MCCs for Chase bonus categories (P2); our island during the Apple Pay sheet / Face ID (P1 only); QuickTime/AirPlay capture of the island and snippet; the J.D. Power "29%" figure.
 
 ### 16.1 Open questions for the team
 1. **Macs:** how many Macs with Xcode 27, and whose? About 30 ph of P0 needs a Mac. With one, the single-Mac plan applies.
-2. **Tonight's sign-ups (B, ~15 min):** Visa Acceptance sandbox; paid LLM key and billing (who pays?); the HTTPS host.
-3. **Rules vs pre-event code:** your decision stands. Who reads the '26 rules on Friday (proposed: D)? Ask organizers on Discord?
-4. **Track:** where did "Visa: Reimagine Shopping" come from? Paste the prompt and rubric. Is Visa a title track or a side prize in '26, and do Visa judges visit tables?
-5. **Roster:** the README lists 5 handles; teams are capped at 4 ('24 rule). Who are the 4?
+2. **Tonight's sign-ups (B, ~15 min):** Visa Acceptance sandbox (`docs/visa-sandbox.md`); Anthropic Console credits (owner: @Azealoo); Render (`docs/hosting.md`).
+3. **Rules vs pre-event code:** decided (§16 table). No action.
+4. **Track:** "Visa: Reimagine Shopping" is a sponsored side track (prompt and rubric in §11.0). Which title track do we enter? (Cook Smarter is suggested.) Do Visa judges visit tables, or is it a video track?
+5. **Roster:** the README lists 5 handles; teams are capped at 4 (Devpost rules). Who are the 4?
 6. **Hours:** the plan assumes ≈8.5–11 ph each before Saturday (≈40 total). If anyone has less, say so tonight so the low-case plan applies.
 7. **Demo phone:** may we bind its Action Button to Paywise? Case or mount? Laptop + USB-C cable for mirroring?
 8. **Real Wallet cards (P1 only):** does any teammate's phone hold cards that fit an Apple Pay version of S1?
@@ -1126,16 +1155,17 @@ Free for consumers; no referral fees or paid ranking. Future revenue: issuers/Vi
 
 ## 18. Sources
 
-Notes on access: most of these were checked on Oct 15, 2026. devpost.com, dubhacks.co, support.apple.com, 9to5mac.com and several issuer and competitor sites weren't reachable from our research environment, so those items rest on search-result summaries and are marked as such where they matter.
+Notes on access: most of these were checked on Oct 15, 2026. support.apple.com, 9to5mac.com and several issuer and competitor sites weren't reachable from our research environment, so those items rest on search-result summaries and are marked as such where they matter. The DubHacks '26 Devpost and dh26 pages and the demo cards' benefit guides were read in a browser on Oct 14 (`docs/dubhacks-2026-rules.md`, `docs/benefits-verification.md`).
 
 - **Apple (fetched from developer.apple.com):** [Live Activities HIG](https://developer.apple.com/design/human-interface-guidelines/live-activities) · [Action button HIG](https://developer.apple.com/design/human-interface-guidelines/action-button) · [Displaying live data with Live Activities](https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities) · [LiveActivityIntent](https://developer.apple.com/documentation/appintents/liveactivityintent) · [App Intents supportedModes](https://developer.apple.com/documentation/appintents/appintent/supportedmodes) · [Displaying static and interactive snippets](https://developer.apple.com/documentation/appintents/displaying-static-and-interactive-snippets) · [Creating controls](https://developer.apple.com/documentation/widgetkit/creating-controls-to-perform-actions-across-the-system) · [Visual Intelligence integration](https://developer.apple.com/documentation/visualintelligence/integrating-your-app-with-visual-intelligence) · [Foundation Models](https://developer.apple.com/documentation/foundationmodels) · [FinanceKit](https://developer.apple.com/documentation/financekit) · [App Clip functionality](https://developer.apple.com/documentation/appclip/choosing-the-right-functionality-for-your-app-clip) · [Vision RecognizeDocumentsRequest](https://developer.apple.com/documentation/vision/recognizedocumentsrequest) · [What's new in Apple Pay](https://developer.apple.com/apple-pay/whats-new/) · WWDC25 session 281 (snippets) · WWDC26 sessions 223 (Live Activities), 297 (Visual Intelligence), 310 (Shortcuts)
 - **Apple (search summaries):** [Back Tap with Shortcuts](https://support.apple.com/guide/shortcuts/run-shortcuts-tapping-iphone-apd897693606/ios) · [Apple Card Daily Cash merchants](https://support.apple.com/en-us/120400) · [Pay with rewards](https://support.apple.com/120479)
 - **iOS 27 Apple Pay (secondary):** [9to5Mac (Sep 27, 2026; a re-dated copy of a Jun 13 story)](https://9to5mac.com/2026/09/27/ios-27-makes-it-easier-to-switch-between-apple-pay-cards/) · [Digital Trends](https://www.digitaltrends.com/phones/ios-27s-apple-pay-fix-wont-have-you-hunting-for-the-right-card-before-checkout/) · [switchingtomac](https://www.switchingtomac.com/ios-27-apple-pay-card-switching-iphone/)
 - **Visa / payments:** [Digital Benefits Platform](https://developer.visa.com/capabilities/vdbp) · [VDBP how-to](https://developer.visa.com/capabilities/vdbp/docs-how-to) · [Cybersource BIN Lookup](https://developer.cybersource.com/docs/cybs/en-us/bin-lookup/developer/all/rest/bin-lookup.html) · Cybersource developer community threads on sandbox activation (search) · [Visa Intelligent Commerce](https://developer.visa.com/capabilities/visa-intelligent-commerce) · [DCC](https://www.visa.com/en-us/personal/travel/dynamic-currency-conversion) · Stripe "Testing Apple Pay" and domain registration docs (search)
-- **Benefits:** [Chase Freedom benefits](https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide) and Chase Freedom Unlimited card page (search: 120 days, $500 per item; +1 yr warranty) · [Wells Fargo Active Cash guide](https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/) · [Discover cuts benefits (NerdWallet)](https://www.nerdwallet.com/article/credit-cards/discover-to-cut-some-card-benefits-2018) · [Doctor of Credit](https://www.doctorofcredit.com/discover-remove-many-card-benefits-february-28th-2018/) · [Visa Extended Warranty](https://usa.review.visa.com/supporting-info/extended-warranty-protection.html)
+- **Benefits (primary, read Oct 14, 2026 for G5; details in `docs/benefits-verification.md`):** [Chase Guide to Benefits BGC11366 (PDF)](https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf) · [Wells Fargo Active Cash Guide to Benefits](https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/) · [Apple Card Customer Agreement (PDF)](https://www.goldmansachs.com/terms-and-conditions/Apple-Card-Customer-Agreement.pdf) · [Mastercard Benefits for Apple Card](https://www.mastercard.com/us/en/personal/find-a-card/card-benefits/apple-card-benefits.html)
+- **Benefits (earlier, secondary):** [Chase Freedom benefits](https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide) and Chase Freedom Unlimited card page (search: 120 days, $500 per item; +1 yr warranty) · [Wells Fargo Active Cash guide](https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/) · [Discover cuts benefits (NerdWallet)](https://www.nerdwallet.com/article/credit-cards/discover-to-cut-some-card-benefits-2018) · [Doctor of Credit](https://www.doctorofcredit.com/discover-remove-many-card-benefits-february-28th-2018/) · [Visa Extended Warranty](https://usa.review.visa.com/supporting-info/extended-warranty-protection.html)
 - **Demand:** [J.D. Power 2026 U.S. Credit Card Satisfaction Study](https://www.jdpower.com/business/press-releases/2026-u-s-credit-card-satisfaction-study/) ([BusinessWire, Aug 13, 2026](https://www.businesswire.com/news/home/20260813093708/en/Financial-Stress-Deepens-Divide-among-U.S.-Credit-Card-Customers-According-to-JD-Power)) · Adobe 2025 holiday shopping results (Jan 2026; search summary) · [UW tuition payment fees](https://finance.uw.edu/sfs/tuition/payment)
 - **Competitors:** [CardPointers 8 (9to5Mac, Sep 21, 2026)](https://9to5mac.com/2026/09/21/cardpointers-updated-for-ios-27-with-siri-ai-automatic-offer-syncing-and-much-more/) · [CardPointers AutoPilot](https://help.cardpointers.com/article/5-autopilot) · [MaxRewards Best Card Live Activity](https://help.maxrewards.com/en/articles/15880013-introducing-the-best-card-live-activity-tracker) · [Kudos × Samsung (PR Newswire)](https://www.prnewswire.com/news-releases/kudos-partners-with-samsung-to-power-the-new-samsung-pay-benefits-shopping-assistant-302620794.html) · [Samsung Next on Kudos](https://www.samsungnext.com/blog/why-we-invested-in-kudos) · [Norte purchase protection guide](https://norteapp.io/guide/purchase-protection-credit-cards)
 - **Merchants:** [Walmart Apple Pay (iclarified)](https://www.iclarified.com/101840/walmart-to-roll-out-apple-pay-at-us-stores-starting-august-24) · [Modern Retail](https://www.modernretail.co/technology/walmart-finally-starts-supporting-apple-pay-and-google-pay/) · Amazon Apple Pay: third-party blogs only (u)
-- **Privacy:** [Gemini API terms](https://ai.google.dev/gemini-api/terms) · [Gemini abuse monitoring](https://ai.google.dev/gemini-api/docs/abuse-monitoring) · [PCI truncated PAN FAQ](https://www.pcisecuritystandards.org/faq/articles/Frequently_Asked_Question/are-truncated-primary-account-numbers-pan-required-to-be-protected-in-accordance-with-pci-dss)
-- **Rules:** [DubHacks '24 Hacker Guide](https://dubhacks.notion.site/The-DubHacks-24-Hacker-Guide-16da323fc21b4c6c8c0c2fbca1b7755e) (search summary) · DubHacks '25 Devpost (rubric and rules, reported by the judge reviewer via search; (u)) · [DubHacks '26 Devpost rules](https://dubhacks-2026.devpost.com/rules) ((u): not reachable / not confirmed) · unofficial '26 schedule mirror: github.com/syedjafri06193/DubHacks-2026-Hack
+- **Privacy:** [Anthropic API and data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) · [Anthropic: how long do you store my organization's data](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) (30 days; search snippet only, (u)) · Gemini, not chosen: [Gemini API terms](https://ai.google.dev/gemini-api/terms) · [Gemini abuse monitoring](https://ai.google.dev/gemini-api/docs/abuse-monitoring) · [PCI truncated PAN FAQ](https://www.pcisecuritystandards.org/faq/articles/Frequently_Asked_Question/are-truncated-primary-account-numbers-pan-required-to-be-protected-in-accordance-with-pci-dss)
+- **Rules:** [DubHacks '24 Hacker Guide](https://dubhacks.notion.site/The-DubHacks-24-Hacker-Guide-16da323fc21b4c6c8c0c2fbca1b7755e) (search summary) · DubHacks '25 Devpost (rubric and rules, reported by the judge reviewer via search; (u)) · [DubHacks '26 Devpost rules](https://dubhacks-2026.devpost.com/rules), [overview](https://dubhacks-2026.devpost.com/) and [dh26 tracks and schedule](https://dh26.dubhacks.co/) (read and confirmed Oct 14, 2026) · unofficial '26 schedule mirror: github.com/syedjafri06193/DubHacks-2026-Hack
 - **Data:** [CardWise (MIT)](https://github.com/novus-tech-tw/CardWise) · [mcc-codes](https://github.com/greggles/mcc-codes)

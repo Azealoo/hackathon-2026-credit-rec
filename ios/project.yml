@@ -1,0 +1,106 @@
+# Paywise iOS project (SPEC §9.1, §15.2).
+# Regenerate after editing:  cd ios && xcodegen
+# The generated Paywise.xcodeproj is committed so teammates without xcodegen can open it.
+name: Paywise
+
+options:
+  bundleIdPrefix: com.azealoo
+  deploymentTarget:
+    iOS: "27.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: 645L37J78Q  # Team ID, not a secret
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  Paywise:
+    type: application
+    platform: iOS
+    sources:
+      - path: Paywise
+      - path: Shared
+      # The one card-data file (§15.2): a file reference into data/, not a copy.
+      - path: ../data/cards.json
+        buildPhase: resources
+    info:
+      path: Paywise/Info.plist
+      properties:
+        CFBundleDisplayName: Paywise
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSSupportsLiveActivities: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    entitlements:
+      path: Paywise/Paywise.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.azealoo.paywise
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - target: PaywiseWidgets
+
+  PaywiseWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PaywiseWidgets
+      - path: Shared
+    info:
+      path: PaywiseWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Paywise
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: PaywiseWidgets/PaywiseWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.azealoo.paywise
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+        SKIP_INSTALL: YES
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+
+  PaywiseTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PaywiseTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - target: Paywise
+
+schemes:
+  Paywise:
+    build:
+      targets:
+        Paywise: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - PaywiseTests
+    archive:
+      config: Release

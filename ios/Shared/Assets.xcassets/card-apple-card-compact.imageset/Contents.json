@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "card-apple-card-compact@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "card-apple-card-compact@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

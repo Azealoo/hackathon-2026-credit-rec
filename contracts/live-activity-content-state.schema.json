@@ -8,6 +8,7 @@
   "properties": {
     "phase": {"type": "string", "enum": ["checking", "keep", "no_checkout", "error", "switch_fallback"]},
     "glyph": {"type": "string", "enum": ["paywise", "check", "warning", "card"]},
+    "cardId": {"anyOf": [{"$ref": "common.schema.json#/$defs/cardId"}, {"type": "null"}], "description": "Optional. The card whose bundled art the island shows (Keep, switch_fallback); §9.1: send a cardId, not an image."},
     "cardShortName": {"type": ["string", "null"]},
     "last4": {"type": ["string", "null"], "pattern": "^[0-9]{4}$"},
     "line1": {"type": "string"},

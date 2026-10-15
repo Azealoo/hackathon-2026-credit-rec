@@ -1,6 +1,7 @@
 {
   "phase": "keep",
   "glyph": "check",
+  "cardId": "apple-card",
   "cardShortName": "Apple Card",
   "last4": "5678",
   "line1": "✓ Keep Apple Card ••5678",

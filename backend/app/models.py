@@ -299,6 +299,7 @@ class Purchase(Contract):
 class LiveActivityContentState(Contract):
     phase: Literal["checking", "keep", "no_checkout", "error", "switch_fallback"]
     glyph: Literal["paywise", "check", "warning", "card"]
+    card_id: CardId | None = None
     card_short_name: str | None
     last4: Annotated[str, Field(pattern=r"^[0-9]{4}$")] | None
     line1: str

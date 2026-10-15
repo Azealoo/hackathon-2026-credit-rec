@@ -28,10 +28,16 @@ targets:
       # The one card-data file (§15.2): a file reference into data/, not a copy.
       - path: ../data/cards.json
         buildPhase: resources
+      # Cached /v1/check responses for the demo fixtures (§15.7 step 10), bundled as replay/<merchantId>_<totalCents>.json.
+      - path: ../fixtures/replay
+        type: folder
+        buildPhase: resources
     info:
       path: Paywise/Info.plist
       properties:
         CFBundleDisplayName: Paywise
+        # Backend base URL (§9.2). Not a secret.
+        PaywiseAPIURL: https://paywise-api-n0f9.onrender.com
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSSupportsLiveActivities: true
@@ -47,6 +53,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise
         TARGETED_DEVICE_FAMILY: "1"
+        # Paywise/Assets.xcassets (standard, dark, tinted). Card art, the glyph and `accent` are in
+        # Shared/Assets.xcassets, compiled into the app and the widget. Both made by tools/make_assets.sh.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - target: PaywiseWidgets
 
@@ -83,6 +92,16 @@ targets:
     platform: iOS
     sources:
       - path: PaywiseTests
+      # The contract examples the tests feed through the check chain.
+      - path: ../contracts/check.request.example.json
+        buildPhase: resources
+      - path: ../contracts/check.response.example.json
+        buildPhase: resources
+      - path: ../contracts/check-record.example.json
+        buildPhase: resources
+      # The 7 demo-store screenshots (§15.4) for the OCR + redaction tests: file references into fixtures/, not copies.
+      - path: ../fixtures/screenshots
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise.tests

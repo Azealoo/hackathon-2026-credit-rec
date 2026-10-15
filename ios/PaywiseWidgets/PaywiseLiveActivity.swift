@@ -2,98 +2,119 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-/// Live Activity views (SPEC §6.3, §6.4). Skeleton: renders whatever lines the state carries,
-/// which today is only the *Checking* state started from the app's debug button.
+/// The Paywise Live Activity (SPEC §6.3, §6.4): *Checking*, then the island results `CheckCheckoutIntent` alerts
+/// with (Keep, No checkout, Couldn't check, the switch fallback). The parts live in `Shared/LiveActivityViews.swift`;
+/// this file places them. Long lines go in the full-width bottom region (the center region clips ~40-character lines),
+/// 8 pt in from each side so the first letters clear the island's rounded corners.
 struct PaywiseLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PaywiseActivityAttributes.self) { context in
-            LockScreenView(state: context.state, isStale: context.isStale)
+            // Lock Screen: the system material (light or dark with the phone), design.md §1 / §4.
+            LockScreenContent(state: context.state, isStale: context.isStale)
                 .activityBackgroundTint(nil)
+                .activitySystemActionForegroundColor(nil)
         } dynamicIsland: { context in
-            DynamicIsland {
+            let state = context.state
+            let isStale = context.isStale
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    GlyphView(glyph: context.state.glyph, isStale: context.isStale)
-                        .font(.title2)
+                    IslandLeadingMark(state: state, isStale: isStale, slot: .expanded)
+                        .padding(.leading, 4)
+                        .islandAppearance()
                 }
-                // Lines go in the full-width bottom region; the center region is too narrow for a 44-char line 2.
+                DynamicIslandExpandedRegion(.trailing) {
+                    IslandStatusMark(state: state, isStale: isStale, slot: .expanded)
+                        .padding(.trailing, 4)
+                        .islandAppearance()
+                }
                 DynamicIslandExpandedRegion(.bottom) {
-                    if !context.isStale {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(context.state.line1)
-                                .font(.headline)
-                                .lineLimit(1)
-                            if let line2 = context.state.line2 {
-                                Text(line2)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        // Keeps the first letters clear of the island's rounded bottom corners.
-                        .padding(.horizontal, 8)
+                    if !isStale {
+                        IslandLines(state: state)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 2)
+                            .islandAppearance()
                     }
                 }
             } compactLeading: {
-                GlyphView(glyph: context.state.glyph, isStale: context.isStale)
+                IslandLeadingMark(state: state, isStale: isStale, slot: .compact)
+                    .islandAppearance()
             } compactTrailing: {
-                if context.state.phase == .checking && !context.isStale {
-                    Image(systemName: "ellipsis")
-                        .accessibilityLabel("Checking")
-                }
+                IslandStatusMark(state: state, isStale: isStale, slot: .compact)
+                    .islandAppearance()
             } minimal: {
-                GlyphView(glyph: context.state.glyph, isStale: context.isStale)
+                IslandMinimalMark(state: state, isStale: isStale)
+                    .islandAppearance()
             }
+            .keylineTint(Color("accent"))
         }
     }
 }
 
-/// Lock Screen: "Paywise is checking" / "Paywise checked this screen"; no card, amount or store.
-/// Content is hidden in Always-On, and a stale activity shows the bare glyph.
-private struct LockScreenView: View {
-    let state: PaywiseActivityAttributes.ContentState
-    let isStale: Bool
-    @Environment(\.isLuminanceReduced) private var isLuminanceReduced
-
-    var body: some View {
-        HStack(spacing: 12) {
-            GlyphView(glyph: state.glyph, isStale: isStale)
-                .font(.title2)
-            if !isStale && !isLuminanceReduced {
-                Text(state.lockScreenText)
-                    .font(.headline)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding()
+private extension View {
+    /// The island is always black: draw in the dark appearance so `accent` is accentDark (#5b74ff) and labels are light.
+    func islandAppearance() -> some View {
+        environment(\.colorScheme, .dark)
     }
 }
 
-private struct GlyphView: View {
-    let glyph: PaywiseActivityAttributes.ContentState.Glyph
-    let isStale: Bool
-
-    var body: some View {
-        Image(systemName: (isStale ? .app : glyph).systemImage)
-            .accessibilityLabel("Paywise")
-    }
+#if DEBUG
+/// Sample states for Xcode previews (fake data; the app's copy comes from the backend or `CheckFlow`).
+private extension PaywiseActivityAttributes.ContentState {
+    static let previewKeep = Self(
+        phase: .keep, glyph: .check, cardId: "apple-card", cardShortName: "Apple Card", last4: "5678",
+        line1: "✓ Keep Apple Card ••5678", line2: "Best of your 3 cards here",
+        lockScreenText: checkedLockScreenText
+    )
+    static let previewNoCheckout = Self(
+        phase: .noCheckout, glyph: .warning,
+        line1: "No checkout total found", line2: "Nothing left your phone", line3: "Scroll to the total and press again",
+        lockScreenText: checkedLockScreenText
+    )
+    static let previewCouldntCheck = Self(
+        phase: .error, glyph: .warning,
+        line1: "Couldn't check this time", line2: "No connection · press again",
+        lockScreenText: checkedLockScreenText
+    )
+    static let previewSwitchFallback = Self(
+        phase: .switchFallback, glyph: .card, cardId: "chase-freedom-unlimited", cardShortName: "Freedom",
+        last4: "1234", line1: "Use Freedom ••1234", line2: "Adds a warranty year + $500 theft cover",
+        line3: "$7.49 less cash back than Active Cash", lockScreenText: checkedLockScreenText
+    )
 }
 
-#Preview("Island compact", as: .dynamicIsland(.compact), using: PaywiseActivityAttributes(checkId: "preview")) {
+private let previewAttributes = PaywiseActivityAttributes(checkId: "preview")
+
+#Preview("Compact", as: .dynamicIsland(.compact), using: previewAttributes) {
     PaywiseLiveActivity()
 } contentStates: {
     PaywiseActivityAttributes.ContentState.checking
+    PaywiseActivityAttributes.ContentState.previewKeep
+    PaywiseActivityAttributes.ContentState.previewSwitchFallback
+    PaywiseActivityAttributes.ContentState.previewCouldntCheck
 }
 
-#Preview("Island expanded", as: .dynamicIsland(.expanded), using: PaywiseActivityAttributes(checkId: "preview")) {
+#Preview("Expanded", as: .dynamicIsland(.expanded), using: previewAttributes) {
     PaywiseLiveActivity()
 } contentStates: {
     PaywiseActivityAttributes.ContentState.checking
+    PaywiseActivityAttributes.ContentState.previewKeep
+    PaywiseActivityAttributes.ContentState.previewNoCheckout
+    PaywiseActivityAttributes.ContentState.previewCouldntCheck
+    PaywiseActivityAttributes.ContentState.previewSwitchFallback
 }
 
-#Preview("Lock Screen", as: .content, using: PaywiseActivityAttributes(checkId: "preview")) {
+#Preview("Minimal", as: .dynamicIsland(.minimal), using: previewAttributes) {
     PaywiseLiveActivity()
 } contentStates: {
     PaywiseActivityAttributes.ContentState.checking
+    PaywiseActivityAttributes.ContentState.previewKeep
+    PaywiseActivityAttributes.ContentState.previewNoCheckout
 }
+
+#Preview("Lock Screen", as: .content, using: previewAttributes) {
+    PaywiseLiveActivity()
+} contentStates: {
+    PaywiseActivityAttributes.ContentState.checking
+    PaywiseActivityAttributes.ContentState.previewKeep
+}
+#endif

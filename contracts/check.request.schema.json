@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /v1/check request",
+  "description": "Sent by CheckCheckoutIntent (SPEC.md §15.5): redacted OCR text and card ids only. No last 4, no images. The backend answers 400 privacy_rejected for any body with a run of 12 or more digits.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requestId", "client", "clientDate", "screen", "wallet", "prefs"],
+  "properties": {
+    "requestId": {"$ref": "common.schema.json#/$defs/uuid"},
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app", "version"],
+      "properties": {
+        "app": {"type": "string"},
+        "version": {"type": "string"}
+      }
+    },
+    "clientDate": {"$ref": "common.schema.json#/$defs/date"},
+    "screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ocrText", "redactions", "ocrConfidence"],
+      "properties": {
+        "ocrText": {"type": "string", "description": "Redacted on device, top strip already cropped."},
+        "redactions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Kinds of text the device replaced, e.g. card_number, address, email, phone."
+        },
+        "ocrConfidence": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "wallet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cards"],
+      "properties": {
+        "cards": {
+          "type": "array",
+          "description": "In wallet order. Exactly one card is the default.",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cardId", "isDefault"],
+            "properties": {
+              "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
+              "isDefault": {"type": "boolean"}
+            }
+          },
+          "contains": {"type": "object", "required": ["isDefault"], "properties": {"isDefault": {"const": true}}},
+          "minContains": 1,
+          "maxContains": 1
+        }
+      }
+    },
+    "prefs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paysInFull"],
+      "properties": {
+        "paysInFull": {"type": ["boolean", "null"]}
+      }
+    }
+  }
+}

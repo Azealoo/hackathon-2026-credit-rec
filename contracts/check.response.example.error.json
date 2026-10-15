@@ -1,0 +1,10 @@
+{
+  "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+  "decision": {
+    "kind": "error",
+    "reason": "error",
+    "presentation": "island",
+    "copy": {"line1": "Couldn't check this time", "line2": "Took too long · press again"}
+  },
+  "error": {"code": "timeout", "message": "Reading the cart took too long."}
+}

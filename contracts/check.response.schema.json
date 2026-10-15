@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /v1/check response",
+  "description": "A result, or the error shape (SPEC.md §15.5). Copy holds {last4:<cardId>} and {ppCap} placeholders that the phone fills.",
+  "anyOf": [{"$ref": "#/$defs/result"}, {"$ref": "#/$defs/error"}],
+  "$defs": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "screenType", "cart", "decision", "purchaseDraft", "sources", "timingMs"],
+      "properties": {
+        "requestId": {"$ref": "common.schema.json#/$defs/uuid"},
+        "screenType": {
+          "type": "string",
+          "enum": ["checkout", "order_confirmation", "not_checkout", "unreadable"]
+        },
+        "cart": {
+          "description": "null when no cart was read.",
+          "anyOf": [{"$ref": "#/$defs/cart"}, {"type": "null"}]
+        },
+        "decision": {"$ref": "#/$defs/decision"},
+        "purchaseDraft": {
+          "description": "null when there is nothing to save.",
+          "anyOf": [{"$ref": "#/$defs/purchaseDraft"}, {"type": "null"}]
+        },
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "timingMs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["parse", "engine"],
+          "properties": {
+            "parse": {"type": "integer", "minimum": 0},
+            "engine": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "decision", "error"],
+      "properties": {
+        "requestId": {
+          "description": "null when the request body couldn't be read.",
+          "anyOf": [{"$ref": "common.schema.json#/$defs/uuid"}, {"type": "null"}]
+        },
+        "decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "reason", "presentation", "copy"],
+          "properties": {
+            "kind": {"const": "error"},
+            "reason": {"const": "error"},
+            "presentation": {"const": "island"},
+            "copy": {"$ref": "#/$defs/copy"}
+          }
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": ["parse_failed", "timeout", "bad_request", "privacy_rejected", "server_error"]
+            },
+            "message": {"type": "string"}
+          }
+        }
+      }
+    },
+    "cart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "merchant", "items", "totalUsd", "currency", "paymentOptionsVisible",
+        "selectedPayment", "upsells", "bnplVisible", "confidence"
+      ],
+      "properties": {
+        "merchant": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "merchantId"],
+          "properties": {
+            "name": {"type": ["string", "null"]},
+            "merchantId": {
+              "description": "null when the merchant isn't in data/cards.json.",
+              "anyOf": [{"$ref": "common.schema.json#/$defs/merchantId"}, {"type": "null"}]
+            }
+          }
+        },
+        "items": {"type": "array", "items": {"$ref": "#/$defs/item"}},
+        "totalUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+        "paymentOptionsVisible": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["apple_pay", "saved_card", "card_form", "bnpl", "paypal", "other"]
+          }
+        },
+        "selectedPayment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "network"],
+          "properties": {
+            "kind": {"type": "string", "enum": ["saved_card", "card_form", "apple_pay", "unknown"]},
+            "network": {"type": "string", "enum": ["visa", "mastercard", "discover", "amex", "unknown"]}
+          }
+        },
+        "upsells": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["protectionPlanUsd"],
+          "properties": {
+            "protectionPlanUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]}
+          }
+        },
+        "bnplVisible": {"type": "boolean"},
+        "confidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["merchant", "total", "items"],
+          "properties": {
+            "merchant": {"type": "number", "minimum": 0, "maximum": 1},
+            "total": {"type": "number", "minimum": 0, "maximum": 1},
+            "items": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name", "priceUsd", "quantity", "category", "condition", "seller", "isGiftCard", "isServicePlan"
+      ],
+      "properties": {
+        "name": {"type": "string"},
+        "priceUsd": {"$ref": "common.schema.json#/$defs/usd"},
+        "quantity": {"type": "integer", "minimum": 1},
+        "category": {"$ref": "common.schema.json#/$defs/itemCategoryId"},
+        "condition": {"$ref": "common.schema.json#/$defs/itemCondition"},
+        "seller": {"type": "string", "enum": ["merchant", "third_party", "unknown"]},
+        "isGiftCard": {"type": "boolean"},
+        "isServicePlan": {"type": "boolean"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind", "reason", "presentation", "recommendedCardId", "defaultCardId", "cashBestCardId",
+        "paymentPath", "instruction", "cash", "protectionsGained", "protectionsLost",
+        "eligibilityNotes", "confidence", "copy"
+      ],
+      "properties": {
+        "kind": {"type": "string", "enum": ["switch", "keep", "no_checkout", "error"]},
+        "reason": {
+          "type": "string",
+          "enum": [
+            "protection", "cash", "method", "default_best", "below_threshold", "items_unreadable",
+            "already_protected", "already_paid", "not_checkout", "unreadable", "error"
+          ]
+        },
+        "presentation": {
+          "description": "snippet for switch and for keep/already_protected; island otherwise.",
+          "type": "string",
+          "enum": ["snippet", "island"]
+        },
+        "recommendedCardId": {"anyOf": [{"$ref": "common.schema.json#/$defs/cardId"}, {"type": "null"}]},
+        "defaultCardId": {"anyOf": [{"$ref": "common.schema.json#/$defs/cardId"}, {"type": "null"}]},
+        "cashBestCardId": {"anyOf": [{"$ref": "common.schema.json#/$defs/cardId"}, {"type": "null"}]},
+        "paymentPath": {"type": "string", "enum": ["apple_pay", "saved_card", "card_form", "unknown"]},
+        "instruction": {
+          "type": "string",
+          "enum": ["change_saved_card", "enter_card", "apple_pay_swipe", "use_apple_pay", "none"]
+        },
+        "cash": {"anyOf": [{"$ref": "#/$defs/cash"}, {"type": "null"}]},
+        "protectionsGained": {"type": "array", "items": {"$ref": "#/$defs/protectionChange"}},
+        "protectionsLost": {"type": "array", "items": {"$ref": "#/$defs/protectionChange"}},
+        "eligibilityNotes": {"type": "array", "items": {"type": "string"}},
+        "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+        "copy": {"$ref": "#/$defs/copy"}
+      }
+    },
+    "cash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["byCard", "deltaVsCashBest", "deltaVsDefault"],
+      "properties": {
+        "byCard": {
+          "description": "Cash back in USD per wallet card, each rounded to cents (half-up).",
+          "type": "object",
+          "propertyNames": {"$ref": "common.schema.json#/$defs/cardId"},
+          "additionalProperties": {"type": "number"}
+        },
+        "deltaVsCashBest": {"type": ["number", "null"]},
+        "deltaVsDefault": {"type": ["number", "null"]}
+      }
+    },
+    "protectionChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "limit", "verification"],
+      "properties": {
+        "type": {"$ref": "common.schema.json#/$defs/protectionType"},
+        "windowDays": {"type": ["integer", "null"], "minimum": 1},
+        "extendsByMonths": {"type": ["integer", "null"], "minimum": 1},
+        "limit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amountUsd", "appliesTo"],
+          "properties": {
+            "amountUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]},
+            "appliesTo": {"$ref": "common.schema.json#/$defs/limitAppliesTo"}
+          }
+        },
+        "verification": {"$ref": "common.schema.json#/$defs/verification"}
+      }
+    },
+    "copy": {
+      "description": "SPEC.md §6.3 copy. Lines 2 and 3 ≤44 characters and the instruction ≤48 once placeholders are filled (§6.2).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line1"],
+      "properties": {
+        "line1": {"type": "string"},
+        "line2": {"type": ["string", "null"]},
+        "line3": {"type": ["string", "null"]},
+        "instruction": {"type": ["string", "null"]},
+        "primaryButton": {"type": ["string", "null"]}
+      }
+    },
+    "purchaseDraft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["merchant", "item", "category", "condition", "priceUsd", "purchaseDate", "cardId", "coverage"],
+      "properties": {
+        "merchant": {"type": "string"},
+        "item": {"type": "string"},
+        "category": {"$ref": "common.schema.json#/$defs/itemCategoryId"},
+        "condition": {"$ref": "common.schema.json#/$defs/itemCondition"},
+        "priceUsd": {"$ref": "common.schema.json#/$defs/usd"},
+        "purchaseDate": {"$ref": "common.schema.json#/$defs/date"},
+        "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
+        "coverage": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/coverageEntry"}}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cardId", "document", "section", "versionDate", "verification"],
+      "properties": {
+        "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
+        "document": {"type": "string"},
+        "section": {"type": ["string", "null"]},
+        "versionDate": {"anyOf": [{"$ref": "common.schema.json#/$defs/date"}, {"type": "null"}]},
+        "verification": {"$ref": "common.schema.json#/$defs/verification"}
+      }
+    }
+  }
+}

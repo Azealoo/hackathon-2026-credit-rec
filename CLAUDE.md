@@ -1,6 +1,6 @@
-# Credit Card Recommender
+# Fine Print
 
-Hackathon 2026 project: recommend the best credit card for a user based on their spending habits and goals.
+DubHacks '26 project: at checkout, Fine Print tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. Spec: `SPEC.md`.
 
 ## Rules
 

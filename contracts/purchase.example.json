@@ -1,0 +1,9 @@
+{
+  "id": "p_5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff", "checkId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff", "status": "planned",
+  "merchant": "Northbay Electronics", "item": "Aero 14 Laptop, 14-inch", "category": "computers",
+  "condition": "new", "priceUsd": 1499.00, "purchaseDate": "2026-10-17",
+  "cardId": "chase-freedom-unlimited",
+  "coverage": [{"type": "purchase_protection", "until": "2027-02-14", "limitUsd": 500},
+               {"type": "extended_warranty", "until": "2028-10-17", "assumesManufacturerWarrantyMonths": 12}],
+  "manufacturerWarrantyMonths": null, "orderNumber": null, "transactionId": null
+}

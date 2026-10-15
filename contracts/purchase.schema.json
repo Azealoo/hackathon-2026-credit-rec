@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Purchase",
+  "description": "On-device SwiftData model in the App Group container (SPEC.md §15.5). Sent to the backend only as part of a coverage check.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "checkId", "status", "merchant", "item", "category", "condition", "priceUsd", "purchaseDate",
+    "cardId", "coverage", "manufacturerWarrantyMonths", "orderNumber", "transactionId"
+  ],
+  "properties": {
+    "id": {"type": "string", "pattern": "^p_[A-Za-z0-9-]+$"},
+    "checkId": {
+      "description": "null when the purchase wasn't saved from a check.",
+      "anyOf": [{"$ref": "common.schema.json#/$defs/uuid"}, {"type": "null"}]
+    },
+    "status": {"$ref": "common.schema.json#/$defs/purchaseStatus"},
+    "merchant": {"type": "string"},
+    "item": {"type": "string"},
+    "category": {"$ref": "common.schema.json#/$defs/itemCategoryId"},
+    "condition": {"$ref": "common.schema.json#/$defs/itemCondition"},
+    "priceUsd": {"$ref": "common.schema.json#/$defs/usd"},
+    "purchaseDate": {"$ref": "common.schema.json#/$defs/date"},
+    "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
+    "coverage": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/coverageEntry"}},
+    "manufacturerWarrantyMonths": {"type": ["integer", "null"], "minimum": 0},
+    "orderNumber": {"type": ["string", "null"]},
+    "transactionId": {"type": ["string", "null"]}
+  }
+}

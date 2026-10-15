@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shared definitions",
+  "description": "Definitions the contracts in this folder share (SPEC.md §15.5). Not a contract itself, so it has no example.",
+  "$defs": {
+    "uuid": {"type": "string", "format": "uuid"},
+    "date": {"type": "string", "format": "date"},
+    "dateTime": {"type": "string", "format": "date-time"},
+    "usd": {"type": "number", "minimum": 0},
+    "cardId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A card id from data/cards.json."
+    },
+    "merchantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "A merchant id from data/cards.json."
+    },
+    "itemCategoryId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+      "description": "An itemCategories id from data/cards.json."
+    },
+    "itemCondition": {"type": "string", "enum": ["new", "renewed", "used", "unknown"]},
+    "protectionType": {
+      "type": "string",
+      "enum": ["purchase_protection", "extended_warranty", "cell_phone_protection"]
+    },
+    "limitAppliesTo": {"type": "string", "enum": ["item", "claim"]},
+    "verification": {"type": "string", "enum": ["verified", "partial", "unverified"]},
+    "purchaseStatus": {"type": "string", "enum": ["planned", "confirmed"]},
+    "coverageEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "until"],
+      "properties": {
+        "type": {"$ref": "#/$defs/protectionType"},
+        "until": {"$ref": "#/$defs/date"},
+        "limitUsd": {"anyOf": [{"$ref": "#/$defs/usd"}, {"type": "null"}]},
+        "assumesManufacturerWarrantyMonths": {"type": ["integer", "null"], "minimum": 0}
+      }
+    }
+  }
+}

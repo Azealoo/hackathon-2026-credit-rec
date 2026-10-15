@@ -1,0 +1,675 @@
+{
+  "$schema": "./cards.schema.json",
+  "schemaVersion": 1,
+  "catalogVersion": "2026-10-14",
+  "cards": [
+    {
+      "id": "apple-card",
+      "issuer": null,
+      "product": "Apple Card",
+      "displayName": "Apple Card",
+      "shortName": "Apple Card",
+      "network": "mastercard",
+      "networkTier": {
+        "value": null,
+        "status": "unverified"
+      },
+      "annualFeeUsd": null,
+      "rewardCurrency": "cash_back",
+      "pointValueCents": null,
+      "foreignTransactionFeePct": null,
+      "art": {
+        "assetName": "card-apple-card",
+        "color": "#8E8E93"
+      },
+      "earn": {
+        "baseRatePct": 1,
+        "baseRateStatus": "unverified",
+        "rules": [
+          {
+            "id": "apple-card-apple-pay-select-merchants",
+            "category": null,
+            "merchantIds": [
+              "nike",
+              "walgreens",
+              "apple"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "unverified"
+          },
+          {
+            "id": "apple-card-apple-pay",
+            "category": null,
+            "merchantIds": null,
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 2,
+            "cap": null,
+            "needsActivation": false,
+            "status": "unverified"
+          }
+        ]
+      },
+      "protections": [],
+      "sources": [],
+      "notes": [
+        "Issuer: to confirm.",
+        "3% merchants: only those in this file's merchant list are included.",
+        "Protections: none known; only 2019 reports (SPEC.md §8.1). Confirm at G5."
+      ]
+    },
+    {
+      "id": "wf-active-cash",
+      "issuer": "Wells Fargo",
+      "product": "Active Cash",
+      "displayName": "Wells Fargo Active Cash",
+      "shortName": "Active Cash",
+      "network": "visa",
+      "networkTier": {
+        "value": null,
+        "status": "unverified"
+      },
+      "annualFeeUsd": null,
+      "rewardCurrency": "cash_back",
+      "pointValueCents": null,
+      "foreignTransactionFeePct": null,
+      "art": {
+        "assetName": "card-wf-active-cash",
+        "color": "#8E8E93"
+      },
+      "earn": {
+        "baseRatePct": 2,
+        "baseRateStatus": "unverified",
+        "rules": []
+      },
+      "protections": [
+        {
+          "type": "cell_phone_protection",
+          "summary": "Cell phone protection up to $600 per claim, $25 deductible.",
+          "covers": [],
+          "excludes": [],
+          "limits": {
+            "perItemUsd": null,
+            "perClaimUsd": 600,
+            "perAccountUsd": null,
+            "appliesTo": "claim"
+          },
+          "eligibility": {
+            "conditionsAllowed": [],
+            "paymentRequirement": null,
+            "excludedCategories": []
+          },
+          "notice": {
+            "notifyWithinDays": null,
+            "submitDocsWithinDays": null
+          },
+          "claim": {
+            "administrator": null,
+            "url": null,
+            "phone": null
+          },
+          "source": {
+            "document": null,
+            "section": null,
+            "versionDate": null,
+            "url": "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/",
+            "quote": null
+          },
+          "verification": {
+            "status": "unverified",
+            "checkedBy": null,
+            "checkedOn": null,
+            "note": "From SPEC.md §8.1. Verify against the Guide to Benefits PDF (G5)."
+          }
+        }
+      ],
+      "sources": [],
+      "notes": [
+        "2% flat earn: verify.",
+        "Extended warranty and purchase protection: sources conflict (SPEC.md §8.1). Not listed until G5 confirms."
+      ]
+    },
+    {
+      "id": "chase-freedom-unlimited",
+      "issuer": "Chase",
+      "product": "Freedom Unlimited",
+      "displayName": "Chase Freedom Unlimited",
+      "shortName": "Freedom",
+      "network": "visa",
+      "networkTier": {
+        "value": null,
+        "status": "unverified"
+      },
+      "annualFeeUsd": null,
+      "rewardCurrency": "cash_back",
+      "pointValueCents": null,
+      "foreignTransactionFeePct": null,
+      "art": {
+        "assetName": "card-chase-freedom-unlimited",
+        "color": "#8E8E93"
+      },
+      "earn": {
+        "baseRatePct": 1.5,
+        "baseRateStatus": "unverified",
+        "rules": []
+      },
+      "protections": [
+        {
+          "type": "purchase_protection",
+          "summary": "Covers new items against theft or damage for 120 days from purchase (90 in NY), up to $500 per item.",
+          "covers": [
+            "theft",
+            "accidental_damage"
+          ],
+          "excludes": [],
+          "windowDays": 120,
+          "windowDaysByState": {
+            "NY": 90
+          },
+          "limits": {
+            "perItemUsd": 500,
+            "perClaimUsd": null,
+            "perAccountUsd": null,
+            "appliesTo": "item"
+          },
+          "eligibility": {
+            "conditionsAllowed": [
+              "new"
+            ],
+            "paymentRequirement": "some_portion",
+            "excludedCategories": []
+          },
+          "notice": {
+            "notifyWithinDays": null,
+            "submitDocsWithinDays": null
+          },
+          "claim": {
+            "administrator": null,
+            "url": null,
+            "phone": null
+          },
+          "source": {
+            "document": null,
+            "section": null,
+            "versionDate": null,
+            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
+            "quote": null
+          },
+          "verification": {
+            "status": "unverified",
+            "checkedBy": null,
+            "checkedOn": null,
+            "note": "From SPEC.md §8.1 (Chase card page, via search). Cap basis is open: the card page says $500 per item; reviews say per claim, $50,000 per account. Notice deadline: reviews say 90 or 120 days. Verify against the Guide to Benefits PDF (G5)."
+          }
+        },
+        {
+          "type": "extended_warranty",
+          "summary": "Adds 1 year to eligible U.S. manufacturer's warranties of 3 years or less, up to 4 years from purchase.",
+          "covers": [
+            "failure"
+          ],
+          "excludes": [],
+          "extendsByMonths": 12,
+          "maxOriginalWarrantyMonths": 36,
+          "maxTotalFromPurchaseMonths": 48,
+          "limits": {
+            "perItemUsd": null,
+            "perClaimUsd": null,
+            "perAccountUsd": null,
+            "appliesTo": "claim"
+          },
+          "eligibility": {
+            "conditionsAllowed": [
+              "new"
+            ],
+            "paymentRequirement": "some_portion",
+            "excludedCategories": []
+          },
+          "notice": {
+            "notifyWithinDays": null,
+            "submitDocsWithinDays": null
+          },
+          "claim": {
+            "administrator": null,
+            "url": null,
+            "phone": null
+          },
+          "source": {
+            "document": null,
+            "section": null,
+            "versionDate": null,
+            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
+            "quote": null
+          },
+          "verification": {
+            "status": "unverified",
+            "checkedBy": null,
+            "checkedOn": null,
+            "note": "From SPEC.md §8.1. Verify against the Guide to Benefits PDF (G5)."
+          }
+        }
+      ],
+      "sources": [],
+      "notes": [
+        "1.5% base: verify. Bonus categories are P2 and not modeled."
+      ]
+    },
+    {
+      "id": "chase-freedom-rise",
+      "issuer": "Chase",
+      "product": "Freedom Rise",
+      "displayName": "Chase Freedom Rise",
+      "shortName": "Freedom Rise",
+      "network": "visa",
+      "networkTier": {
+        "value": null,
+        "status": "unverified"
+      },
+      "annualFeeUsd": null,
+      "rewardCurrency": "cash_back",
+      "pointValueCents": null,
+      "foreignTransactionFeePct": null,
+      "art": {
+        "assetName": "card-chase-freedom-rise",
+        "color": "#8E8E93"
+      },
+      "earn": {
+        "baseRatePct": 1.5,
+        "baseRateStatus": "unverified",
+        "rules": []
+      },
+      "protections": [
+        {
+          "type": "purchase_protection",
+          "summary": "Covers new items against theft or damage for 120 days from purchase (90 in NY), up to $500 per item.",
+          "covers": [
+            "theft",
+            "accidental_damage"
+          ],
+          "excludes": [],
+          "windowDays": 120,
+          "windowDaysByState": {
+            "NY": 90
+          },
+          "limits": {
+            "perItemUsd": 500,
+            "perClaimUsd": null,
+            "perAccountUsd": null,
+            "appliesTo": "item"
+          },
+          "eligibility": {
+            "conditionsAllowed": [
+              "new"
+            ],
+            "paymentRequirement": "some_portion",
+            "excludedCategories": []
+          },
+          "notice": {
+            "notifyWithinDays": null,
+            "submitDocsWithinDays": null
+          },
+          "claim": {
+            "administrator": null,
+            "url": null,
+            "phone": null
+          },
+          "source": {
+            "document": null,
+            "section": null,
+            "versionDate": null,
+            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
+            "quote": null
+          },
+          "verification": {
+            "status": "unverified",
+            "checkedBy": null,
+            "checkedOn": null,
+            "note": "Same as Freedom Unlimited per Chase's page (SPEC.md §8.1). Verify against Freedom Rise's own Guide to Benefits PDF (G5)."
+          }
+        },
+        {
+          "type": "extended_warranty",
+          "summary": "Adds 1 year to eligible U.S. manufacturer's warranties of 3 years or less, up to 4 years from purchase.",
+          "covers": [
+            "failure"
+          ],
+          "excludes": [],
+          "extendsByMonths": 12,
+          "maxOriginalWarrantyMonths": 36,
+          "maxTotalFromPurchaseMonths": 48,
+          "limits": {
+            "perItemUsd": null,
+            "perClaimUsd": null,
+            "perAccountUsd": null,
+            "appliesTo": "claim"
+          },
+          "eligibility": {
+            "conditionsAllowed": [
+              "new"
+            ],
+            "paymentRequirement": "some_portion",
+            "excludedCategories": []
+          },
+          "notice": {
+            "notifyWithinDays": null,
+            "submitDocsWithinDays": null
+          },
+          "claim": {
+            "administrator": null,
+            "url": null,
+            "phone": null
+          },
+          "source": {
+            "document": null,
+            "section": null,
+            "versionDate": null,
+            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
+            "quote": null
+          },
+          "verification": {
+            "status": "unverified",
+            "checkedBy": null,
+            "checkedOn": null,
+            "note": "Same as Freedom Unlimited per Chase's page (SPEC.md §8.1). Verify against Freedom Rise's own Guide to Benefits PDF (G5)."
+          }
+        }
+      ],
+      "sources": [],
+      "notes": [
+        "Network: Visa per SPEC.md §8.1, unverified.",
+        "1.5% flat earn: verify."
+      ]
+    },
+    {
+      "id": "discover-it-student-cash-back",
+      "issuer": "Discover",
+      "product": "Discover it Student Cash Back",
+      "displayName": "Discover it Student Cash Back",
+      "shortName": "Discover",
+      "network": "discover",
+      "networkTier": {
+        "value": null,
+        "status": "unverified"
+      },
+      "annualFeeUsd": null,
+      "rewardCurrency": "cash_back",
+      "pointValueCents": null,
+      "foreignTransactionFeePct": null,
+      "art": {
+        "assetName": "card-discover-it-student-cash-back",
+        "color": "#8E8E93"
+      },
+      "earn": {
+        "baseRatePct": 1,
+        "baseRateStatus": "unverified",
+        "rules": []
+      },
+      "protections": [],
+      "sources": [],
+      "notes": [
+        "5% rotating categories are not modeled.",
+        "Purchase protection and extended warranty were removed Feb 28, 2018 (SPEC.md §8.1)."
+      ]
+    }
+  ],
+  "merchants": [
+    {
+      "id": "northbay-electronics",
+      "names": [
+        "Northbay Electronics"
+      ],
+      "domains": [],
+      "category": "electronics",
+      "acceptsApplePay": {
+        "value": false,
+        "status": "verified"
+      },
+      "isDemo": true,
+      "notes": [
+        "Fictional demo store (demo-store/). No Apple Pay in v1."
+      ]
+    },
+    {
+      "id": "stride-athletics",
+      "names": [
+        "Stride Athletics"
+      ],
+      "domains": [],
+      "category": "apparel",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": true,
+      "notes": [
+        "Fictional demo store page (P1)."
+      ]
+    },
+    {
+      "id": "nike",
+      "names": [
+        "Nike"
+      ],
+      "domains": [
+        "nike.com"
+      ],
+      "category": "apparel",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "amazon",
+      "names": [
+        "Amazon",
+        "Amazon.com"
+      ],
+      "domains": [
+        "amazon.com"
+      ],
+      "category": "general",
+      "acceptsApplePay": {
+        "value": false,
+        "status": "unverified"
+      },
+      "isDemo": false,
+      "notes": [
+        "\"No Apple Pay\" is weakly sourced (SPEC.md §8.3)."
+      ]
+    },
+    {
+      "id": "target",
+      "names": [
+        "Target"
+      ],
+      "domains": [
+        "target.com"
+      ],
+      "category": "general",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "best-buy",
+      "names": [
+        "Best Buy"
+      ],
+      "domains": [
+        "bestbuy.com"
+      ],
+      "category": "electronics",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "walgreens",
+      "names": [
+        "Walgreens"
+      ],
+      "domains": [
+        "walgreens.com"
+      ],
+      "category": "pharmacy",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "doordash",
+      "names": [
+        "DoorDash"
+      ],
+      "domains": [
+        "doordash.com"
+      ],
+      "category": "dining",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "apple",
+      "names": [
+        "Apple",
+        "Apple Store"
+      ],
+      "domains": [
+        "apple.com"
+      ],
+      "category": "electronics",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "walmart",
+      "names": [
+        "Walmart"
+      ],
+      "domains": [
+        "walmart.com"
+      ],
+      "category": "general",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false,
+      "notes": [
+        "Apple Pay in U.S. stores since Aug 24, 2026; online and in-app unverified (SPEC.md §8.3)."
+      ]
+    }
+  ],
+  "itemCategories": [
+    {
+      "id": "electronics",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "computers",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "phones",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "audio",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "cameras",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "appliances",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "tools",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "bikes",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "instruments",
+      "warrantyRelevant": true,
+      "theftDamageRelevant": true
+    },
+    {
+      "id": "apparel",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "home",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "dining",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "grocery",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "pharmacy",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "gift_card",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "services",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "travel",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "general",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    }
+  ]
+}

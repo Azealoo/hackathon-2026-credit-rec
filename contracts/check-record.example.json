@@ -1,0 +1,173 @@
+{
+  "checkId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+  "createdAt": "2026-10-17T14:02:11-07:00",
+  "sentPayload": {
+    "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+    "client": {
+      "app": "fineprint-ios",
+      "version": "0.1.0"
+    },
+    "clientDate": "2026-10-17",
+    "screen": {
+      "ocrText": "Northbay Electronics\nCheckout\nAero 14 Laptop, 14-inch (New)  $1,499.00\nTotal  $1,499.00\nPay with Mastercard [CARD]\nChange\nShip to [ADDRESS]\nPlace order",
+      "redactions": [
+        "card_number",
+        "address",
+        "email",
+        "phone"
+      ],
+      "ocrConfidence": 0.93
+    },
+    "wallet": {
+      "cards": [
+        {
+          "cardId": "apple-card",
+          "isDefault": true
+        },
+        {
+          "cardId": "wf-active-cash",
+          "isDefault": false
+        },
+        {
+          "cardId": "chase-freedom-unlimited",
+          "isDefault": false
+        }
+      ]
+    },
+    "prefs": {
+      "paysInFull": null
+    }
+  },
+  "response": {
+    "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+    "screenType": "checkout",
+    "cart": {
+      "merchant": {
+        "name": "Northbay Electronics",
+        "merchantId": "northbay-electronics"
+      },
+      "items": [
+        {
+          "name": "Aero 14 Laptop, 14-inch",
+          "priceUsd": 1499.0,
+          "quantity": 1,
+          "category": "computers",
+          "condition": "new",
+          "seller": "merchant",
+          "isGiftCard": false,
+          "isServicePlan": false
+        }
+      ],
+      "totalUsd": 1499.0,
+      "currency": "USD",
+      "paymentOptionsVisible": [
+        "saved_card"
+      ],
+      "selectedPayment": {
+        "kind": "saved_card",
+        "network": "mastercard"
+      },
+      "upsells": {
+        "protectionPlanUsd": null
+      },
+      "bnplVisible": false,
+      "confidence": {
+        "merchant": 0.97,
+        "total": 0.98,
+        "items": 0.92
+      }
+    },
+    "decision": {
+      "kind": "switch",
+      "reason": "protection",
+      "presentation": "snippet",
+      "recommendedCardId": "chase-freedom-unlimited",
+      "defaultCardId": "apple-card",
+      "cashBestCardId": "wf-active-cash",
+      "paymentPath": "saved_card",
+      "instruction": "change_saved_card",
+      "cash": {
+        "byCard": {
+          "apple-card": 14.99,
+          "wf-active-cash": 29.98,
+          "chase-freedom-unlimited": 22.49
+        },
+        "deltaVsCashBest": -7.49,
+        "deltaVsDefault": 7.5
+      },
+      "protectionsGained": [
+        {
+          "type": "purchase_protection",
+          "windowDays": 120,
+          "limit": {
+            "amountUsd": 500,
+            "appliesTo": "item"
+          },
+          "verification": "verified"
+        },
+        {
+          "type": "extended_warranty",
+          "extendsByMonths": 12,
+          "limit": {
+            "amountUsd": null,
+            "appliesTo": "claim"
+          },
+          "verification": "verified"
+        }
+      ],
+      "protectionsLost": [],
+      "eligibilityNotes": [],
+      "confidence": "high",
+      "copy": {
+        "line1": "Use Freedom ••{last4:chase-freedom-unlimited}",
+        "line2": "Adds a warranty year + $500 theft cover",
+        "line3": "$7.49 less cash back than Active Cash",
+        "instruction": "Change card to Visa ••{last4:chase-freedom-unlimited}, then place order",
+        "primaryButton": "Paying with Freedom"
+      }
+    },
+    "purchaseDraft": {
+      "merchant": "Northbay Electronics",
+      "item": "Aero 14 Laptop, 14-inch",
+      "category": "computers",
+      "condition": "new",
+      "priceUsd": 1499.0,
+      "purchaseDate": "2026-10-17",
+      "cardId": "chase-freedom-unlimited",
+      "coverage": [
+        {
+          "type": "purchase_protection",
+          "until": "2027-02-14",
+          "limitUsd": 500
+        },
+        {
+          "type": "extended_warranty",
+          "until": "2028-10-17",
+          "assumesManufacturerWarrantyMonths": 12
+        }
+      ]
+    },
+    "sources": [
+      {
+        "cardId": "chase-freedom-unlimited",
+        "document": "Example Guide to Benefits (placeholder)",
+        "section": "Purchase Protection",
+        "versionDate": "2000-01-01",
+        "verification": "verified"
+      }
+    ],
+    "timingMs": {
+      "parse": 900,
+      "engine": 3
+    }
+  },
+  "filledCopy": {
+    "line1": "Use Freedom ••1234",
+    "line2": "Adds a warranty year + $500 theft cover",
+    "line3": "$7.49 less cash back than Active Cash",
+    "instruction": "Change card to Visa ••1234, then place order"
+  },
+  "replayed": false,
+  "savedPurchaseId": null,
+  "view": "result"
+}

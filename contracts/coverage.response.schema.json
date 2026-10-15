@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "POST /v1/coverage response",
+  "description": "?format=json body; ?format=html renders the same data through templates/verdict.html (SPEC.md §15.5). Date and window math happen in code.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict", "benefit", "route", "headline", "why", "limit", "assumptions",
+    "citations", "checklist", "deadline", "contact", "disclaimer"
+  ],
+  "properties": {
+    "verdict": {"type": "string", "enum": ["may_be_eligible", "not_covered", "need_more_info"]},
+    "benefit": {"type": "string", "enum": ["purchase_protection", "extended_warranty", "none"]},
+    "route": {
+      "type": "string",
+      "enum": ["card_extended_warranty", "card_purchase_protection", "manufacturer", "none"]
+    },
+    "headline": {"type": "string"},
+    "why": {"type": "string"},
+    "limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["appliesTo"],
+      "properties": {
+        "perItemUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]},
+        "perClaimUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]},
+        "perAccountUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]},
+        "payoutCapUsd": {"anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]},
+        "appliesTo": {"anyOf": [{"$ref": "common.schema.json#/$defs/limitAppliesTo"}, {"type": "null"}]}
+      }
+    },
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["document", "section", "versionDate", "quote", "verification"],
+        "properties": {
+          "document": {"type": "string"},
+          "section": {"type": ["string", "null"]},
+          "versionDate": {"anyOf": [{"$ref": "common.schema.json#/$defs/date"}, {"type": "null"}]},
+          "quote": {"type": ["string", "null"]},
+          "verification": {"$ref": "common.schema.json#/$defs/verification"}
+        }
+      }
+    },
+    "checklist": {"type": "array", "items": {"type": "string"}},
+    "deadline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "date", "note"],
+      "properties": {
+        "type": {"type": "string", "enum": ["notify_by", "file_by", "unknown"]},
+        "date": {"anyOf": [{"$ref": "common.schema.json#/$defs/date"}, {"type": "null"}]},
+        "note": {"type": ["string", "null"]}
+      }
+    },
+    "contact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["administrator", "url"],
+      "properties": {
+        "administrator": {"type": ["string", "null"]},
+        "url": {"type": ["string", "null"]}
+      }
+    },
+    "disclaimer": {"type": "string"}
+  }
+}

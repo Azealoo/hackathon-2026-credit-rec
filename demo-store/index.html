@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#ffffff">
+<title>Shop · Northbay Electronics</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="store.css">
+<script src="store.js" defer></script>
+</head>
+<body data-page="shop">
+<!-- Fictional demo store (SPEC v2.1 §9.3). The product list is filled from ITEMS in store.js. -->
+
+<!-- Pictures used by the page; no text inside them. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="thumb-laptop" viewBox="0 0 56 56">
+    <rect x="13" y="15" width="30" height="21" rx="2" fill="#2c2c30"/>
+    <rect x="15" y="17" width="26" height="17" rx="1" fill="#7fc4b0"/>
+    <path d="M8 38h40l-3 4H11z" fill="#8e8e93"/>
+  </symbol>
+  <symbol id="thumb-earbuds" viewBox="0 0 56 56">
+    <circle cx="20" cy="23" r="7" fill="#2c2c30"/>
+    <rect x="17.5" y="26" width="5" height="15" rx="2.5" fill="#2c2c30"/>
+    <circle cx="36" cy="23" r="7" fill="#2c2c30"/>
+    <rect x="33.5" y="26" width="5" height="15" rx="2.5" fill="#2c2c30"/>
+    <circle cx="20" cy="23" r="2.5" fill="#8e8e93"/>
+    <circle cx="36" cy="23" r="2.5" fill="#8e8e93"/>
+  </symbol>
+  <symbol id="thumb-mug" viewBox="0 0 56 56">
+    <path d="M35 23h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#0d7a5f" stroke-width="3"/>
+    <rect x="14" y="17" width="23" height="25" rx="4" fill="#0d7a5f"/>
+  </symbol>
+</svg>
+
+<div class="page" id="page">
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Northbay Electronics"><span class="brand-mark">NORTHBAY</span> <span class="brand-sub">Electronics</span></a>
+  </header>
+
+  <main>
+    <h1 class="page-title">Shop</h1>
+    <p class="tagline">Laptops, audio and a few things for your desk. Free delivery on everything.</p>
+
+    <ul class="products" id="products" aria-label="Products"></ul>
+  </main>
+
+  <footer class="site-footer">
+    <p>Northbay Electronics is a fictional store made for a hackathon demo. Nothing here is for sale and no money moves.</p>
+  </footer>
+</div>
+
+<template id="product-template">
+  <li class="product">
+    <svg class="thumb" viewBox="0 0 56 56" aria-hidden="true" focusable="false"><use href="#thumb-laptop"></use></svg>
+    <div class="product-info">
+      <p class="item-name product-name"></p>
+      <p class="item-meta product-condition"></p>
+      <p class="product-price money"></p>
+    </div>
+    <a class="buy-button" href="checkout.html">Buy now</a>
+  </li>
+</template>
+
+</body>
+</html>

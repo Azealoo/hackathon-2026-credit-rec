@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#ffffff">
+<title>Checkout · Northbay Electronics</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="store.css">
+<script src="store.js" defer></script>
+</head>
+<body data-page="checkout">
+<!-- Fictional demo store (SPEC v2.1 §9.3). Params: ?item=laptop|laptop-renewed|earbuds|mug, ?pay=mock|backend, ?blur=1. -->
+
+<!-- Pictures used by the page; no text inside them. -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="thumb-laptop" viewBox="0 0 56 56">
+    <rect x="13" y="15" width="30" height="21" rx="2" fill="#2c2c30"/>
+    <rect x="15" y="17" width="26" height="17" rx="1" fill="#7fc4b0"/>
+    <path d="M8 38h40l-3 4H11z" fill="#8e8e93"/>
+  </symbol>
+  <symbol id="thumb-earbuds" viewBox="0 0 56 56">
+    <circle cx="20" cy="23" r="7" fill="#2c2c30"/>
+    <rect x="17.5" y="26" width="5" height="15" rx="2.5" fill="#2c2c30"/>
+    <circle cx="36" cy="23" r="7" fill="#2c2c30"/>
+    <rect x="33.5" y="26" width="5" height="15" rx="2.5" fill="#2c2c30"/>
+    <circle cx="20" cy="23" r="2.5" fill="#8e8e93"/>
+    <circle cx="36" cy="23" r="2.5" fill="#8e8e93"/>
+  </symbol>
+  <symbol id="thumb-mug" viewBox="0 0 56 56">
+    <path d="M35 23h4a6 6 0 0 1 0 12h-4" fill="none" stroke="#0d7a5f" stroke-width="3"/>
+    <rect x="14" y="17" width="23" height="25" rx="4" fill="#0d7a5f"/>
+  </symbol>
+  <symbol id="card-glyph" viewBox="0 0 28 20">
+    <rect x="1" y="1" width="26" height="18" rx="3" fill="#f2f2f7" stroke="#5b5b60" stroke-width="1.5"/>
+    <rect x="1" y="5" width="26" height="3" fill="#5b5b60"/>
+    <rect x="5" y="12" width="8" height="2" rx="1" fill="#5b5b60"/>
+  </symbol>
+</svg>
+
+<div class="page" id="page">
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Northbay Electronics"><span class="brand-mark">NORTHBAY</span> <span class="brand-sub">Electronics</span></a>
+  </header>
+
+  <main>
+    <section id="checkout" aria-labelledby="checkout-title" hidden>
+      <h1 class="page-title" id="checkout-title">Checkout</h1>
+
+      <div class="item-row">
+        <svg class="thumb" viewBox="0 0 56 56" aria-hidden="true" focusable="false"><use id="item-thumb" href="#thumb-laptop"></use></svg>
+        <div class="item-info">
+          <p class="item-name" id="item-name"></p>
+          <p class="item-meta" id="item-condition"></p>
+          <p class="item-meta">Qty 1</p>
+        </div>
+        <p class="item-price money" id="item-price"></p>
+      </div>
+
+      <section class="block" aria-labelledby="ship-label">
+        <h2 class="label" id="ship-label">Ship to</h2>
+        <p>Alex Doe</p>
+        <p>123 Example St, Seattle, WA 98000</p>
+        <p class="accent-text">Free delivery in 2–4 days</p>
+      </section>
+
+      <section class="block" aria-labelledby="contact-label">
+        <h2 class="label" id="contact-label">Contact</h2>
+        <p>alex@example.com · (555) 010-0000</p>
+      </section>
+
+      <section class="pay-row" aria-labelledby="pay-label">
+        <h2 class="label" id="pay-label">Pay with</h2>
+        <p class="pay-card">
+          <svg class="card-glyph" viewBox="0 0 28 20" aria-hidden="true" focusable="false"><use href="#card-glyph"></use></svg>
+          <span id="card-label">Mastercard ••5678</span>
+        </p>
+        <button type="button" class="link-button" id="change-card" aria-haspopup="dialog" aria-controls="card-sheet" aria-describedby="card-label">Change</button>
+      </section>
+
+      <dl class="summary">
+        <div class="summary-row"><dt>Shipping</dt><dd>Free</dd></div>
+        <div class="summary-row total-row"><dt>Total</dt><dd class="money" id="total"></dd></div>
+      </dl>
+
+      <button type="button" class="primary-button" id="place-order">Place order</button>
+      <p class="pay-error" id="pay-error" role="alert"></p>
+    </section>
+
+    <section class="not-found" id="not-found" aria-labelledby="not-found-title" hidden>
+      <h1 class="page-title" id="not-found-title">We couldn't find that item</h1>
+      <p>The link may be out of date.</p>
+      <a href="index.html">Back to the shop</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Northbay Electronics is a fictional store made for a hackathon demo. Nothing here is for sale and no money moves.</p>
+  </footer>
+</div>
+
+<!-- Saved-card picker. Hidden (display: none) unless open, so it never shows in a screenshot. -->
+<div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+<div class="sheet" id="card-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="sheet-head">
+    <h2 class="sheet-title" id="sheet-title">Pay with</h2>
+    <button type="button" class="link-button" id="sheet-cancel">Cancel</button>
+  </div>
+  <div id="card-options" role="radiogroup" aria-labelledby="sheet-title"></div>
+</div>
+
+<template id="card-option-template">
+  <button type="button" class="card-option" role="radio" aria-checked="false">
+    <svg class="card-glyph" viewBox="0 0 28 20" aria-hidden="true" focusable="false"><use href="#card-glyph"></use></svg>
+    <span class="card-option-label"></span>
+    <span class="radio-mark" aria-hidden="true"></span>
+  </button>
+</template>
+
+</body>
+</html>

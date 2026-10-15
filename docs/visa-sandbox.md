@@ -13,7 +13,7 @@ Owner: B (backend). SPEC §14 says to submit the sign-up in the first 15 minutes
    - Terms and a reCAPTCHA, then **Create Account**. You must tick and solve these yourself.
 2. **Watch the inbox** for the email with a link to create your user login for the Test Enterprise Business Center (`ebc2test.cybersource.com`). Open it and set a password.
 3. **If it arrives**, log in at <https://ebc2test.cybersource.com/ebc2>, then do the key steps in §3 (about 5 minutes) and put the three values in the host's environment (§3).
-4. **If nothing has arrived by Thu 14 Oct, ~9 PM**, follow §2 (stall).
+4. **If nothing has arrived a few hours after signing up, and no later than Thu 15 Oct, 9 PM**, follow §2 (stall).
 5. **Hard stop: Fri 16 Oct, 12 PM.** If the account can't log in and make a key by then, set `PAY_MODE=mock` and remove every Visa-API claim (SPEC G4, §14.4 item 3).
 
 Do **not** paste the password, key ID or secret into chat, an issue, a PR, or any file in the repo.

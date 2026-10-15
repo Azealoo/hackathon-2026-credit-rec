@@ -1,360 +1,1141 @@
 # Fine Print — Product Spec
 
-**Version:** 1.0 (Oct 14, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping
-**Status:** Approved direction after a 7-judge review (Visa lead, iOS engineer, interaction designer, rewards expert, privacy/App Review, hackathon veteran, student user). Items marked **(u)** are unverified and must be tested before we rely on them.
+**Version:** 2.0 (Oct 15, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa (track name and prompt **(u)**, see §11.0)
+**Status:** Product-form decision after a 7-reviewer product-form review (product manager, interaction designer, form-factor designer, student user, competitive analyst, hackathon/Visa judge, iOS engineering lead), a PM decision and a challenge round. Items marked **(u)** are unverified and must be tested before we rely on them.
 
-> This document is a plan, not code. Per DubHacks rules, all code is written during the event (12:30 PM Sat → 10:00 AM Sun).
+## Changelog
+
+**v2.0 (Oct 15, 2026): product-form review**
+- **Centre:** per-purchase protection (pick → proof → claim). Picking a card is the way in, not the product.
+- **Trigger:** press and hold the **Action Button**. Back Tap is a second binding of the same Shortcut. "Check a screenshot" in the app needs no setup.
+- **Surface:** an interactive **snippet** for answers you act on (Switch; Keep when your default already covers the item). A short, silent **Dynamic Island** alert for everything else. The island never lingers.
+- **Copy:** protections are shown as facts with their caps ("$500 theft cover"). Expected-value math is removed.
+- **Engine:** a protection-loss guard; cash thresholds of $3 (Apple Pay) and $5 (other paths); protection switches only for items of $100 or more in a relevant category; unreadable items → keep.
+- **Scope:** 5 cards. Settings-screenshot onboarding, receipt press, claim PDF and the Why sheet move to P1. Cut: offline engine, money-leak audit, fee traps, order splitting.
+- **Visa:** one Visa Acceptance sandbox authorization in the demo payment (P0, gated). VDBP moves to P1 (test data). "Visa-verified" is removed.
+- **Plan:** code may now be written before the event. A Thu–Fri pre-event build with go/no-go gates replaces the "no code" prep list and the Saturday chain test. New §15 First build (v1).
+- **Facts corrected:** demand stats, Apple Pay iOS 27 wording, Walmart/Amazon Apple Pay, CardPointers 8, the Freedom $500 cap, AI-provider retention, and the claim concierge fee (removed).
+- **Metrics and demo:** user-value metrics added; the demo is one story arc with the judge pressing the button.
+
+**v1.0 (Oct 14, 2026):** approved direction after a 7-judge review (Back Tap → Dynamic Island → "Pay as usual").
 
 ---
 
 ## 0. TL;DR
 
-**One line:** One tap on the back of your iPhone at any checkout, and the Dynamic Island tells you which of your cards is worth the most — cashback *and* the protections hidden in the fine print — then helps you actually use those protections later.
+**One line:** Press one button at checkout and Fine Print tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. When it does break, it tells you whether you can claim.
 
 **Pitch (3 sentences):**
-Every time you check out on your phone, you guess which card to use, and you never see the warranty, theft cover and fees buried in your card's fine print. Fine Print lets you double-tap the back of your iPhone on any checkout screen; within about 3 seconds the Dynamic Island shows the card (and how to pay) that's worth the most, with the trade-off spelled out, and you pay as usual. After you pay it saves the receipt and coverage dates, and if something breaks or is stolen it tells you honestly whether you're covered and builds the claim packet.
+Your cards come with theft cover and extra warranty years buried in the fine print, but you never see them when you pay and almost never claim them afterwards. Press the Action Button on any checkout and Fine Print reads the cart on your iPhone, then tells you, before you tap Pay, which card covers this item and what that costs in cash back. It keeps the purchase and its coverage dates, and if the item breaks or is stolen it tells you honestly whether you're covered, cites the clause, and lists what to send.
 
 **Tagline:** *The perks buried in your card's fine print — at the moment you pay.*
+
+**Product form at a glance**
+
+| | |
+|---|---|
+| **What it is** | A per-purchase protection checker. At checkout it names the card whose fine print covers *this* item (theft/damage cover with its cap, an extra warranty year) and what that costs in cash back. It saves the purchase with its coverage dates. Later, "Can I claim?" answers *may be eligible* / *not covered* / *need more info*, citing the clause. |
+| **Where it lives** | A native iOS 27 app plus one App Intent (`CheckCheckoutIntent`), run by a "Fine Print" Shortcut that takes a screenshot of the current screen. Answers appear over whatever app or site you're in. Purchases and claims live in the app. A small backend reads the cart. |
+| **How it's triggered** | On the checkout screen, press and hold the **Action Button** (iPhone 15 Pro and later). Back Tap runs the same Shortcut on other iPhones. "Check a screenshot" in the app needs no setup. |
+| **What you see when you pay** | **Switch:** a snippet at the top of the screen: "Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash", plus [Paying with Freedom] to save the purchase. **Keep:** "✓ Keep Apple Card ••5678" flashes silently in the Dynamic Island and clears itself. Then you pay in the store's own flow. |
 
 ---
 
 ## 1. Problem
 
-- People don't know which card to use, and they almost never know their card's protections. Only ~30% of cardholders say they always maximize rewards (J.D. Power 2025). The CFPB estimates ~$500M in rewards forfeited per year.
-- Rewards skew to the wealthy: an HBS working paper (Aug 2026) finds rewards move ~$9.2B/yr to households earning >$150K while lower-income households lose ~$88/yr. Students and first-gen/international students lose the most to fees and traps.
-- Most online shopping happens on phones (~56% of 2025 holiday online spend was mobile, Adobe). Browser extensions (Kudos, CardPointers, MaxRewards) don't run inside shopping apps.
-- iOS 27's Apple Pay sheet now shows rewards per card, but it doesn't recommend a card, ignores protections and fees, and doesn't help with saved-card checkouts or claims.
+- Cardholders barely use their benefits: the average cardholder used **2.3 card benefits, down from 2.5** a year earlier. In the same study, about 29% say their card use maximizes rewards earning **(u)** (J.D. Power 2026 U.S. Credit Card Satisfaction Study, Aug 13, 2026).
+- Card protections go so unused that Discover dropped extended warranty and purchase protection on Feb 28, 2018, citing "prolonged low usage".
+- Smartphones drove 56.4% of 2025 holiday online sales (Adobe, Jan 2026). Many student checkouts happen inside shopping apps, where browser extensions can't run.
+- iOS 27's Apple Pay sheet lets you swipe between cards and, for eligible cards, surfaces "rewards, balances, debit account balance, pay later options" (Apple). It doesn't recommend a card, says nothing about protections, and doesn't appear in saved-card checkouts.
+- Our interviews: *[fill in after Friday: n, card products held → protections, awareness counts]*.
 
-**Our wedge:** the moment of payment *inside mobile apps* + the *fine print* (protections, fees, how-to-pay) + *after-purchase follow-through*.
+**Our wedge:** per-purchase protection. That means the card that covers *this* item, the purchase saved when you pay, and an honest claim check later. The one-press trigger is how we get there, not the moat.
+
+### 1.1 Competitors (as of Oct 15, 2026)
+
+| Product | What it does at the moment of purchase | After purchase | Source status |
+|---|---|---|---|
+| Apple Pay (iOS 27 sheet) | Swipe between cards; shows rewards/balances/pay-later for eligible cards; with Automatic Selection, dynamic buttons surface co-brand cards. No recommendation found. | Order tracking only | Apple developer page (fetched) |
+| CardPointers 8 (Sep 21, 2026) | Best card by merchant and offers. Visual Intelligence on a storefront, product, screenshot or receipt; 36 App Intents; location "AutoPilot" Live Activity; Safari extension | Offer sync, savings dashboard | 9to5Mac (search snippet); CardPointers help pages (reviewer) |
+| MaxRewards | Best card by merchant; "Best Card Nearby" Live Activity; bank linking | Linked-account spend | Help center / changelog (reviewer) |
+| Kudos | Best card + autofill in the browser and the iOS Safari extension; markets "hidden perks like purchase protection"; powers Samsung's checkout assistant | — | Press / investor posts (reviewer) |
+| Norte (adjacent) | None (no purchase moment) | Per-card Protection Explorer and Claim Prep checklists | App Store / guides (reviewer) |
+
+Nobody we found joins **this purchase → its coverage window → an incident check against the clause**. That rests on our own searches, which can only show absence.
 
 ---
 
 ## 2. Target user and scenarios
 
-**Primary persona:** a 21-year-old UW student with 2–3 cards (e.g., Apple Card as default, a Chase or Wells Fargo Visa, maybe Discover), shopping mostly in apps (Amazon, Target, Best Buy, Nike, DoorDash, StubHub, Shein/Temu, Expedia).
+**Primary persona:** a UW student who pays in full and holds a Chase Freedom (Rise or Unlimited) plus a card without protections (Apple Card or Discover), buying electronics online or in apps. Secondary (P1): one-card students and cards not in our catalog.
 
-**Honest frequency:** for this user, ~15–25% of checkouts beat the default card by more than $1 in a quarter where categories line up (~5–10% otherwise). The real value is concentrated in 3–6 big purchases a year (protections), fee traps, and "how to pay" (e.g., Apple Card earns 3% / 2% / 1% depending on Apple Pay vs card number). Therefore the product must **always answer, but stay quiet when it doesn't matter.**
+**Honest frequency (team estimate, no source):** for this user, ~15–25% of checkouts beat the default card by more than $1 in a quarter where categories line up (~5–10% otherwise). The real value sits in 3–6 big purchases a year, in protections and in "how to pay". So the product must **always answer, and only interrupt when it matters.**
 
-**Core scenarios (used in demo and tests):**
+**Core scenarios (demo and tests):**
 
 | # | Scenario | Expected answer |
 |---|---|---|
-| S1 | $1,499 laptop, electronics store checkout; wallet = Apple Card (default), Wells Fargo Active Cash, Chase Freedom Unlimited | **Switch:** Freedom Unlimited — $7.49 less cash, but +1 yr extended warranty and 120-day damage/theft cover (Active Cash and Apple Card have neither) |
-| S2 | $180 shoes in the Nike app, Apple Pay visible | **Pay as usual — with Apple Pay:** Apple Card via Apple Pay earns 3% ($5.40) vs 1% as a typed card number |
-| S3 | $249 AirPods, then "stolen at 6 weeks" | Purchase protection (theft) claim packet: receipt, card statement, police report, deadline |
-| S4 | 14 months later: laptop display shows lines, no impact | **Covered** by extended warranty (manufacturer year expired); packet + notice deadline. Contrast: "Cracked from a drop → not covered" |
-| S5 (engine only) | Foreign hotel booked direct (¥48,000 ≈ live rate), "pay in USD" offered | Pay in local currency with a no-foreign-fee card; Active Cash's 3% FTF makes it net negative |
-| S6 (engine only) | User carries a balance | "Interest outweighs any reward — pay with debit or pay down the balance" |
+| S1 | $1,499 laptop, Northbay Electronics (our fictional demo store), saved-card checkout. Wallet: Apple Card (default), Wells Fargo Active Cash, Chase Freedom Unlimited | **Switch → Freedom ••1234:** "Adds a warranty year + $500 theft cover · $7.49 less cash back than Active Cash" |
+| S1-R | Same laptop, Renewed, $1,099 | **Switch → Active Cash** (cash): renewed items get no card warranty |
+| S1-K | S1 with Freedom as the default | **Keep Freedom** (already protected); snippet with save |
+| S2 (engine / Q&A) | $180 shoes at Nike, Apple Pay visible | **Keep Apple Card: use Apple Pay** (3% vs 1% typed) |
+| S3 | $249 earbuds stolen at week 6 | **May be eligible:** purchase protection; police report; deadline |
+| S4 | Laptop shows lines at month 14, never dropped | **May be eligible:** extended warranty, clause cited. Contrast: dropped → **not covered** |
 
 ---
 
 ## 3. Product principles
 
-1. **One tap, not zero steps.** Be honest: one back-tap, a ~3 s wait, at most one swipe or card change. Never claim "zero steps."
-2. **Always answer; vary the loudness.** The user asked, so silence feels broken. Loud (expand + sound) only when switching is worth it; a quiet ✓ when the default is best.
-3. **Show the trade, never a blended number.** Cash on one line; protection as an estimate on another. Never add cash and expected value into one "+$".
-4. **Private by design.** We look only when you tap. The screenshot is read and redacted on the phone; only order-summary text leaves it. Your card list stays on the phone.
-5. **Honest about coverage.** Say "may be eligible," cite the clause, and say "not covered" when that's the truth. We never file or submit a claim for the user.
-6. **Neutral engine, Visa-verified fine print.** We recommend whatever card is truly best; Visa cards get clause-level verification via the Visa Digital Benefits Platform.
+1. **One press, not zero steps.** One press-and-hold, a ~3 s wait, at most one card change. Never claim "zero steps".
+2. **Always answer visibly; vary loudness by sound and persistence, not visibility.** Answers you act on stay in a snippet. Everything else flashes silently in the island and clears.
+3. **Show the trade as facts on separate lines.** Gain (with its cap) on one line, cash cost on another. Never one blended number; no expected-value math.
+4. **Private by design.** We look only when you press. The screenshot is cropped, read and redacted on the phone. Only redacted order-summary text and card product names leave it. Your last 4 never leaves.
+5. **Honest about coverage.** Say "may be eligible", cite the clause, and say "not covered" when that's the truth. We never file or submit a claim for the user.
+6. **Neutral engine, cited fine print.** We recommend whatever card is truly best, and cite each benefit's Guide to Benefits section and version date.
 
 ---
 
 ## 4. Scope
 
-| Priority | Feature |
-|---|---|
-| **P0 (must ship)** | Onboarding from a Settings → Wallet & Apple Pay screenshot (on-device OCR, confirm grid) · Back Tap → Shortcut → `CheckCheckoutIntent` → Live Activity in Dynamic Island with result in ≤3 s · Engine: cashback + protections (EV, differential) + fees + payment method, one card per order · Island states (§6) incl. "Pay as usual" and errors · Receipt capture (double-tap the order confirmation) · "What can I claim?" coverage check + claim packet PDF for S3/S4 · Demo store (mobile web, Stripe test mode + Apple Pay) · "What we sent" privacy sheet |
-| **P1 (should)** | Visa Digital Benefits Platform (VDBP) as the source for Visa card benefits/Guide to Benefits clauses (fallback: public Guide to Benefits PDFs, labeled) · Read-only test on 2 real app checkouts (no purchase) · Money-leak audit at onboarding (3 questions: pay in full?, Q4 categories activated?, which card for foreign purchases) · AI eligibility checks (Renewed/refurbished, third-party seller, gift cards, AppleCare in cart) · Interactive snippet fallback (iOS 26 `SnippetIntent`) |
-| **P2 (stretch)** | Visa Acceptance (Cybersource) sandbox payments + BIN lookup on the demo store to confirm which card product paid · Fee-trap guard (tuition 2.95%/4.25%, Venmo 3%, FX/DCC) beyond S5 · Visual Intelligence `IntentValueQuery` entry · Action Button setup flow |
-| **Cut** | Browser extension · iMessage/Photon · Share extension · On-stage FX and rotating-category demos (engine only) · Push-to-start Live Activities |
+Budget: ≈20–40 person-hours (ph) before Sat 12:30 PM plus ≈50–60 ph at the event, so 70–100 ph in total. P0 is ≈76 ph, which leaves **−6 to +24 ph** of slack. In the low case, the lean-P0 trims (§4.1) apply at once. About 30 ph of P0 needs a Mac (§15.1).
+
+### 4.1 P0 (must ship)
+
+| # | Item | Owner(s) | ph | Mac? |
+|---|---|---|---|---|
+| P0-1 | Spikes S0–S3 + S6: Action Button / Back Tap → Shortcut → `CheckCheckoutIntent` → Live Activity; snippet patterns A/B, button + reload; silent sound; capture rig; setup stopwatch | C | 7 | yes |
+| P0-2 | Repo skeleton, contracts (JSON Schema + examples), `.env.example`, `THIRD_PARTY.md`, `.gitignore` | B | 2.5 | no |
+| P0-3 | `data/cards.json`: 5 cards, ~10 merchants, item categories; protections with caps, citations and verification status | B 4 + D 1 (second check) | 5 | no |
+| P0-4 | `fixtures/scenarios.json` (22) + `fixtures/coverage_cases.json` (13), written by D (who doesn't write the engine), committed before the engine merges | D | 4 | no |
+| P0-5 | Engine (§7.2) + `POST /v1/check` + rules parser + pytest | B | 5 | no |
+| P0-6 | LLM cart parser (schema-constrained JSON, no arithmetic) | A | 3 | no |
+| P0-7 | On-device top-strip crop + OCR + checkout gate + redaction + os_signpost timings, inside the background intent | A | 5 | yes |
+| P0-8 | `CheckResultSnippetIntent` + snippet views (Result / Saved / Sent) + Live Activity views (compact, expanded, minimal, limited, Lock Screen, stale) | C 4.5 + D 0.5 | 5 | yes |
+| P0-9 | Intent → backend wiring (6.0 s timeout, last-4 fill, `CheckRecord` store) [C]; What-we-sent screen + replay keyed on merchant + total [A] | C 2.5 + A 2 | 4.5 | yes |
+| P0-10 | App shell: wallet tiles + default + optional last 4 + seeded demo wallet; "Check a screenshot"; Purchases (planned/confirmed, "I bought this") | A | 4 | yes |
+| P0-11 | `SavePurchaseIntent(checkId:)` → SwiftData `Purchase(status: planned)` | C | 2 | yes |
+| P0-12 | Coverage: backend rules [B 2]; LLM cause classification [A 1]; HTML verdict template [D 2]; SwiftUI input + web view [A 1.5] | B, A, D | 6.5 | 1.5 h |
+| P0-13 | Demo store, fictional "Northbay Electronics": static, deployed to HTTPS on Thursday [D 3.5]; also served by the backend with `/v1/store/pay` [B 0.5] | D, B | 4 | no |
+| P0-14 | Visa Acceptance sandbox authorization on Place order; transaction ID on the confirmation page (gate G4) | B | 3 | no |
+| P0-15 | Trigger setup screen (Shortcut link, Action Button first, Back Tap, practice press) | D | 1.5 | yes |
+| P0-16 | 10–12 student interviews: card *products* held, mapped by us to protections; aggregate counts only | D | 2.5 | no |
+| P0-17 | Metrics harness + runs + 10 clean runs | A 2.5, B 1, C 1, D 1 | 5.5 | partly |
+| P0-18 | Devpost write-up + ≤2:00 video | D 4, C 1, B 0.5, A 0.5 | 6 | no |
+| | **Total** (A 19.5 · B 18.5 · C 18 · D 20) | | **≈76** | ≈30 |
+
+**Lean-P0 trims for the low case** (≈ −10 ph, decided in advance):
+- P0-15 → P1; the demo phone is pre-bound.
+- P0-16 → a 1-h hallway test with 5 students.
+- P0-10 → seeded wallet only, no tile picker.
+- P0-12 LLM cause classification → user-picked chips.
+- P0-14 only if G4 passed before the event.
+- P0-17 → 5 ph.
+- Back Tap → Q&A mention only.
+
+### 4.2 P1 (in this order; start only when the never-cut arc has run 5/5 clean)
+
+| # | Item | ph |
+|---|---|---|
+| P1-1 | Renewed flip as a video beat + optional 20-s stage beat (the page is already in P0-13) | 0.5 |
+| P1-2 | Claim packet PDF via the share sheet | 2 |
+| P1-3 | Apple Pay path on the demo store (Stripe test mode + domain registration) + "In Apple Pay, swipe to this card"; only if teammates' real Wallet cards fit the story | 3 |
+| P1-4 | Press on the order confirmation → confirmed purchase with order # and the Visa Acceptance transaction ID | 2.5 |
+| P1-5 | "Skip the store's $X protection plan" line when an upsell is on screen | 1.5 |
+| P1-6 | BNPL warning ("Paying with Afterpay drops this cover") | 1 |
+| P1-7 | "Do you pay in full?" + balance guard ("Pay down your balance first") | 1 |
+| P1-8 | Map the selected saved card on device + re-check "✓ Freedom ••1234 selected" | 2 |
+| P1-9 | In-app Why sheet: cash rows, protection rows with caps, clause, sources; no expected-value math | 2 |
+| P1-10 | Bounded island reminder after a Switch (`staleDate` 3 min; ended on the next press or app launch), only if S2 shows an acceptable stale state | 1 |
+| P1-11 | One verified **non-Chase** protection card in the catalog | 2 |
+| P1-12 | Settings-screenshot onboarding (on-device OCR of Settings › Wallet & Apple Pay) | 4 |
+| P1-13 | VDBP sandbox call shown as the production path for benefit data (labeled test data) | 3 |
+| P1-14 | Screenshot-automation / Share Sheet trigger option (branched Shortcut) | 1 |
+| P1-15 | Read-only footage of a real shopping app (masked on the phone) | 1 |
+| P1-16 | "Other card" (not in the catalog): "We don't know this card's fine print yet" | 1 |
+
+### 4.3 P2 (not planned for the event)
+Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation Models "Keep on device" mode · coverage widget · photo analysis in the coverage check · more cards · one-card "what your card covers" home · paste-a-link check · iOS 26 support · Action Button menu tip · push-based Live Activity end.
+
+### 4.4 Cut
+- **Rewards optimization:** money-leak audit; rotating categories, caps, activation, shared caps; FX/DCC/fee-trap guard; order splitting; expected-value formula and editable assumptions.
+- **Engine and data:** on-device offline rules engine; Cybersource BIN lookup as separate work; 10 of 15 cards and ~30 of ~40 merchants.
+- **Island:** push-to-start; separate Low-confidence and Offline states; a lingering island reminder in P0.
+- **Copy:** "Visa-verified"; claim concierge fee.
+- **Live demo:** onboarding speed-run; quiet montage.
+- **Forms:** see §4.5.
+
+### 4.5 Forms considered and rejected
+
+| Alternative | Verdict | Why |
+|---|---|---|
+| Back Tap as primary / demo trigger | Second binding only | Buried in Accessibility settings; misfire and case-damping reports (anecdotal); no haptic feedback. The Action Button runs the same Shortcut. |
+| Action Button bound to an App Shortcut or Control that runs the intent directly | Rejected | Controls and App Shortcuts run an intent with no screen input, so the bare intent gets no screenshot. We do **not** register `CheckCheckoutIntent` in `AppShortcutsProvider`. |
+| Screenshot → share sheet as primary | P1 option | 4–5 steps per checkout. Needs the Shortcut's input branch (§9.1). |
+| iOS 27 screenshot automation as primary | First fallback if G1 fails; P1 option | Exists in iOS 27 ("runs when a screenshot is saved"). Unknown: runs without a prompt? which image? privacy of processing every screenshot. |
+| Visual Intelligence | P2, gated fallback | Screenshot → highlight to search → choose our app; Apple decides the provider order; the result is a short row over a screenshot copy. CardPointers 8 already ships it. |
+| Camera Control | Rejected | Camera / VI-camera only; doesn't read an in-app checkout. |
+| Safari Web Extension | Rejected | Safari only, blind inside shopping apps, per-site permission. Kudos and CardPointers already ship one. |
+| Share extension (app extension) | Rejected | 5–8 h; Live Activity from an extension unconfirmed. The branched Shortcut gives the same entry for ≈0 h. |
+| Home / Lock Screen widget | P2 companion | No screen input. |
+| Control Center / Lock Screen control | Rejected | No screen input, and opening Control Center covers the checkout. |
+| Wallet / PassKit / FinanceKit | Rejected | FinanceKit needs a managed entitlement, an organization account and Apple review. No API to recommend or reorder Apple Pay cards. |
+| App Clip | Rejected | App Intents and PhotoKit have no runtime function in App Clips. |
+| Web app / PWA | Rejected | No system hook. |
+| Location-triggered Live Activity / notification | Rejected | In-store only; CardPointers and MaxRewards already do it. |
+| Shortcuts "App is opened" automation | Rejected | Sees the merchant, not the cart; fires on every open. |
+| Siri / App Shortcut phrase | Rejected | No screen input; reads card choices aloud. |
+| Notification banner as the result | Rejected | Apple's HIG: don't duplicate Live Activity updates with notifications; amounts would land in Notification Center. |
+| Full-screen app result | Only for the in-app check | Takes the user out of the checkout. |
+| ReplayKit always-on screen reading | Rejected | Breaks "only when you press". |
 
 ---
 
 ## 5. User flows
 
-### 5.1 Onboarding (~17 taps, first result ≤60 s, full setup ≤2.5 min)
-1. **Add my cards:** app deep-links the user toward Settings (1 tap) → Wallet & Apple Pay (1) → take a screenshot → swipe back (1). *(Verified Oct 14 on a real iPhone: this screen lists each card's product name, thumbnail and last 4 on one screen.)*
-2. **Choose screenshot** with the system photo picker (2 taps; no Photos permission). On-device OCR matches names to our local card catalog; Apple Cash and transit cards (Suica, Clipper) are dropped automatically → **Looks right** (1). Ambiguous cards: two thumbnails, one tap. The onboarding screenshot is never uploaded.
-3. **First result before any setup:** a built-in sample checkout ($1,499 laptop) → **Check** (1) → a real island with the user's own cards.
-4. **Money-leak audit (P1, 3 taps):** "Do you usually pay in full?" · "Activated this quarter's 5% categories?" · "Any card with foreign fees?" (pre-filled from catalog).
-5. **Add shortcut:** "Add shortcut" (1) → Shortcuts "Add Shortcut" (1).
-6. **Set up Back Tap:** looping 3 s clip of a finger double-tapping the back + path *Accessibility › Touch › Back Tap › Double Tap* (~6 taps).
-7. **Practice tap:** on return, the sample checkout says "Double-tap the back now." Success → done.
+### 5.1 Onboarding (target ≤2:00 including the trigger; first result ≤60 s)
+1. **Add my cards:** pick your cards from tiles and set your default. Last 4 is optional and stays on the phone. (P1: Settings-screenshot onboarding.)
+2. **First result:** run the sample check on a built-in $1,499 laptop checkout → a real result with your own cards.
+3. **"Make it one press"** (skippable): install the Shortcut from a link, then set the Action Button (Settings › Action Button › Shortcut › Fine Print). Back Tap (Settings › Accessibility › Touch › Back Tap) is shown on iPhones without an Action Button. Offered again after the 2nd in-app check.
+4. **Practice press** on the sample checkout; this also clears Shortcuts' first-run prompts.
 
-### 5.2 Payment moment
-1. User reaches the checkout screen in any app or mobile site (before tapping Apple Pay).
-2. Double-tap the back → Shortcut: **Take Screenshot → Check Checkout** (our App Intent, runs in background).
-3. Island shows **Checking…** within 0.5 s. On-device: OCR + "is this a checkout?" test. If not a checkout → "No checkout here · nothing uploaded."
-4. Redacted order-summary text + the user's card **product IDs** (no last 4) go to our backend → structured cart → engine → result.
-5. Island updates with an alert (auto-expands briefly) when a switch is recommended; quiet ✓ when the default is best.
+### 5.2 Payment moment (targets; unmeasured until spike S1)
 
-### 5.3 Paying (instruction depends on what the screenshot shows)
-- **Apple Pay visible:** "Tap Apple Pay, swipe to ••1234." The island shows the same card art and last 4 the Apple Pay sheet shows.
-- **Saved card in the app (e.g., Amazon, which we believe doesn't take Apple Pay (u)):** "Change card to ••1234."
-- **Default already best:** "✓ Pay as usual" (+ "use Apple Pay" when the payment method matters, S2).
+**A. Switch on a saved-card checkout (S1).** The phone shows our store's checkout: "Pay with: Mastercard ••5678 [Change]", total $1,499.00.
+
+| t (s) | Hand and eyes | Surface | What shows |
+|---|---|---|---|
+| 0.0 | Press and hold the Action Button (~0.5 s) | — | — |
+| ≤1.0 | Eyes at top | Island compact | Fine Print glyph + progress ring (*Checking*, no alert) |
+| 1.0–3.0 | — | On device | Crop the top strip, OCR, checkout gate, redaction (~0.4 s); upload, LLM parse, engine (~1.5–2 s); write `CheckRecord`; **end the Live Activity** |
+| ≈3.0–3.5 | Eyes at top | **Snippet** (result) | §6.3 *Switch* |
+| ≈3.5–4.5 | Reads line 1 (≈0.75 s), then line 2 | Snippet | — |
+| ≈5 | Taps **[Paying with Freedom]** | `SavePurchaseIntent` runs; the snippet reloads in place | §6.3 *Saved* |
+| ≈6 | Taps Done (or [What we sent], then Done) | Snippet gone; island empty | — |
+| ≈7–10 | Store's Change → "Visa ••1234" → Place order | — | — |
+
+**B. Keep, default already protects the item (S1-K).** Same as A, with the *Keep, protected* copy and no sound.
+
+**C. Other Keep answers** (an $18 mug, or $180 Nike shoes with Apple Pay visible): press → *Checking* within 1.0 s → at ≈3 s the island **expands via an alerting update** (silent if gate G2 passes) with the *Keep* copy → `perform()` holds 4 s, ends the activity `.immediate`, and returns with no snippet. No tap needed.
+
+**D. No checkout found** (pressed on a social feed): press → *Checking* → at ≈1.0–1.5 s the on-device gate finds no order total, so **nothing is uploaded** → the island expands with *No checkout* → held 4 s, then ended.
+
+**E. Couldn't check:** the request times out at 6.0 s (≈7 s after the press). If demo replay is on and the replay key matches a fixture, that result is shown and logged as "replayed". Otherwise the island shows *Couldn't check*, held 4 s, then ended.
+
+### 5.3 Paying (the instruction depends on the checkout)
+- **Saved card in the store (primary):** "Change card to Visa ••1234, then place order."
+- **Apple Pay (P1):** "In Apple Pay, swipe to this card."
+- **Default is best:** "✓ Keep <card> ••<last4>" (+ "use Apple Pay" when the payment method changes the rate, S2).
 
 ### 5.4 After paying
-- **Primary:** double-tap the back again on the order confirmation → logs merchant, total, order #, card last 4, item → **"Receipt saved · covered until <date>"**.
-- **Backup:** one button in the expanded island: "I paid with ••1234."
+- [Paying with …] in the snippet saves a **planned** purchase with its coverage dates.
+- It becomes **confirmed** via "I bought this" in the app, or the first step of "Something happened".
+- P1: press on the order confirmation to confirm it and attach the order # and transaction ID.
 - Never say "warranty registered": card benefits need no registration; we save evidence and dates.
 
-### 5.5 "What can I claim?" (demo climax)
-- In the app, open the purchase → "Something happened" → photo + one line ("lines on the screen, never dropped" / "stolen at the library").
-- The AI checks, in order: return window → manufacturer warranty → card extended warranty → purchase protection (theft/damage, ~90–120 days) → merchant dispute.
-- Output: **covered / may be eligible / not covered**, the cited Guide to Benefits section + version date, a document checklist, and a deadline countdown. Generates a claim packet PDF the user submits themselves (e.g., Visa eclaims web form, Chase/Card Benefit Services).
-- Honest contrast built in: "Cracked from a drop at month 14 → not covered (accidental damage; damage cover ended at 120 days)."
+### 5.5 "Can I claim?" (P0; the demo climax)
+
+**Input screen (SwiftUI):**
+1. "Did you pay with Freedom ••1234 on Oct 17?" [Yes] [No, another card]. Yes sets `status = confirmed`.
+2. "Maker's warranty: [1 year] [2 years] [Don't know]". "Don't know" uses 12 months and labels the result "assumed".
+3. "What happened?" as free text, plus cause chips (Stopped working / Dropped or damaged / Stolen / Lost). The LLM pre-selects a chip; the user confirms.
+
+**Verdict:** rendered by the backend as HTML (`POST /v1/coverage?format=html`) in an in-app web view. The checks run in order: still under the maker's warranty → card extended warranty → purchase protection (theft/damage, 120 days) → not covered.
+
+| Verdict | Example (laptop bought Oct 17, 2026 with Freedom Unlimited) | Screen copy |
+|---|---|---|
+| may_be_eligible | "Lines across the screen. Never dropped." at 14 months | **May be eligible: Extended warranty (Freedom Unlimited).** The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028. **Notify by {date}** if the deadline is verified; otherwise "Check the notice deadline in your Guide to Benefits". Clause: {document} · {section} · version {date}. Checklist: itemized receipt · card statement showing the purchase · original warranty · repair estimate. You file it yourself at {administrator url}. |
+| may_be_eligible, capped | "Stolen from my bag" at day 30 | **May be eligible: Purchase protection, up to $500 of the $1,499.** Theft is covered within 120 days (to Feb 14, 2027). The checklist adds a police report. |
+| not_covered | "Cracked it when I dropped it" at 14 months | **Not covered.** Damage was covered for 120 days (to Feb 14, 2027). The extended warranty covers failures, not drops. |
+| not_covered, maker route | Stops working at month 8 | **Not covered by your card yet: it's still under the maker's warranty.** Contact the manufacturer first. The card's extra year starts Oct 17, 2027. |
+| need_more_info | "Left them on the bus" (earbuds, week 6) | **Need more info.** Theft and "involuntary and accidental parting" may be covered within 120 days; simply losing something may not be. See the cited clause. |
+
+Footer on every verdict: "Only the benefit administrator decides claims. Fine Print never files for you." Photo analysis is P2; the claim PDF is P1.
 
 ---
 
-## 6. Dynamic Island & Live Activity design
+## 6. Snippet, Dynamic Island & Live Activity
 
-**Constraints (Apple HIG/ActivityKit):** compact sides ~52×37 pt each; expanded/Lock Screen up to ~371×160 pt; expanded shows only on long-press or briefly after an alert update; 4 KB payload; Live Activity has no network access; images must be bundled in the widget's asset catalog (send a `cardId`, not an image); one primary button; animations ≤2 s; avoid sensitive info on Lock Screen.
+### 6.1 Constraints (Apple HIG / ActivityKit / App Intents)
+- **Sizes:** compact 52.33×36.67 pt (393-pt-wide screens) / 62.33×36.67 pt (430-pt); minimal 36.67–45×36.67 pt; expanded and Lock Screen 371 or 408 × 84–160 pt; limited width 28-pt circle; landscape on iOS 27.
+- **When the expanded view shows:** only on an alerting update or a long-press, and only "briefly"; the duration is undocumented. A quiet compact-only update never shows its text.
+- **Lifetime and payload:** a Live Activity lives up to 8 h unless the app or the person ends it, so the intent always ends it. Data is ≤4 KB. Oversized art can make the start fail.
+- **Taps:** tapping the island opens the app, so the island never carries information that needs a tap.
+- **Snippets:** they appear at the top of the screen over other content and stay until confirmed, cancelled or swiped away. Buttons must run an App Intent. Interactive snippets need `ShowsSnippetIntent` + a `SnippetIntent`, which the system may re-perform, so it reads its data from a shared store.
+- **HIG:** one Live Activity at a time; one interactive element; no sensitive info on the Lock Screen; don't duplicate updates with notifications.
 
-| State | Compact leading / trailing | Expanded copy | Sound/expand | Dismiss |
-|---|---|---|---|---|
-| Checking | Fine Print glyph / timer ring | "Reading checkout…" | none | becomes error at 8 s |
-| Switch card | card art / "1234" in card color | "Pay with Freedom Unlimited ••1234" · "−$7.49 cash · +1 yr warranty · 120-day cover" · "Tap for why" | alert (expand + sound) | stale at 2 min, end at 3 min or on receipt |
-| Default is best | card art / ✓ | "Pay as usual: ••5678 is best here" (+ "Use Apple Pay" if relevant) | quiet | 4 s |
-| Low confidence | card art / "1234?" | "Probably Freedom ••1234 · couldn't confirm store type" | quiet | 3 min |
-| Couldn't read | ⚠ / – | "Couldn't read this screen · scroll to the total and tap again" | quiet | 5 s |
-| Not a checkout | glyph / – | "No checkout here · nothing uploaded" | quiet | 3 s |
-| Offline / error | ⚠ / ↻ | "Offline · estimate from saved rules" or "Couldn't check · tap to retry" | quiet | 10 s |
-| Receipt saved | shield ✓ / "1234" | "Receipt saved · covered until Oct 2028" | quiet | 4 s; Lock Screen 15 min |
+### 6.2 Rules for every result
+- **The 3-second rule:** line 1 is the verdict, at most 4 words plus `••last4`, next to the card art, starting with a verb. Lines 2 and 3 are ≤44 characters each. The instruction line is ≤48 characters, in secondary style. At most 2 numbers in lines 1–3 (not counting last 4).
+- **Content:** never blend cash and protection into one number. Always state the protection cap when it's verified.
+- **Cost line:** compares against the wallet's cash-best card. If the default ties for cash-best, it names the default. If the pick is also cash-best, it says "Also earns the most cash back here".
+- **Island:** before each `Activity.request`, end every existing Fine Print activity with `.immediate`. Every request and update sets `staleDate = now + 2 min`. **The intent always ends its activity before `perform()` returns.** On app launch, end any leftover activities.
+- **Timing:** the backend request times out at **6.0 s**, and *Couldn't check* shows at once. The intent never runs past 30 s.
 
-- **Lock Screen:** card art + "Use card ending 1234" only — no amounts, no store. Hide content when Always-On (`isLuminanceReduced`).
-- **"Why" sheet (tap):** cash vs protection rows, expected-value formula with editable assumptions, cited clause + "last verified" date, flip conditions ("Cash+ with Electronics selected would win"), "This was wrong."
-- **Accessibility:** color is never the only cue (art + digits + shapes ✓ ⚠ shield); VoiceOver: "Use Freedom Unlimited, card ending 1 2 3 4. Adds one-year warranty, about 7 dollars less cash back."; Dynamic Type drops secondary lines first.
-- **Phones without Dynamic Island:** Lock Screen Live Activity; alert banner when unlocked. Do not send a separate notification for the same update.
-- **Explaining Apple's sheet:** "Apple shows cash back; Fine Print adds the fine print."
+### 6.3 Copy and behaviour for every state
+
+The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it drops "••{…}". Card names come from `shortName` in `data/cards.json`. `{ppCap}` is the verified per-item (or per-claim) limit. If it isn't verified, line 2 reads "Adds a warranty year + theft cover".
+
+| State / variant | When | Surface | Line 1 | Line 2 | Line 3 / instruction | Buttons | Sound | Ends |
+|---|---|---|---|---|---|---|---|---|
+| **Checking** | Intent starts | Island compact (long-press: expanded) | (expanded) Reading this screen… | Only the order summary leaves your phone | — | — | none | Replaced by the result; the intent ends it in every path |
+| **Switch, protection** | Rule P | **Result snippet** | Use Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | $7.49 less cash back than Active Cash · *Change card to Visa ••{last4}, then place order* | [Paying with Freedom] + system Done | snippet presentation only | Done or swipe; the Live Activity is ended before the snippet appears |
+| Switch, protection, pick also cash-best | Rule P | Same | Use Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Also earns the most cash back here · *instruction* | Same | Same | Same |
+| **Switch, cash** | Rule C | Same | Use Active Cash ••{last4} | $10.99 more cash back than Apple Card | Eligibility note if any ("Renewed item: no card adds a warranty") · *Change card to Visa ••{last4}, then place order* | [Paying with Active Cash] + Done | Same | Same |
+| Switch, Apple Pay path (P1) | Apple Pay button visible | Same | Use Freedom ••{last4} | (gain) | (cost) · *In Apple Pay, swipe to this card* | Same | Same | Same |
+| **Keep, protected** | Guard G, or default protects | **Result snippet** | ✓ Keep Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Save it so you can claim later | [Paying with Freedom] + Done | snippet presentation only | Same as Switch |
+| **Saved** (reload) | `SavePurchaseIntent` done | Same snippet | ✓ Saved: Aero 14 · $1,499 | Theft & damage cover up to $500 to Feb 14, 2027 | Extra warranty year to Oct 17, 2028* · *If the maker's warranty is 1 year. Planned: confirm after you pay.* | [What we sent] + Done | none | Done or swipe |
+| **Sent** (reload) | [What we sent] | Same snippet | What left your iPhone | The exact redacted text sent (scrolls; monospaced) | Cards sent as product names only. No screenshot, no last 4. | Done | none | Done or swipe |
+| **Keep, default best** | No rule fires | Island, expanded via alert | ✓ Keep Apple Card ••{last4} | Best of your 3 cards here | — | — | silent `.named` (G2), else `.default` | Held 4 s, then `.immediate` |
+| Keep, under threshold | Cash gain below threshold | Same | ✓ Keep Apple Card ••{last4} | Switching gains under ${threshold} here | — | — | Same | Same |
+| Keep, method (S2) | Default earns more via Apple Pay | Same | ✓ Apple Card: use Apple Pay | 3% ($5.40) with Apple Pay vs 1% typed | — | — | Same | Same |
+| Keep, items unreadable | Merchant + total read, items not | Same | ✓ Keep Apple Card ••{last4} | Couldn't read the items, so no switch | — | — | Same | Same |
+| **No checkout, on device** | On-device gate fails (nothing sent) | Island, alert | No checkout total found | Nothing left your phone | Scroll to the total and press again | — | Same | Held 4 s, then `.immediate` |
+| No checkout, from backend | Text was sent; screen is not a checkout or unreadable | Same | No checkout total found | Scroll to the total and press again | — | — | Same | Same |
+| No checkout, already paid | Order confirmation screen | Same | Already paid? | Press on the checkout, before you pay | — | — | Same | Same |
+| **Couldn't check** | 6.0 s timeout, no network or 5xx | Same | Couldn't check this time | No connection · press again *(or: Took too long · press again)* | — | — | Same | Held 4 s, then `.immediate` |
+| Not set up | Intent ran with no image | Static snippet (`ShowsSnippetView`) | Use the Fine Print shortcut | It reads the screen for you | Set it up in the Fine Print app | Done | none | Done |
+| Switch fallback (G2 fails) | Snippet doesn't appear | Island, alert | Lines 1–3 as Switch | | | none (save later with "I bought this") | `.default` | Held 8 s, then `.immediate` |
+| Receipt saved (P1) | Press on an order confirmation | Island, alert | ✓ Receipt saved | Aero 14 · Freedom ••{last4} | Purchase confirmed | — | silent | Held 4 s |
+| Balance guard (P1) | User said they carry a balance | Island, alert | Pay down your balance first | Interest costs more than any reward | — | — | silent | Held 4 s |
+
+**Where S1's numbers come from:** Active Cash 2% = $29.98, Freedom 1.5% = $22.49, Apple Card typed 1% = $14.99. Each card's cash is rounded to cents (half-up) before subtracting, which gives −$7.49 vs Active Cash and +$7.50 vs the default. Renewed ($1,099): Active Cash $21.98 vs Apple Card typed $10.99. Nike ($180): 3% = $5.40. Purchase protection runs 120 days from Oct 17, 2026 to Feb 14, 2027. The warranty year runs to Oct 17, 2028, assuming a 12-month maker warranty. The comprehension test (§13) checks that users don't read the cost line as "earns less than my card".
+
+### 6.4 Presentations and accessibility
+- **Minimal** (another app's Live Activity is running): Fine Print glyph during Checking, ✓ for Keep, ⚠ for errors.
+- **Limited width / landscape** (28-pt circle): leading view only.
+- **Lock Screen:** "Fine Print is checking" / "Fine Print checked this screen". No card, no amount, no store. Hide content when Always-On (`isLuminanceReduced`).
+- **Stale** (`isStale`): bare Fine Print glyph.
+- **Card art:** generic team-made card shapes, not issuer artwork, exported @3x at the exact compact and expanded sizes and no larger. The snippet uses the same art.
+- **VoiceOver (Switch):** "Use Freedom, card ending 1 2 3 4. Adds a warranty year and up to 500 dollars of theft cover. 7 dollars 49 less cash back than Active Cash."
+- **Color** is never the only cue (art + digits + ✓ / ⚠ / shield). Dynamic Type drops secondary lines first.
+- **Phones without a Dynamic Island:** the Lock Screen presentation shows as a banner on alert updates. No separate notification for the same update.
+
+### 6.5 Explaining Apple's sheet
+"Apple made switching cards one swipe and shows rewards and balances for eligible cards. It doesn't tell you which card covers this purchase, or help when it breaks."
+
+### 6.6 Fallbacks decided in advance (applied when a gate in §14.2 fails)
+- **G1 fails** (Take Screenshot from the Action Button / Back Tap doesn't capture the app underneath in ≥9/10 runs):
+  1. That evening, try the iOS 27 screenshot automation.
+  2. If that fails, use the branched Shortcut in the Share Sheet plus the in-app check; the demo opens on "screenshot → share → answer".
+  3. Only if both fail: Visual Intelligence moves from P2 to P1.
+- **G2 fails on appearance** (the snippet doesn't appear over Safari and ≥1 third-party app in ≥9/10 Action Button runs): Switch and Keep-protected become alerting island updates with the `.default` sound, held 8 s. Users save later with "I bought this".
+- **G2 fails on the button** ([Paying with …] doesn't save and reload in ≥9/10): try Pattern B (`requestConfirmation` with a custom verb, §15.5). If that fails too, show a static snippet and save via "I bought this".
+- **G2 fails on sound** (`.named("silent.caf")` makes a sound or doesn't expand): use `.default` for every alert.
+- **The Live Activity can't start from the intent** (`visibility` or `unsupportedTarget` error): every state uses snippets; *Checking* is skipped, and the Shortcut's own running indicator is the only progress cue.
 
 ---
 
-## 7. Recommendation engine
+## 7. Recommendation and coverage engine
 
 ### 7.1 Inputs
-- **Cart (from LLM over redacted OCR text):** merchant, merchant-of-record hints (Shop Pay, PayPal, marketplace seller), line items (name, price, condition: new/renewed, gift card, service plan), total, currency, payment options visible (Apple Pay / saved card / PayPal), "pay in USD" offers.
-- **Wallet (on device):** card product IDs, network, plastic last 4 and Apple Pay last 4 (they can differ (u)), user answers (pays in full, activated categories, chosen categories), cap usage estimate.
-- **Rules (catalog):** see §8.
+The `/v1/check` request (§15.5): redacted OCR text, wallet card IDs with the default flag, and the client date. The LLM turns the text into a Cart (merchant, items with category / condition / seller, total, visible payment options, upsells, BNPL). The engine never sees last 4. Card rules come from `data/cards.json` (§8, §15.3).
 
-### 7.2 Scoring (per order; one card per order)
-For each card × payment method:
-- **Cash value** = Σ eligible amount × rate (category rules, caps, activation, payment-method requirements such as Apple Card 3% only via Apple Pay at listed merchants), points × user-editable ¢/pt (default 1¢).
-- **Protection value (expected, differential vs the runner-up):**
-  - Extended warranty ≈ P(failure in extended window) × E[min(repair, price)] × P(claim approved) × P(user files). Demo defaults: 6% × $300 × 0.85 × 0.9 ≈ **$14** (range $8–25) on a $1,499 laptop. Fine Print raises P(user files) by saving receipts and deadlines.
-  - Purchase protection ≈ ~1% × min(price, per-item cap) (e.g., Freedom Unlimited $500/item) ≈ $3–5.
-  - Only counts if the item qualifies (new, from an authorized seller, valid U.S. manufacturer warranty, paid entirely with the card — no gift cards/BNPL split).
-- **Fees:** foreign transaction fee on foreign-processed charges; DCC markup if "pay in USD"; card-funded P2P/tuition fees (P2).
-- **Guards:** if the user carries a balance → recommend no rewards optimization ("interest outweighs rewards"); unknown activation/cap → conditional phrasing ("5% if activated and under cap") and ask once.
-- **Decision:** switch only if (cash delta + protection EV − fees) beats the default by ≥ $1, or the item is ≥ $100 and protection differs; otherwise "Pay as usual." Suggest splitting an order only if gain ≥ $5.
+### 7.2 Rules (v1; `backend/app/engine.py`, thresholds in `backend/app/policy.py`)
+
+**Thresholds:** `PROTECTION_MIN_ITEM_USD = 100` · `CASH_SWITCH_MIN_USD = {apple_pay: 3, saved_card: 5, card_form: 5, unknown: 5}` · `ITEM_CONFIDENCE_MIN = 0.8`.
+
+**Rules, applied in order:**
+0. **Screen type.** If the screen isn't a checkout, return `no_checkout`: not_checkout → reason `not_checkout`; unreadable → `unreadable`; order_confirmation → `already_paid`.
+1. **Cash per card.** Use `Decimal` throughout.
+   - Rate precedence: merchant rule > category rule > base.
+   - Payment-method requirements apply. The path is `apple_pay` if an Apple Pay button is visible (every wallet card is assumed to be in Wallet). Otherwise it's the saved-card or card-form path, and cards earn their "card" rates.
+   - Round each card's cash to cents (half-up) before any subtraction.
+   - `cashBest` is the card with the most cash; ties go to the default, then to wallet order.
+2. **Items unreadable.** If items are missing or `confidence.items < ITEM_CONFIDENCE_MIN` → `keep / items_unreadable`. No protection switch and no cash switch.
+3. **Eligible protections** per card. Only purchase_protection and extended_warranty count, and only when:
+   - the item condition is allowed (v1: new only);
+   - the item isn't a gift card or a service plan;
+   - the payment requirement is met;
+   - the category isn't excluded;
+   - extended warranty: the category is `warrantyRelevant`; purchase protection: the category is `theftDamageRelevant`.
+
+   An item **qualifies** if its price ≥ `PROTECTION_MIN_ITEM_USD` and its category is relevant to that protection type.
+4. **Rule P (protection gain).** For a qualifying item, find a card that has an eligible protection type the default lacks **and** keeps every eligible protection type the default has. Pick the card with the most such types, breaking ties by cash → `switch / protection`.
+5. **Guard G (protection loss).** For a qualifying item, if the default has an eligible protection type that `cashBest` lacks → `keep / already_protected`. The cash gain isn't shown at checkout (P1 Why sheet).
+6. **Rule C (cash).** If `cashBest ≠ default` and its gain over the default ≥ `CASH_SWITCH_MIN_USD[path]` → `switch / cash`.
+7. **Rule M (method).** If the default earns more via Apple Pay than typed, and an Apple Pay button is visible → `keep / method`.
+8. **Keep.** If the default has an eligible protection on a qualifying item → `keep / already_protected` (presentation: snippet). Else if `cashBest ≠ default` → `keep / below_threshold`. Else → `keep / default_best`.
+9. **Not in v1:** expected value, caps, activation, FX, order splitting, balance logic.
 
 ### 7.3 Where AI is used (and why it isn't a lookup table)
-1. Reading arbitrary checkout screens into a structured cart.
-2. Eligibility judgments from the screen: "Renewed" listing (warranty excluded), third-party seller, gift cards, AppleCare already in cart, foreign merchant, DCC offer. Demo beat: switch to the Renewed version of the same laptop → the pick flips and cites the exclusion.
-3. Turning Guide to Benefits text into cited, structured rules (offline during prep at the event, reviewed by a human).
-4. The coverage check: matching an incident description + photo to benefit clauses, producing covered / may be eligible / not covered with citations.
+1. Reading arbitrary checkout screens into a Cart.
+2. Eligibility from the screen: Renewed / refurbished (P0); third-party seller, gift card, protection plan in the cart, BNPL (P1). Demo beat: the Renewed version of the same laptop flips the pick and says why.
+3. Turning Guide to Benefits text into cited, structured rules **before the event (gate G5)**, reviewed by a human.
+4. Coverage: classifying the incident's cause (the user confirms). The verdict comes from date and window rules in code.
 
-### 7.4 Output (to the island and "Why" sheet)
-`cardId`, payment method, instruction type (apple-pay-swipe / change-saved-card / pay-as-usual), cash delta, protections list with EV and limits, fees, confidence (verified / inferred / unknown), two short reasons, flip conditions, sources with version dates.
+The LLM never does arithmetic. Money and date math happen in code.
+
+### 7.4 Output
+The `/v1/check` response (§15.5): `decision` (kind, reason, presentation, recommended card, cash by card, protections gained/lost with limits, copy), `purchaseDraft` with coverage dates, and sources with version dates.
 
 ---
 
 ## 8. Data
 
-### 8.1 Card set (15)
-Chase Freedom Unlimited, Freedom Flex, Freedom Rise, Sapphire Preferred, Prime Visa · Wells Fargo Active Cash · Citi Double Cash · Capital One Savor/Savor Student, Quicksilver · Discover it (Student) · Apple Card · Amex Blue Cash Everyday, Amex Gold · U.S. Bank Cash+ · BofA Customized Cash Rewards.
-Note networks: Freedom Flex, Double Cash and Apple Card are Mastercard; don't present their perks as Visa benefits. Capital One publishes separate benefit guides per network version — capture the network logo at onboarding.
+### 8.1 Card set (v1: 5 cards)
+
+| id | shortName | Network | Earn | Protections | Status |
+|---|---|---|---|---|---|
+| `apple-card` | Apple Card | Mastercard | 3% via Apple Pay at select merchants (Nike, Walgreens, Apple…); 2% via Apple Pay; 1% otherwise | none known | Earn confirmed (search). No protections: (u), 2019 reports only → G5 |
+| `wf-active-cash` | Active Cash | Visa | 2% flat (verify) | Cell phone protection (≤$600/claim, $25 deductible). Extended warranty / purchase protection: **(u), sources conflict** | → G5 |
+| `chase-freedom-unlimited` | Freedom | Visa | 1.5% base (bonus categories P2; verify) | Purchase protection: 120 days (90 in NY), up to $500 per item (Chase card page; reviews say per claim, $50K/account). Extended warranty: +1 yr on U.S. warranties ≤3 yr, up to 4 yr from purchase. Charging "some portion" to the card qualifies | Confirmed (Chase page, search); cap basis and notice deadline (90 vs 120 days in reviews) → G5 |
+| `chase-freedom-rise` | Freedom Rise | Visa (u) | 1.5% flat (verify) | Same as Freedom Unlimited per Chase's page | → G5 |
+| `discover-it-student-cash-back` | Discover | Discover | 1% base (5% rotating not modeled) | none (removed Feb 28, 2018) | Confirmed (search) |
+
+Networks matter: Apple Card is Mastercard, so its perks aren't Visa benefits. P1: one verified non-Chase protection card. P2: more cards (Savor Student, Double Cash, …) after verification.
 
 ### 8.2 Card catalog fields
-- **Card:** issuer, product, network, tier (Signature/Infinite/World Elite), annual fee, point currency, default ¢/pt, base rate, foreign transaction fee.
-- **Category rules (each):** category, rate, MCC list or merchant list, exclusions (e.g., Walmart/Target not grocery at Chase), payment-method requirement (Apple Pay only), cap amount + period + shared-cap group, needs activation/user pick + deadline + retroactive?, valid from/to.
-- **Merchant exceptions:** e.g., Walgreens single-item carts for Apple Card 3%.
-- **Protections (each):** type (extended warranty, purchase protection, return, price, cell phone), rule (e.g., +1 yr on warranties ≤3 yrs), limits (per item/per year), payment requirement, notice and document deadlines, administrator, claim URL/phone, exclusions.
-- **Sources:** Guide to Benefits URL, version date, last verified date, verified-by.
-- **Per user (on device only):** plastic last 4, Apple Pay last 4, chosen categories, activation status, estimated cap used, pays-in-full flag.
+Everything lives in **one data file**, `data/cards.json`: cards, earn rules, protections with limits and citations, merchants, item categories. The field list and schema are in §15.3. **Display rule:** the copy and the demo state a value as fact only when its `verification.status` is `verified`. The engine may use `partial` values, but responses then carry `confidence: "medium"` and drop the cap from the copy. Per-user data (last 4, default card) stays on the device only.
 
-### 8.3 Merchant table (~40 merchants)
-domain/app name → likely MCC/category, issuer-specific exclusions, Apple Pay accepted?, merchant-of-record notes (Shop Pay = the store; PayPal may post as "PAYPAL *" → low confidence; Expedia "pay now" = Expedia; pay-at-property = foreign hotel), confidence.
+### 8.3 Merchants (v1: ~10)
+- Demo: `northbay-electronics` (electronics); `stride-athletics` (apparel, P1).
+- `nike` (apparel; Apple Card 3% via Apple Pay).
+- `amazon` (general; "no Apple Pay" is weakly sourced, (u)).
+- `target`, `best-buy`, `walgreens` (pharmacy), `doordash` (dining), `apple`.
+- `walmart` (Apple Pay in U.S. stores since Aug 24, 2026; online/in-app (u)).
 
 ### 8.4 Sources & licenses
-- Seed earn rates from `novus-tech-tw/CardWise` `cards.json` (MIT) — data only, notice kept in `THIRD_PARTY.md`; hand-verify every demo card against issuer pages.
-- Benefits: Visa Digital Benefits Platform (Visa cards, P1) + public Guide to Benefits PDFs (dated).
-- MCC reference: `greggles/mcc-codes` (Unlicense).
+- Seed earn rates from `novus-tech-tw/CardWise` `cards.json` (MIT) — data only, with the notice in `THIRD_PARTY.md`. **(u)** Confirm the license before copying. Hand-verify every demo card against issuer pages.
+- Benefits: public Guide to Benefits PDFs, dated and cited. VDBP sandbox is P1 and returns test data only.
+- MCC reference: `greggles/mcc-codes` (Unlicense). (u) Confirm the license before copying.
 
 ---
 
 ## 9. Architecture
 
-### 9.1 iOS app (SwiftUI, iOS 26+, demo device iOS 27)
-- **Shortcut (2 actions):** Take Screenshot → Check Checkout.
-- **`CheckCheckoutIntent`** (`LiveActivityIntent`, `supportedModes = .background`, `IntentFile` image parameter):
-  1. `Activity.request` → "Checking…" (stale date 15 min).
-  2. Downscale image; on-device OCR (Vision `RecognizeDocumentsRequest` / `VNRecognizeTextRequest`); checkout test; redaction (Luhn-valid digit runs, CVV, names, emails, phones, "Ship to" blocks, one-time codes, notification banner strip).
-  3. POST redacted text + card product IDs to backend (6 s timeout). On timeout: local rules on cached catalog → "estimate."
-  4. `update(_:alertConfiguration:)` with `{cardId, last4, instruction, cashDelta, protections, reasons[2]}` (<1 KB).
-- **`ReceiptIntent`** (same pattern) for the order confirmation; **`MarkPaidIntent`** button as backup.
-- **Widget extension:** Live Activity views per §6; card art bundled in asset catalog.
-- **App screens:** onboarding, wallet, purchases, "Why" sheet, "What we sent," coverage check + claim packet.
-- **Storage:** wallet + purchases on device (Keychain/SwiftData); purchases synced to backend only when the user runs a coverage check.
-- **Fallback if Live Activity start fails:** interactive snippet (`SnippetIntent`, iOS 26) with the same content.
+### 9.1 iOS app (SwiftUI, iOS 27 only)
+- **The "Fine Print" Shortcut:** if it has input (shared from the Share Sheet) → Check Checkout(input); otherwise → Take Screenshot → Check Checkout. Bound to the Action Button (and Back Tap).
+- **`CheckCheckoutIntent`** (`AppIntent` + `LiveActivityIntent`, `supportedModes = [.background]`, `IntentFile` image parameter):
+  1. End any Fine Print activity.
+  2. Start *Checking*.
+  3. Crop the top strip, run OCR, the checkout gate and redaction.
+  4. POST `/v1/check` (6.0 s timeout; replay lookup on failure).
+  5. Write a `CheckRecord`.
+  6. Return an interactive snippet (Switch / Keep-protected) after ending the activity, or show an alerting island update, hold 4 s, end it, and return.
 
-### 9.2 Backend (proxy + services)
-- `/analyze`: redacted text + card IDs → LLM (paid-tier Gemini Flash-class, JSON output) → cart → engine → result. No request bodies logged.
-- `/benefits`: VDBP Card Product Benefits → Benefit Details → Benefit File (Guide to Benefits) for Visa cards; cached; overlaid with hand-verified clauses (labeled).
-- `/coverage`: incident + photo + purchase → covered/may be eligible/not covered + citations → claim packet PDF.
-- API keys only on the server; per-device rate limit; budget cap; App Attest if time allows.
+  Details: §15.5.
+- **Other intents:** `CheckResultSnippetIntent`, `SavePurchaseIntent`, `ShowSentIntent` (§15.5).
+- **Target and config:** intents live in the main app target only (`allowedExecutionTargets`). `NSSupportsLiveActivities = YES`; check `areActivitiesEnabled` in onboarding. One activity at a time. Do **not** register `CheckCheckoutIntent` in `AppShortcutsProvider`.
+- **Widget extension:** Live Activity views per §6.4. Card art is bundled in the asset catalog; send a `cardId`, not an image.
+- **App screens:** onboarding, wallet, Purchases, What we sent, claim input + HTML verdict. The Why sheet and claim PDF are P1.
+- **Storage:** wallet, `CheckRecord`s (pruned after 24 h) and purchases live on the device (App Group + SwiftData). A purchase is sent to the backend only when the user runs a coverage check.
+
+### 9.2 Backend (FastAPI)
+- `POST /v1/check`: redacted text + card IDs → LLM (paid tier, schema-constrained JSON) or the rules parser → engine → result.
+- `POST /v1/coverage` (`?format=json|html`): purchase + incident → verdict, citations, checklist, deadline.
+- `POST /v1/store/pay`: the demo store's payment (Visa Acceptance sandbox or mock).
+- No request-body logging. Returns 400 `privacy_rejected` for any body with a run of ≥12 digits. API keys only on the server. Per-device rate limit and budget cap.
 
 ### 9.3 Demo store (mobile web)
-- Electronics store + Nike-style store pages; checkout with Apple Pay via Stripe test mode on a registered HTTPS domain.
-- P2: Visa Acceptance (Cybersource) sandbox `pts/v2/payments` + BIN lookup to confirm card product → stronger proof of purchase.
+- Fictional "Northbay Electronics": static HTML with laptop, renewed laptop, earbuds and mug checkouts and a saved-card selector. Deployed to HTTPS on Thursday, later served by the backend at `/store/`.
+- Payment: Visa Acceptance sandbox (P0, gated) or a mock.
+- Apple Pay via Stripe test mode is P1 (needs a real card in Wallet and a registered domain).
 
-### 9.4 Latency budget (target ≤3 s median)
-Screenshot + intent launch ~0.5 s · OCR + redaction ~0.4 s · network + LLM ~1.5 s · engine + island update ~0.2 s. Cache demo responses for replay mode.
+### 9.4 Latency budget (unmeasured; these are targets until spike S1 measures them)
+Press + Shortcut start + screenshot + intent launch ~0.5–1.0 s · crop + OCR + redaction ~0.4 s · network + LLM ~1.5 s · engine + snippet/island ~0.2 s. Targets: press → *Checking* ≤1.0 s; press → result p50 ≤3.5 s, p90 ≤5 s. Say "about 3 seconds" only if the measured p50 is ≤3.0 s. Replay is keyed on merchant + total (§15.7 step 10).
 
 ---
 
 ## 10. Privacy & safety
 
-- **What leaves the phone:** only redacted order-summary text (e.g., "Electronics store, $1,499.00, 1 item: 14-inch laptop (new)") and card product IDs. Never the screenshot, never last 4, never the onboarding screenshot.
-- **"What we sent" sheet:** shows the exact payload for every check (strongest trust demo).
-- **Consent screen** names the AI provider and offers "Keep on device" (local rules only).
-- **Retention copy:** "Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider may keep logs for up to 55 days." (Paid-tier Gemini; never the free tier.)
-- **Accidental triggers:** on-device checkout test first; nothing is uploaded from non-checkout screens.
-- **Lock Screen:** no amounts or store names.
-- **Claims:** free; uses only facts the user confirms; the user submits; wording "may be eligible"; never "you're covered," "filed," "guaranteed," or "best card."
+- **What leaves the phone:** only redacted order-summary text (e.g. "Northbay Electronics · Aero 14 Laptop (New) · $1,499.00 · Mastercard [CARD]") and card product IDs. Never the screenshot, never last 4. The status-bar strip is cropped before reading.
+- **"What we sent":** shows the exact payload for every check, in the app and inside the Saved snippet.
+- **Consent screen:** names the AI provider (paid tier) and its retention. A "Keep on device" mode is P2.
+- **Retention copy:** "Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider may keep logs for up to 55 days." (Paid-tier Gemini: no training on prompts; abuse-monitoring logs kept about 55 days. Never the free tier.)
+- **Accidental presses:** an on-device checkout test runs first, and nothing is uploaded from non-checkout screens.
+- **Lock Screen:** no amounts, cards or store names.
+- **Claims:** free; uses only facts the user confirms; the user submits. Wording is "may be eligible", never "you're covered", "filed", "guaranteed" or "best card".
 - **Disclaimer:** "Estimates only, not financial, legal or insurance advice. Values use public card terms (last checked [date]) and the assumptions shown. Fine Print can't see your caps, activations or balances. Warranty and purchase protection are insurance benefits with limits and exclusions; only your card's benefit administrator decides claims. If you carry a balance, interest will likely cost more than any reward. Not affiliated with or paid by any issuer."
+- **Test data:** real-app screenshots used for accuracy testing never live in the repo (§15.2).
 - **Onboarding privacy copy:**
-  > We only look when you double-tap. Never in the background.
-  > Card numbers, names and addresses are blurred on your iPhone first.
-  > Only the blurred order summary is sent for analysis, then deleted.
-- **Judge answer — "Aren't you sending my payment screen to Google?"** "No. The screenshot never leaves your phone. On-device OCR blurs anything that identifies you; only something like 'Target, $84.12, 3 items' is analyzed. Tap 'What we sent' to see it." *(Say this only if on-device redaction is actually built.)*
+  > We only look when you press. Never in the background.
+  > Card numbers, names and addresses are removed on your iPhone first.
+  > Only that redacted order summary is sent for analysis; our AI provider may keep it up to 55 days for abuse monitoring.
+- **Judge answer — "Aren't you sending my payment screen to Google?"** "No. The screenshot never leaves your phone. On-device OCR removes anything that identifies you; only something like 'Northbay Electronics, $1,499, 1 laptop' is analyzed. Tap 'What we sent' to see it." *(Say this only if on-device redaction is actually built.)*
 
 ---
 
 ## 11. Visa track fit
 
-- **Commerce journey covered:** decision (which card + how to pay) → checkout (Apple Pay / saved card) → post-purchase (receipts, coverage check, claims). Generative AI does the reading, eligibility judgment and claim reasoning.
-- **Visa APIs that matter:** Visa Digital Benefits Platform is the source of truth for Visa card benefits and Guide to Benefits clauses (Card Product Benefits, Benefit Details, Benefit File). Stretch: Visa Acceptance (Cybersource) payments + BIN lookup on the demo store. Skip VDBP Card Account endpoints (need PAN/PCI).
-- **Neutrality framing:** the engine recommends whatever is truly best. The demo's winning card is a Visa (Freedom Unlimited vs Active Cash — both Visa Signature per our notes, re-verify): "same network, same tier, different fine print." Protections are issuer-optional, so we say: "Visa built the benefit tiers; Fine Print shows them at the moment you buy."
-- **Why Visa benefits:** benefits get used (engagement), fewer misfiled claims and chargebacks, and an inclusive story — protecting students from fees and interest, not just maximizing points for the wealthy.
-- **Roadmap line only:** the same engine could pick the credential for AI shopping agents (Visa Intelligent Commerce) or set rules for Visa Flexible Credential. Not built.
+### 11.0 Published criteria
+- **'26 Visa prompt and rubric:** *[paste verbatim, with the source (Devpost / Hacker Guide / Discord) and date]*. Not found yet: devpost.com and dubhacks.co weren't reachable from our research environment, and search found no '26 track text **(u)**.
+- **Until then:** use the '25 rubric weights reported by the judge reviewer **(u)**: Functionality 30%, Creativity 20%, Track Applicability 20%, Design 10%, ~20% unseen. The '24 Hacker Guide describes in-person, expo-style judging with at least one team member present.
+
+### 11.1 Commerce journey covered
+Decision (which card covers this) → checkout (change card / pay) → post-purchase (saved purchase, coverage check). Generative AI does the reading, the eligibility judgment and the cause classification.
+
+### 11.2 Visa APIs
+- **P0 (gated by G4):** a Visa Acceptance (Cybersource) sandbox authorization runs the demo merchant's payment; the confirmation shows the transaction ID.
+- **P1:** the Visa Digital Benefits Platform (VDBP) sandbox, shown as the production path for benefit data (test data, labeled).
+- Skip the VDBP Card Account endpoints (they need the full card number and PCI scope).
+- Never say "Visa-verified". Devpost line: "Visa Acceptance runs the demo merchant's payment. In production, benefit data would come from Visa's benefits APIs (VDBP; sandbox shown if P1 ships)."
+
+### 11.3 Neutrality framing
+The engine recommends whatever is truly best. The demo's winning card is a Visa (Freedom Unlimited vs Active Cash, both Visa; tiers to re-verify): "same network, different fine print." Protections are issuer-optional, so we say: "Visa built the benefit tiers; Fine Print shows them at the moment you buy."
+
+### 11.4 Why Visa benefits
+Benefits get used (engagement), fewer misfiled claims, and an inclusive story: free for students, no paid ranking.
+
+### 11.5 Roadmap line only
+The same engine could pick the credential for AI shopping agents (Visa Intelligent Commerce) or set rules for Visa Flexible Credential. Not built.
 
 ---
 
 ## 12. Demo & video
 
-### 12.1 Demo wallet
-Apple Card (default, Mastercard), Wells Fargo Active Cash (Visa Signature), Chase Freedom Unlimited (Visa Signature). Use team-owned or sample card art; no real card numbers on screen.
+### 12.1 Live table demo (≤3:00; planned 2:20 + optional 0:20 + buffer)
+**Setup:**
+- The phone is mirrored to a laptop facing the judges (rig chosen at gate G3).
+- Seeded wallet, all with fake last 4: Apple Card ••5678 (default), Active Cash ••4321, Freedom Unlimited ••1234.
+- Safari tab 1: laptop checkout. Tab 2: renewed-laptop checkout.
 
-### 12.2 Live demo script (3:00)
-1. **0:00** Cold open: real hand double-taps the back on the laptop checkout → island: "Pay with Freedom Unlimited ••1234 · −$7.49 cash · +1 yr warranty."
-2. **0:20** Problem in one line + the "nobody reads the fine print" stat.
-3. **0:35** Onboarding speed-run: one Settings screenshot → wallet appears, counter "1 screenshot · 0 digits typed."
-4. **1:00** Apple Pay: island art matches the sheet's art → swipe → double-click → Face ID → double-tap the confirmation → "Receipt saved · covered until Oct 2028."
-5. **1:30** Quiet montage: Nike app → "✓ Pay as usual — use Apple Pay (3%)"; Instagram feed → "No checkout here · nothing uploaded."
-6. **1:50** Renewed laptop → pick flips, clause cited (AI eligibility judgment).
-7. **2:10** "14 months later" (labeled staged): display lines, no impact → "May be eligible: extended warranty, notify by <date>" + packet; "Cracked from a drop → not covered."
-8. **2:40** Numbers: latency, read accuracy, scenario accuracy incl. misses; what's real vs simulated.
+| Time | Beat | On screen | Real / simulated |
+|---|---|---|---|
+| 0:00–0:15 | Hook: "This $1,499 laptop: cash back says Active Cash. The fine print says something else." Hand the judge the phone. | Northbay Electronics checkout, "Pay with Mastercard ••5678 [Change]" | Store is ours (fictional) |
+| 0:15–0:30 | Coach: "Press and hold the button above the volume buttons." **Judge presses.** | *Checking* → snippet: Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash | Real: screenshot, on-device OCR + redaction, cloud parse, engine |
+| 0:30–0:45 | Judge taps **[Paying with Freedom]** → Saved. Presenter taps **[What we sent]**: "That's all that left the phone." Done. | Saved: dates + "up to $500". Sent: the redacted summary | Real |
+| 0:45–1:05 | Presenter: Change → Visa ••1234 → Place order | "Approved · Visa Acceptance sandbox · txn {id}" | Real sandbox call; test card; no money moves |
+| 1:05–1:35 | "14 months later" (said aloud as staged): Purchases → Aero 14 (Planned) → Something happened → paid with Freedom? Yes → maker's warranty 1 year → "Lines across the screen. Never dropped." | **May be eligible: Extended warranty** + clause + version date + checklist + notify-by | Date override simulated; verdict is real engine output |
+| 1:35–1:50 | Contrast: "Cracked when I dropped it" | **Not covered**: damage was covered for 120 days only | Real |
+| 1:50–2:05 | Why Visa / why us: "Card benefits are how cards like this Visa differ, yet cardholders use about 2 of them (J.D. Power 2026). We show them at checkout and turn them into a claim. Visa Acceptance ran this merchant's payment. Free for students, no paid ranking." | One slide or app screen | — |
+| 2:05–2:20 | Close: tagline + one numbers line (measured p50, scenarios including misses, interview stat) | Tagline | Measured |
+| 2:20–2:40 (optional) | **Renewed flip**, only if rehearsals finish by 2:20: tab 2, press | "Use Active Cash ••4321 / $10.99 more cash back than Apple Card / Renewed item: no card adds a warranty" | Real |
+| → 3:00 | Buffer / Q&A | — | — |
 
-### 12.3 Video (≤2:00, captions burned in)
-Same beats compressed; one continuous real-time take for the core flow; picture-in-picture of the hand doing the Back Tap; latency timer on screen; strip of Visa API request IDs when VDBP is used. Record footage at ~7:30 PM Sat and ~3 AM Sun so the morning is only editing. Verify Friday that QuickTime capture shows the Dynamic Island and Apple Pay sheet (u).
+**Q&A backup cards, in order:**
+1. Renewed flip (if not shown).
+2. Keep with Apple Pay ("✓ Apple Card: use Apple Pay").
+3. No checkout found ("Nothing left your phone").
+4. Back Tap on any iPhone.
+5. iOS 27 Apple Pay sheet and CardPointers 8 comparison.
+6. How the catalog generalizes: per-card protection fields + cited sources; a non-Chase protection card is the next to verify.
+7. Read-only real-app footage (P1).
+8. Interview numbers.
+9. What's simulated.
 
-### 12.4 Real vs simulated (disclose on Devpost and in video)
-Real: on-device OCR, engine, island, onboarding, Apple Pay sheet, read-only real-app checkouts. Simulated: Stripe test payments, "14 months later," claim submission (packet only).
+### 12.2 Video (≤2:00, captions burned in; one continuous real-time take for 0:08–0:45)
+
+| Time | Beat |
+|---|---|
+| 0:00 | Hook |
+| 0:08 | Action Button press (hand in picture-in-picture, timer on screen) → snippet |
+| 0:20 | [Paying with Freedom] → Saved → [What we sent] |
+| 0:32 | Change card → Place order → Visa Acceptance sandbox approval |
+| 0:45 | "14 months later" → may be eligible + clause |
+| 1:05 | Drop → not covered |
+| 1:15 | Renewed flip |
+| 1:30 | Why Visa + free / no paid ranking |
+| 1:45 | Real-vs-simulated card + tagline |
+
+First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
+
+### 12.3 Real vs simulated (say it on Devpost and in the video)
+- **Real:** the Action Button press and Shortcut screenshot; on-device crop, OCR and redaction; the cloud cart parse and engine; the snippet and island; the saved (planned) purchase; the coverage verdict from stored clause data; the Visa Acceptance **sandbox** authorization of the demo merchant's payment.
+- **Simulated or staged:** the store (a fictional merchant we built); the cards (fake saved cards with fake last 4; the processor's test card numbers live only on the server); no money moves; "14 months later" is a date override; no claim is ever submitted; replay mode, if used, is labeled "replayed" in What we sent.
+
+### 12.4 Table kit
+- Demo iPhone and a spare, both with the build, the seeded wallet, Shortcut first-run prompts cleared, and the Action Button bound.
+- Cable + laptop mirroring, or an external camera if G3 fails.
+- Two hotspots. Replay on-when-offline.
+- No other Live Activities running (music and timers off). Do Not Disturb on.
+- Tab 2 pre-loaded with the renewed checkout. Devpost QR code.
+- At least one person at the table during judging (11:30 AM–2:00 PM per an unofficial schedule, (u)).
 
 ---
 
 ## 13. Success metrics
 
-| Metric | Target | Measurement |
-|---|---|---|
-| Tap → "Checking…" | ≤0.5 s | screen recording timestamps |
-| Tap → result | ≤3 s median, ≤4 s P90 | 20 timed runs on venue network |
-| Checkout read (merchant + total) | ≥95% | 30 labeled screenshots from ~10 apps |
-| Line items + eligibility flags | ≥85% | same set |
-| Onboarding read | 100% of cards on ≥2 phones (≥1 non-Chase issuer), ≤10 s | teammates' Settings screenshots |
-| Recommendation accuracy | ≥90% of 20 scenarios | `scenarios.json` written by a teammate who doesn't write the engine, committed before engine code |
-| Effort at payment | 1 tap + ≤1 swipe/change | count in demo |
-| One-time setup | ≤2.5 min, first result ≤60 s | stopwatch with a non-teammate |
-| Demo reliability | 10 consecutive clean runs | rehearsal log |
-| Privacy | 0 screenshots uploaded; 0 card numbers stored | "What we sent" log + code check |
+| Metric | Kind | Target | How measured (owner) |
+|---|---|---|---|
+| Card **products** held by interviewed students, mapped by us to purchase protection / extended warranty | Demand | Report counts per product family (n = 10–12). The pitch uses "X of N hold a card with protection" only if X ≥ 4 | Pre-event interviews; aggregates only (D) |
+| Awareness: knows their card's protections; ≥$100 online purchases in the last 12 months; ever filed a benefit claim; would bind the Action Button | Demand | Report counts | Same interviews (D) |
+| 3-second comprehension | UX | ≥8/10 non-teammates name the card after a 3 s view of the Switch snippet; ≥6/10 name one reason; ≤2/10 say "it earns less than my card" | Sat 8–9 PM at the venue (D) |
+| Stranger trigger | UX | ≥9/10 first-time presses by non-teammates start a check | Same session (D) |
+| Right card used | UX | ≥9/10 trials end with the recommended card selected on the demo store | Same session (D) |
+| Time to "am I covered + what do I send?" | User value | Fine Print ≤60 s vs a measured manual baseline | Stopwatch, 3 non-teammates (D) |
+| Correct pick | User value | ≥20/22 scenarios | `pytest` over `fixtures/scenarios.json` (B runs; D wrote it) |
+| **False switches** | Trust | 0/22 scenarios; ≤1/30 real screenshots | Same + accuracy set (A) |
+| **Protection drops** | Trust | 0: never recommend a card that loses a protection the default has on a qualifying item | Scenarios 5, 21, 22 + harness (B) |
+| Coverage verdicts | User value | ≥12/13 correct; every not_covered case right; 13/13 cite section + version date; capped cases show the cap | `pytest` over `fixtures/coverage_cases.json` (B) |
+| Press → *Checking* | Tech | p50 ≤1.0 s | os_signpost, 20 runs (A) |
+| Press → result | Tech | p50 ≤3.5 s, p90 ≤5 s on venue Wi-Fi or hotspot | os_signpost + screen recording (A) |
+| Chain reliability | Tech | ≥19/20 presses capture the right screen and show a result | S1 log + rehearsal (C) |
+| Snippet save | Tech | ≥9/10 taps on [Paying with …] create a planned Purchase and reload to Saved | G2 log (C) |
+| Checkout read (merchant + total) | Tech | ≥95% on 30 screenshots: 10 demo-store images in the repo + 20 real-app images kept outside the repo | Accuracy harness; aggregates only (A) |
+| Items + condition | Tech | ≥85% on the same set | Same (A) |
+| Replay robustness | Tech | Replay hits after ≥2 min, at a different battery %, and with another Live Activity in the island | §15.7 step 10 (A) |
+| Unaided setup | Adoption | ≥4/5 non-teammates finish in ≤2:00; first result ≤60 s | Stopwatch (D) |
+| Demo reliability | Tech | 10 consecutive clean runs of the full arc | Rehearsal log (all) |
+| Privacy | Trust | 0 screenshots, last 4 or card numbers in any request; the backend rejects ≥12-digit runs; no real-app file in the repo | Backend test + `test_privacy.py` + What-we-sent review (B, A) |
 
 ---
 
 ## 14. Plan
 
 ### 14.1 Team
-- **A — ML/CV:** on-device OCR + redaction, checkout detection, cart parsing prompts, coverage-check reasoning, accuracy test set.
-- **B — Backend/engine:** catalog + merchant table, engine, `/analyze`, `/benefits` (VDBP), `/coverage` + claim PDF.
-- **C — iOS lead:** App Intents, Live Activity/widget, Shortcut, onboarding plumbing.
-- **D — Design/web/story:** island + app UI with C, demo store (Stripe + Apple Pay), Devpost draft owner, pitch, video.
+- **A — ML/CV:** on-device crop/OCR/redaction, checkout gate, LLM cart parser, cause classification, replay + What we sent, app shell, claim input, metrics harness.
+- **B — Backend/engine:** catalog + merchant table, engine, `/v1/check`, `/v1/coverage`, `/v1/store/pay` (Visa Acceptance), benefit verification (G5).
+- **C — iOS lead:** Shortcut, App Intents, snippets, Live Activity/widget, chain spikes and gates G1–G3.
+- **D — Design/web/story:** demo store, snippet/island design with C, HTML verdict template, trigger setup screen, interviews, Devpost (owner), pitch, video. D writes `scenarios.json` and `coverage_cases.json` (non-engine).
 
-### 14.2 Before Saturday (no code: accounts, data, designs, docs)
-- **Settle the roster tonight:** the repo README lists 5 GitHub handles; DubHacks allows up to 4. The fifth person should come off the README and collaborators and not commit code.
-- **Signing:** enroll in the paid Apple Developer Program today (free teams can't share an App ID; free profiles expire in 7 days) — or have one Mac sign everything. Install Xcode 27, enable Developer Mode on the demo iPhone (Dynamic Island required; Action Button needs iPhone 15 Pro+).
-- **Accounts/keys:** paid-tier Gemini key; Stripe test mode with Apple Pay domain registered; Visa Developer project with two-way SSL hello-world and VDBP activated; hosting domain.
-- **Data:** 15-card catalog with sources and dates; ~40-merchant table; 30 labeled checkout screenshots; Settings screenshots from teammates; `scenarios.json` (20 scenarios, hand-computed by one teammate); Guide to Benefits PDFs for the demo cards.
-- **Design:** island states (§6) in Figma, onboarding, "Why" sheet, coverage check.
-- **Verify by hand:** Back Tap → Take Screenshot captures the app underneath on iOS 27; QuickTime shows the island.
-- **Discord questions:** Do Visa judges visit tables if we add a side track? Can tracks change after the draft? Video length limit? Which deadline is right (Devpost 10:00 AM vs site 10:30 AM — treat 10:00 as hard)?
-- **Repo hygiene:** add Xcode entries to `.gitignore` (xcuserdata, DerivedData, *.xcuserstate); add `THIRD_PARTY.md`; update README to describe Fine Print (current README describes a different product).
+### 14.2 Before Saturday: pre-event build (Thu Oct 15 evening → Sat 12:30 PM, ≈40 ph)
 
-### 14.3 Event timeline
+**Tonight, first 15 minutes (B):** submit the Visa Acceptance (Cybersource) sandbox sign-up (activation can stall); set up paid LLM billing and a key, kept only in the deployed environment and local, uncommitted `.env` files; pick the HTTPS host.
+
+| When | A: ML/CV (≈8.5 ph) | B: Backend/engine (≈10.5 ph) | C: iOS lead (≈11 ph) | D: Design/web/story (≈10.5 ph) |
+|---|---|---|---|---|
+| **Thu 6–9 PM** | Redaction rules + tests on `fixtures/ocr` text, as portable regexes (2) | Sign-ups (0.25); repo skeleton, contracts, `cards.json` skeleton (3) | S0: project, signing, widget extension, App Group (1) | Demo store: 4 checkouts + saved-card selector + confirmation, fake data, client-side mock payment (2.5) |
+| **Thu 9–11 PM** | OCR on the 7 captured screenshots on a Mac; top-strip crop (1.5) | — | **S1:** chain with a fake result over the *deployed* store (3) | Deploy the static store to HTTPS (0.25); capture the 7 fixture screenshots (0.5); book interviews |
+| **Fri 9 AM–12 PM** | — | Verify demo-card protections against the Guide to Benefits PDFs (2); Visa hello-world **if activated** (1.5) | **Gate G1** runs (1) | `scenarios.json` (2) |
+| **Fri 12–6 PM** | OCR + gate + redaction inside the background intent, with C; label 30 screenshots (real-app ones kept outside the repo) (3) | Engine + `/v1/check` + rules parser + tests (3) | **S2** (snippet patterns A/B, button + reload, silent sound, `.transient` probe, island 5 min after Done, Shortcuts indicator during the Keep hold); **S3** capture rig; **S6** setup + Share Sheet branch (3.5) | `coverage_cases.json` + second check of B's data (2); interviews (2.5) |
+| **Fri 6:00–6:30 PM** | **Gate review (all):** G1–G5. D reports what the '26 rules and Discord say about tracks, deadlines and pre-event work. | ← | ← | ← |
+| **Fri 7–10 PM** | LLM parser prompt + eval on `fixtures/ocr` (1.5) | Deploy the backend; serve `/store/` + `/v1/store/pay` (0.5) | Snippet + Live Activity views skeleton (2) | Copy/design pass with C (0.5) |
+| **Sat 8:30–10:30 AM** | Smoke test (0.5) | Smoke test (0.25) | Wire `/v1/check` into the proven chain (0.5) | Table-kit check (0.25) |
+
+**Gates (pass rule → on fail):**
+- **G1 chain** (C, Fri 12 PM): Action Button presses capture the right underlying screen and show the island in ≥9/10 runs, over the deployed store in Safari and over 2 real apps (read-only). On fail → §6.6.
+- **G2 surface** (C, Fri 6 PM). All four must pass, otherwise → §6.6:
+  - the snippet appears in ≥9/10 runs over Safari and ≥1 third-party app;
+  - [Paying with …] creates a planned Purchase and reloads to Saved in ≥9/10;
+  - the island is empty 5 min after Done;
+  - silent `.named` expands the island without a sound.
+- **G3 capture** (C, Fri 6 PM): wired QuickTime or AirPlay shows the island and the snippet. On fail → external camera + overlay.
+- **G4 Visa** (B, Fri 6 PM): the sandbox returns an approved transaction ID. If the account isn't activated by Fri 12 PM, stop spending time on it. On fail → P2; remove every Visa-API claim; keep the benefits story.
+- **G5 data** (B + D, Fri 6 PM): demo-card protections verified against the PDFs (Active Cash extended warranty / purchase protection; Apple Card; Freedom cap per item vs per claim; notice deadlines). On fail → change the S1 copy to what is verified.
+
+**Low case (~20 ph):** C: S0–S3 + G1/G2 (8) · B: sign-ups + contracts + `cards.json` + G5 (5) · D: store + deploy + screenshots + `scenarios.json` (5) · A: redaction regexes (2). Apply the lean-P0 trims (§4.1).
+
+**Single-Mac plan (if we have only one Mac):** C owns the Mac. A writes redaction and replay-key logic as portable regexes with tests on any machine, then ports them in two Mac slots (Thu 9–11 PM, Fri 12–3 PM). The P0-10 tile picker is cut (seeded wallet only) and P0-15 moves to P1. The coverage verdict is HTML (no Mac); only its SwiftUI input screen needs the Mac (1.5 h).
+
+**Also before Saturday:**
+- **Roster:** the README lists 5 GitHub handles; DubHacks allows up to 4 per team ('24 rule). Settle the 4.
+- **Signing:** done (paid Apple Developer account). Install Xcode 27; enable Developer Mode on the demo iPhones.
+- **Accounts:** Visa Acceptance sandbox and LLM key tonight; hosting; Stripe only for P1.
+- **Discord questions:** the '26 Visa prompt and rubric; title vs side track; do Visa judges visit tables; deadline (Devpost 10:00 AM vs site 10:30 AM, treat 10:00 as hard); video length.
+- **Repo hygiene:** add Xcode entries (`xcuserdata/`, `DerivedData/`, `*.xcuserstate`) to `.gitignore`; add `THIRD_PARTY.md`; rewrite the README for Fine Print (it still describes a different product). Real-app screenshots live in `~/fineprint-private/`, never in the repo.
+
+### 14.3 Event timeline (Sat 12:30 PM → Sun; internal hard deadline 10:00 AM)
+
 | Time | Milestone | Kill switch |
 |---|---|---|
-| 12:30 PM Sat | Tag `event-start`; B commits `scenarios.json`; contracts frozen | — |
-| 1:30 PM | D at Visa workshop | — |
-| 2:30 PM | **Riskiest-chain test:** Back Tap → screenshot → intent → Live Activity with alert, over a Safari Apple Pay page, captured in QuickTime | No island → `SnippetIntent` fallback |
-| 3:30 PM | Chain works end to end with a fake result | — |
-| 7:30 PM | Real OCR + engine on demo store; first footage recorded | OCR <80% → per-merchant parsers for demo merchants |
-| 9:30 PM | Side-track decision | — |
-| 10:00 PM | **Devpost draft submitted** (D owns, B backup); all members accepted invites | Hard deadline 10:30 PM |
-| 1:00 AM | Receipt capture + coverage check + claim PDF | Static claim template |
-| 1:30–5:30 AM | A & B sleep | — |
-| 3:00 AM | Feature freeze; C & D film until 4:00, sleep until 7:30 | — |
-| 5:30 AM | A & B: 10 clean runs, accuracy tests, write-up | — |
+| 12:30 PM Sat | Contracts frozen; P0 board; gate recap | — |
+| 1:30 PM | D at the Visa workshop, if there is one (u) | — |
+| **2:30 PM** | **G6:** real pipeline on the store (press → crop + OCR → LLM → engine → snippet → save) in 4/5 runs | `PARSER_MODE=rules` for the demo pages |
+| 5:00 PM | Purchases + "I bought this"; `/v1/coverage` ≥11/13; HTML verdict in the web view | `COVERAGE_MODE=rules` (user picks the cause) |
+| 7:30 PM | Full arc end to end; first footage | Snippet unreliable → island alerts (§6.6) |
+| 8:00–9:00 PM | Comprehension, stranger-trigger, right-card and setup tests with 10 non-teammates (D) | — |
+| 9:30 PM | Track decision | Default: Visa only |
+| **10:00 PM** | **Devpost draft submitted** (D; B backup); all members accepted invites | Hard 10:30 PM ('25 pattern, (u)) |
+| 10:00 PM–1:00 AM | P1 window, **only if the arc ran 5/5 clean** | — |
+| 1:00 AM | P0 freeze | — |
+| 1:30–5:30 AM | A & B sleep. C & D film until 3:00, then sleep 3:30–7:30 | — |
+| 3:00 AM | Feature freeze, including P1 | — |
+| 5:30 AM | A & B: latency runs, scenario + coverage tests, 10 clean runs, numbers for the close | — |
+| 7:30 AM | C & D: video edit | — |
 | 8:45 AM | Video final | — |
 | 9:00 AM | Upload over hotspot | — |
-| 9:30 AM | Submit | **10:00 AM hard deadline** |
+| 9:30 AM | Submit | **10:00 AM internal hard deadline** (official 10:30 AM per an unofficial schedule, (u)) |
+| 11:30 AM–2:00 PM (u) | Judging: at least one person at the table, table kit, replay armed | — |
 
 ### 14.4 Cut order (first → last)
-Cybersource → fee-trap guard extras → Visual Intelligence → money-leak audit → Renewed eligibility beat → VDBP (fall back to public PDFs) → receipt double-tap (keep button) → coverage-check photo analysis (keep text) → claim PDF styling.
-**Never cut:** Back Tap → island with the cash-vs-protection trade, and "Pay as usual."
+1. Anything P2.
+2. P1 items in reverse order (P1-16 first … P1-1 last).
+3. Visa Acceptance live call → mocked confirmation; remove every Visa-API claim.
+4. Back Tap instructions.
+5. The [What we sent] snippet button (keep the in-app screen and redaction).
+6. Claim checklist and deadline styling (keep the verdict and the clause).
+7. Snippet → island alerts for every state (§6.6).
+8. LLM cart parser → rules parser for the demo pages.
+9. LLM cause classification → user-picked chips.
 
-### 14.5 GitHub (70/30 rule)
-Everyone commits at least hourly from their own account; merge commits, not squash; data prep committed with timestamps; no API keys in the app or repo.
+**Never cut:**
+- Press → screenshot → on-device crop, OCR and redaction (only text leaves the phone).
+- A protection-aware pick with the cash trade, readable in about 3 s.
+- A saved (planned) purchase with coverage dates.
+- A "Can I claim?" verdict citing the clause, including one honest "not covered".
+- The Keep answer, replay mode, and the real-vs-simulated disclosure.
+
+### 14.5 GitHub hygiene
+Everyone commits at least hourly from their own account; merge commits, not squash; no API keys in the app or repo; real-app test data never in the repo.
 
 ---
 
-## 15. Risks & open questions
+## 15. First build (v1)
+
+This section lists exactly what to build first. A separate session can start from here. It uses §6.3 (copy for every state) and §7.2 (engine rules) from this file. Fixture data must be obviously fake; card data lives in one file; no secrets in the repo.
+
+### 15.1 What runs where
+
+| Step (§15.7) | Any machine (Linux / Claude Code OK) | Needs Mac + Xcode 27 + iPhone |
+|---|---|---|
+| 0–5 (skeleton, contracts, data, fixtures, engine, store) | yes | — |
+| 6–8 (iOS chain, snippet/surface spikes, OCR) | redaction regexes and tests only | yes |
+| 9 (LLM parser) | yes | — |
+| 10–11 (wiring, app shell) | — | yes |
+| 12a (`SavePurchaseIntent`) | — | yes |
+| 12b (`/v1/coverage`), 12c (HTML verdict), 13 (Visa Acceptance) | yes | — |
+| 12d (SwiftUI claim input + web view), 14 (trigger setup) | — | yes |
+| 15 (metrics) | scripts and aggregation | device runs |
+
+### 15.2 Repo layout
+
+```
+README.md            rewrite: Fine Print; how to run backend, store, tests
+THIRD_PARTY.md       licenses for any seeded data
+.env.example         placeholders only (§15.5)
+.gitignore           + xcuserdata/, DerivedData/, *.xcuserstate (.env is already ignored)
+
+data/
+  cards.json           THE ONE card-data file (cards, merchants, item categories)
+  cards.schema.json    JSON Schema (structure, not data)
+
+contracts/             JSON Schema + example for each of:
+  check.request · check.response · coverage.request · coverage.response
+  store-pay.request · store-pay.response · live-activity-content-state
+  check-record · purchase
+
+fixtures/
+  wallets.json         7 demo wallets; fake last 4 only
+  scenarios.json       22 scenarios (author: D)
+  coverage_cases.json  13 cases (author: D)
+  screenshots/*.png    demo-store pages only (fake names, addresses, cards)
+  ocr/*.txt            expected redacted OCR text (top strip already cropped)
+  carts/*.json         expected parsed Cart per screenshot
+  replay/<merchantId>_<totalCents>.json   cached /v1/check responses
+
+backend/
+  pyproject.toml       Python 3.12, fastapi, uvicorn, pydantic v2, httpx, jinja2, pytest
+  app/main.py          /health, /v1/check, /v1/coverage (?format=html), /v1/store/pay, static /store/
+  app/models.py        pydantic models mirroring contracts/
+  app/catalog.py       loads + validates data/cards.json (fail fast)
+  app/parser_rules.py  regex parser for demo-store pages
+  app/parser_llm.py    LLM parser (schema-constrained JSON)
+  app/engine.py        §7.2 rules; Decimal math
+  app/copy.py          §6.3 templates with {last4:<cardId>} and {ppCap} placeholders
+  app/coverage.py      window/date rules + LLM cause classification
+  app/templates/verdict.html
+  app/visa_acceptance.py   PAY_MODE=mock|visa_acceptance
+  app/policy.py        thresholds (not card data)
+  tests/               test_catalog, test_contracts, test_scenarios, test_coverage, test_privacy
+
+demo-store/            index.html, checkout.html, confirm.html, store.css, store.js
+                       (fictional "Northbay Electronics"; page header starts below 80 pt)
+
+ios/
+  FinePrint.xcodeproj
+  FinePrint/           app target: intents, onboarding, wallet, purchases, claim input, What we sent
+  Shared/              App Group code: CheckStore, Purchase model, CheckResultView (app + widget)
+  FinePrintWidgets/    widget extension (Live Activity views)
+  FinePrintTests/
+  Shortcut/README.md   how to rebuild and share the "Fine Print" iCloud Shortcut (with the input branch)
+
+docs/
+  spikes.md            S0–S6 results, timings, gate decisions
+  metrics.md
+```
+
+- The iOS app bundles `data/cards.json` as a **file reference** (Copy Bundle Resources). There is no second copy.
+- Real-app screenshots and their labels **never live inside the repo directory**. Keep them in `~/fineprint-private/`, mask them on the phone before export, and delete them after the event.
+
+### 15.3 The one card-data file: `data/cards.json`
+- **Format:** JSON, UTF-8, validated against `data/cards.schema.json` at backend start and in `test_catalog.py`. A Swift `Codable` model mirrors it.
+- **Top level:** `schemaVersion` (1), `catalogVersion` (date), `cards[]`, `merchants[]`, `itemCategories[]`.
+- **Card fields:**
+  - `id`, `issuer`, `product`, `displayName`, `shortName`; `network` (visa / mastercard / discover / amex); `networkTier` {value, status}; `annualFeeUsd`; `rewardCurrency` (cash_back / points); `pointValueCents` (null for cash back); `foreignTransactionFeePct`; `art` {assetName, color}.
+  - `earn`: {`baseRatePct`, `rules[]`}. Each rule: `id`, `category` (itemCategory id or null), `merchantIds` (array or null), `paymentMethods[]` (apple_pay / card / any), `ratePct`, `cap` (null in v1), `needsActivation` (false in v1), `status` (verified / partial / unverified).
+  - `protections[]`. Each protection:
+    - `type` (purchase_protection / extended_warranty / cell_phone_protection), `summary`, `covers[]` (theft / accidental_damage / involuntary_parting / failure), `excludes[]`.
+    - Purchase protection: `windowDays`, `windowDaysByState` (e.g. {"NY": 90}).
+    - Extended warranty: `extendsByMonths`, `maxOriginalWarrantyMonths`, `maxTotalFromPurchaseMonths`.
+    - `limits`: {`perItemUsd`, `perClaimUsd`, `perAccountUsd`, `appliesTo` (item / claim)}. **Required for any protection shown in copy.**
+    - `eligibility`: {`conditionsAllowed[]` (new), `paymentRequirement` (some_portion / full), `excludedCategories[]`}.
+    - `notice`: {`notifyWithinDays`, `submitDocsWithinDays`} (null until verified).
+    - `claim`: {administrator, url, phone}; `source`: {document, section, versionDate, url, quote}; `verification`: {`status` (verified / partial / unverified), checkedBy, checkedOn, note}.
+  - `sources[]`.
+- **Merchant fields:** `id`, `names[]`, `domains[]`, `category`, `acceptsApplePay` {value, status}, `isDemo`.
+- **Item category fields:** `id`, `warrantyRelevant`, `theftDamageRelevant`.
+  - Both true: electronics, computers, phones, audio, cameras, appliances, tools, bikes, instruments.
+  - Both false: apparel, home, dining, grocery, pharmacy, gift_card, services, travel, general.
+- **v1 content:** the 5 cards in §8.1, the ~10 merchants in §8.3, and the item categories above. Display rule: §8.2.
+
+### 15.4 Fixtures (all obviously fake)
+- **Fake identity:** name "Alex Doe"; address "123 Example St, Seattle, WA 98000"; email "alex@example.com"; phone "(555) 010-0000"; last 4 only 1234, 5678 or 4321. No real card numbers anywhere. Processor test card numbers live only in the deployed environment (`DEMO_TEST_CARD_MAP`).
+- **`fixtures/wallets.json`** (the first card listed is the default):
+
+| Wallet | Cards |
+|---|---|
+| `demo-3card` | apple-card ••5678, wf-active-cash ••4321, chase-freedom-unlimited ••1234 |
+| `apple-ac` | apple-card ••5678, wf-active-cash ••4321 |
+| `no-protection` | apple-card ••5678, discover-it-student-cash-back ••4321 |
+| `rise-2card` | apple-card ••5678, chase-freedom-rise ••1234 |
+| `fu-default` | chase-freedom-unlimited ••1234, wf-active-cash ••4321, apple-card ••5678 |
+| `discover-fu` | discover-it-student-cash-back ••4321, chase-freedom-unlimited ••1234 |
+| `rise-ac` | chase-freedom-rise ••1234, wf-active-cash ••4321 |
+
+- **Screenshots** (393×852 pt @3x, captured on a phone Thursday night), each with a matching `ocr/*.txt` (top strip cropped) and `carts/*.json`:
+  - `laptop-checkout`: Aero 14 Laptop, new, $1,499.00, saved Mastercard ••5678.
+  - `laptop-renewed-checkout`: $1,099.00.
+  - `earbuds-checkout`: $249.00.
+  - `mug-checkout`: $18.00.
+  - `laptop-confirmation`: order #NB-100234.
+  - `feed-not-checkout`: a fake social feed page.
+  - `blurry-unreadable`.
+  - P1: `laptop-with-protection-plan`, `shoes-bnpl`.
+- **`fixtures/scenarios.json`** (D writes and hand-computes; draft below matches §7.2). Each entry: `{id, wallet, paymentPath, cart, expected: {kind, reason, recommendedCardId, cashDeltaVsCashBest, protectionsGained[]}}`. AC = Active Cash, FU = Freedom Unlimited.
+
+| # | Wallet | Cart / path | Expected |
+|---|---|---|---|
+| 1 | demo-3card | laptop $1,499, saved card | switch / protection → FU; −$7.49 vs AC; gains [purchase_protection, extended_warranty] |
+| 2 | demo-3card | renewed laptop $1,099 | switch / cash → AC; +$10.99 vs Apple Card; note "renewed" |
+| 3 | demo-3card | earbuds $249 (audio) | switch / protection → FU; −$1.24 vs AC |
+| 4 | demo-3card | mug $18 (home) | keep / below_threshold |
+| 5 | fu-default | laptop $1,499, saved card | **keep / already_protected** (guard; snippet) |
+| 6 | no-protection | laptop | keep / default_best (tie) |
+| 7 | apple-ac | laptop | switch / cash → AC; +$14.99 |
+| 8 | demo-3card | Nike $180 shoes, Apple Pay visible | keep / method |
+| 9 | demo-3card | Nike $180, card form only | keep / below_threshold ($1.80) |
+| 10 | demo-3card | headphones $120 (audio) | switch / protection → FU; −$0.60 |
+| 11 | demo-3card | headphones $90 | keep / below_threshold |
+| 12 | demo-3card | gift card $100 only | keep / below_threshold |
+| 13 | demo-3card | text with no total | no_checkout / not_checkout |
+| 14 | demo-3card | garbage OCR | no_checkout / unreadable |
+| 15 | demo-3card | order confirmation | no_checkout / already_paid |
+| 16 | discover-fu | laptop | switch / protection → FU; pick is also cash-best |
+| 17 | rise-2card | earbuds $249 | switch / protection → Freedom Rise; also cash-best |
+| 18 | demo-3card | laptop, items unreadable, total readable | **keep / items_unreadable** |
+| 19 | demo-3card | Walgreens $40, Apple Pay visible | keep / method |
+| 20 | demo-3card | Amazon $38 household, saved card | keep / below_threshold |
+| 21 | rise-ac | laptop $1,200, saved card | **keep / already_protected** (guard: AC +$6.00 would otherwise switch) |
+| 22 | fu-default | laptop $1,499, Apple Pay visible | **keep / already_protected** (guard on the Apple Pay path) |
+
+- **`fixtures/coverage_cases.json`** (D; draft). Each case: `{id, purchase, incident, asOf, expected: {verdict, benefit, route, payoutCapUsd, citesSection}}`.
+
+| # | Purchase | Incident | Expected |
+|---|---|---|---|
+| 1 | FU laptop | lines at month 14, not dropped | may_be_eligible / extended_warranty / card_extended_warranty |
+| 2 | FU laptop | dropped at month 14 | not_covered / none |
+| 3 | FU laptop | dropped at day 30 | may_be_eligible / purchase_protection; cap $500 of $1,499 |
+| 4 | FU earbuds | stolen at week 6 | may_be_eligible / purchase_protection; full $249; police report in the checklist |
+| 5 | FU earbuds | left on a bus at week 6 | need_more_info |
+| 6 | Apple Card laptop | failure at month 14 | not_covered / none |
+| 7 | FU laptop | failure at month 8 | **not_covered / route manufacturer** ("still under the maker's warranty") |
+| 8 | FU renewed laptop | failure at month 14 | not_covered (verify the refurbished exclusion) |
+| 9 | FU earbuds | stolen at day 200 | not_covered |
+| 10 | AC headphones | failure at month 14 | not_covered (if G5 confirms no extended warranty) |
+| 11 | FU laptop | failure at month 30 | not_covered (after the extra year ends) |
+| 12 | FU laptop, `paidWith` card_partial | failure at month 14 | may_be_eligible (Chase: "some portion"; G5) |
+| 13 | FU laptop | stolen at day 30 | may_be_eligible / purchase_protection; **cap $500 of $1,499** |
+
+### 15.5 API contracts, on-device records and intents
+
+**`POST /v1/check`** (sent by the intent; no last 4, no images)
+
+Request:
+```json
+{
+  "requestId": "5f0c…uuid",
+  "client": {"app": "fineprint-ios", "version": "0.1.0"},
+  "clientDate": "2026-10-17",
+  "screen": {
+    "ocrText": "Northbay Electronics\nCheckout\nAero 14 Laptop, 14-inch (New)  $1,499.00\nTotal  $1,499.00\nPay with Mastercard [CARD]\nChange\nShip to [ADDRESS]\nPlace order",
+    "redactions": ["card_number", "address", "email", "phone"],
+    "ocrConfidence": 0.93
+  },
+  "wallet": {"cards": [
+    {"cardId": "apple-card", "isDefault": true},
+    {"cardId": "wf-active-cash", "isDefault": false},
+    {"cardId": "chase-freedom-unlimited", "isDefault": false}
+  ]},
+  "prefs": {"paysInFull": null}
+}
+```
+
+Response:
+```json
+{
+  "requestId": "5f0c…uuid",
+  "screenType": "checkout",
+  "cart": {
+    "merchant": {"name": "Northbay Electronics", "merchantId": "northbay-electronics"},
+    "items": [{"name": "Aero 14 Laptop, 14-inch", "priceUsd": 1499.00, "quantity": 1,
+               "category": "computers", "condition": "new", "seller": "merchant",
+               "isGiftCard": false, "isServicePlan": false}],
+    "totalUsd": 1499.00, "currency": "USD",
+    "paymentOptionsVisible": ["saved_card"],
+    "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+    "upsells": {"protectionPlanUsd": null}, "bnplVisible": false,
+    "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+  },
+  "decision": {
+    "kind": "switch",
+    "reason": "protection",
+    "presentation": "snippet",
+    "recommendedCardId": "chase-freedom-unlimited",
+    "defaultCardId": "apple-card",
+    "cashBestCardId": "wf-active-cash",
+    "paymentPath": "saved_card",
+    "instruction": "change_saved_card",
+    "cash": {"byCard": {"apple-card": 14.99, "wf-active-cash": 29.98, "chase-freedom-unlimited": 22.49},
+             "deltaVsCashBest": -7.49, "deltaVsDefault": 7.50},
+    "protectionsGained": [
+      {"type": "purchase_protection", "windowDays": 120,
+       "limit": {"amountUsd": 500, "appliesTo": "item"}, "verification": "verified"},
+      {"type": "extended_warranty", "extendsByMonths": 12,
+       "limit": {"amountUsd": null, "appliesTo": "claim"}, "verification": "verified"}
+    ],
+    "protectionsLost": [],
+    "eligibilityNotes": [],
+    "confidence": "high",
+    "copy": {
+      "line1": "Use Freedom ••{last4:chase-freedom-unlimited}",
+      "line2": "Adds a warranty year + $500 theft cover",
+      "line3": "$7.49 less cash back than Active Cash",
+      "instruction": "Change card to Visa ••{last4:chase-freedom-unlimited}, then place order",
+      "primaryButton": "Paying with Freedom"
+    }
+  },
+  "purchaseDraft": {
+    "merchant": "Northbay Electronics", "item": "Aero 14 Laptop, 14-inch", "category": "computers",
+    "condition": "new", "priceUsd": 1499.00, "purchaseDate": "2026-10-17",
+    "cardId": "chase-freedom-unlimited",
+    "coverage": [
+      {"type": "purchase_protection", "until": "2027-02-14", "limitUsd": 500},
+      {"type": "extended_warranty", "until": "2028-10-17", "assumesManufacturerWarrantyMonths": 12}
+    ]
+  },
+  "sources": [{"cardId": "chase-freedom-unlimited", "document": "…Guide to Benefits",
+               "section": "Purchase Protection", "versionDate": "…", "verification": "verified"}],
+  "timingMs": {"parse": 900, "engine": 3}
+}
+```
+
+**Enum values (every enum field)**
+
+| Field | Values |
+|---|---|
+| `screenType` | checkout / order_confirmation / not_checkout / unreadable |
+| `decision.kind` | switch / keep / no_checkout / error |
+| `decision.reason` | protection / cash / method / default_best / below_threshold / items_unreadable / already_protected / already_paid / not_checkout / unreadable / error |
+| `decision.presentation` | snippet / island (snippet for switch and for keep/already_protected) |
+| `paymentPath` | apple_pay / saved_card / card_form / unknown |
+| `instruction` | change_saved_card / enter_card / apple_pay_swipe / use_apple_pay / none |
+| `confidence` | high / medium / low |
+| `item.category` | ids from `itemCategories` |
+| `item.condition` | new / renewed / used / unknown |
+| `item.seller` | merchant / third_party / unknown |
+| `paymentOptionsVisible[]` | apple_pay / saved_card / card_form / bnpl / paypal / other |
+| `selectedPayment.kind` | saved_card / card_form / apple_pay / unknown |
+| `selectedPayment.network` | visa / mastercard / discover / amex / unknown |
+| protection `type` | purchase_protection / extended_warranty / cell_phone_protection |
+| `limit.appliesTo` | item / claim |
+| `verification` | verified / partial / unverified |
+
+**Errors:** shape `{"requestId", "decision": {"kind": "error", "reason": "error", "presentation": "island", "copy": {...}}, "error": {"code", "message"}}`. `error.code`: parse_failed / timeout / bad_request / privacy_rejected / server_error. The backend returns **400 privacy_rejected** for any body with a run of ≥12 digits, and never logs request bodies.
+
+**On-device records** (App Group container, shared by the app process and the widget extension)
+
+`CheckRecord`, stored at `<AppGroup>/checks/<checkId>.json` and written by `CheckCheckoutIntent`. Records older than 24 h are pruned. `view`: result / saved / sent.
+```json
+{
+  "checkId": "5f0c…uuid",
+  "createdAt": "2026-10-17T14:02:11-07:00",
+  "sentPayload": { "...": "the exact /v1/check request JSON" },
+  "response": { "...": "the /v1/check response JSON" },
+  "filledCopy": {"line1": "Use Freedom ••1234", "line2": "…", "line3": "…", "instruction": "…"},
+  "replayed": false,
+  "savedPurchaseId": null,
+  "view": "result"
+}
+```
+
+`Purchase`, a SwiftData model in the App Group container. `status`: planned / confirmed.
+```json
+{
+  "id": "p_…", "checkId": "5f0c…uuid", "status": "planned",
+  "merchant": "Northbay Electronics", "item": "Aero 14 Laptop, 14-inch", "category": "computers",
+  "condition": "new", "priceUsd": 1499.00, "purchaseDate": "2026-10-17",
+  "cardId": "chase-freedom-unlimited",
+  "coverage": [{"type": "purchase_protection", "until": "2027-02-14", "limitUsd": 500},
+               {"type": "extended_warranty", "until": "2028-10-17", "assumesManufacturerWarrantyMonths": 12}],
+  "manufacturerWarrantyMonths": null, "orderNumber": null, "transactionId": null
+}
+```
+
+**Intents** (main app target only via `allowedExecutionTargets`; none registered in `AppShortcutsProvider`)
+- **`CheckCheckoutIntent : AppIntent, LiveActivityIntent`** — `supportedModes = [.background]`; `@Parameter(title: "Screenshot") var image: IntentFile?`; `perform() -> some IntentResult & ShowsSnippetIntent` (the not-set-up path returns a static `ShowsSnippetView` result). Steps, in order:
+  1. End all Fine Print activities.
+  2. Request *Checking*.
+  3. Crop the top strip.
+  4. OCR, gate, redaction.
+  5. POST `/v1/check` with a 6.0 s timeout; on failure, look up replay.
+  6. Write the `CheckRecord`.
+  7. If `presentation == "snippet"`: end the activity (`.immediate`) and return `.result(snippetIntent: CheckResultSnippetIntent(checkId:))`. Otherwise: update the activity with an alert, sleep 4 s, end it `.immediate`, and return `.result()`.
+- **`CheckResultSnippetIntent : SnippetIntent`** — `@Parameter var checkId: String`. `perform()` reads the `CheckRecord` and returns `ShowsSnippetView` with `CheckResultView(record:)`. **No side effects:** the system may re-perform it.
+- **`SavePurchaseIntent : AppIntent`** — `@Parameter var checkId: String`. Loads the record; if `savedPurchaseId` is already set it does nothing (idempotent). Otherwise it inserts `Purchase(status: planned)` from `purchaseDraft`, sets `savedPurchaseId` and `view = saved`, and returns `.result()`. The system then re-performs the snippet intent, which shows Saved.
+- **`ShowSentIntent : AppIntent`** — `@Parameter var checkId: String`. Sets `view = sent` and returns `.result()`.
+- The snippet's buttons are `Button(intent: SavePurchaseIntent(checkId:))` and `Button(intent: ShowSentIntent(checkId:))`. **Done is the system button.**
+- **Pattern B** (only if G2's button test fails): inside `CheckCheckoutIntent`, `try await requestConfirmation(actionName: <custom "Paying with Freedom">, snippetIntent: CheckResultSnippetIntent(checkId:))`. On confirm: save, then return the Saved result. On cancel: return.
+
+**Live Activity** (Swift `Codable`, well under 4 KB). `phase`: checking / keep / no_checkout / error / switch_fallback. `glyph`: fp / check / warning / card. `staleDate` = start + 2 min on every request and update.
+```json
+// ActivityAttributes (static)
+{"checkId": "5f0c…uuid"}
+// ContentState (dynamic)
+{
+  "phase": "keep",
+  "glyph": "check",
+  "cardShortName": "Apple Card",
+  "last4": "5678",
+  "line1": "✓ Keep Apple Card ••5678",
+  "line2": "Best of your 3 cards here",
+  "lockScreenText": "Fine Print checked this screen"
+}
+```
+
+**`POST /v1/coverage`** (only when the user runs a check on one purchase)
+
+Request:
+```json
+{
+  "purchase": {"cardId": "chase-freedom-unlimited", "merchant": "Northbay Electronics",
+               "item": "Aero 14 Laptop, 14-inch", "category": "computers", "condition": "new",
+               "priceUsd": 1499.00, "purchaseDate": "2026-10-17", "status": "confirmed",
+               "manufacturerWarrantyMonths": 12, "manufacturerWarrantySource": "user",
+               "paidWith": "card_full"},
+  "incident": {"date": "2027-12-17", "description": "Lines across the screen. Never dropped.",
+               "cause": "failure", "causeSource": "user_confirmed"},
+  "asOf": "2027-12-18"
+}
+```
+`manufacturerWarrantySource`: user / assumed ("Don't know" → 12 months, assumed). `paidWith`: card_full / card_partial / bnpl / unknown. `cause`: failure / accidental_damage / theft / loss / cosmetic / unknown; null means the server classifies it. `causeSource`: user_confirmed / llm.
+
+Response (`?format=json`; `?format=html` renders the same data through `templates/verdict.html`):
+```json
+{
+  "verdict": "may_be_eligible",
+  "benefit": "extended_warranty",
+  "route": "card_extended_warranty",
+  "headline": "May be eligible: Extended warranty (Freedom Unlimited)",
+  "why": "The maker's 1-year warranty ended Oct 17, 2027. The extra year runs to Oct 17, 2028. A failure without a drop fits this benefit.",
+  "limit": {"perItemUsd": null, "perClaimUsd": null, "perAccountUsd": null, "payoutCapUsd": null, "appliesTo": "claim"},
+  "assumptions": [],
+  "citations": [{"document": "…Guide to Benefits", "section": "Extended Warranty Protection",
+                 "versionDate": "…", "quote": "…", "verification": "verified"}],
+  "checklist": ["Itemized receipt", "Card statement showing the purchase", "Original manufacturer warranty", "Repair estimate"],
+  "deadline": {"type": "unknown", "date": null, "note": "Check the notice deadline in your Guide to Benefits"},
+  "contact": {"administrator": "…", "url": "…"},
+  "disclaimer": "Only the benefit administrator decides claims. Fine Print never files for you."
+}
+```
+`verdict`: may_be_eligible / not_covered / need_more_info. `benefit`: purchase_protection / extended_warranty / none. `route`: card_extended_warranty / card_purchase_protection / manufacturer / none. `deadline.type`: notify_by / file_by / unknown. For case 13: `"limit": {"perItemUsd": 500, "payoutCapUsd": 500, "appliesTo": "item"}`, and the headline adds "up to $500 of the $1,499". Date and window math happens in code; the LLM only classifies the cause (the user confirms) and drafts `why`.
+
+**`POST /v1/store/pay`** (demo store only)
+- Request: `{"orderId": "NB-100234", "savedCardId": "demo-visa-1234", "amountUsd": 1499.00}`
+- Response: `{"status": "approved", "processor": "visa_acceptance_sandbox", "transactionId": "…", "cardLabel": "Visa ••1234"}`
+- `status`: approved / declined / error. `processor`: visa_acceptance_sandbox / mock. `savedCardId` maps to a processor test card only through `DEMO_TEST_CARD_MAP` in the deployed environment.
+
+**`.env.example`** (placeholders only):
+```
+LLM_PROVIDER=gemini
+LLM_API_KEY=changeme
+LLM_MODEL=changeme
+PARSER_MODE=rules|llm
+COVERAGE_MODE=rules|llm
+PAY_MODE=mock|visa_acceptance
+VISA_ACCEPTANCE_MERCHANT_ID=changeme
+VISA_ACCEPTANCE_KEY_ID=changeme
+VISA_ACCEPTANCE_SECRET_KEY=changeme
+DEMO_TEST_CARD_MAP=changeme
+PUBLIC_BASE_URL=https://changeme
+```
+
+### 15.6 Engine
+Implement §7.2 exactly (rules 0–9, thresholds in `policy.py`). The copy templates come from §6.3.
+
+### 15.7 Ordered build steps
+
+| # | What | Owner | h | Machine | Done when … |
+|---|---|---|---|---|---|
+| 0 | Repo skeleton (§15.2), `.gitignore`, `.env.example`, `THIRD_PARTY.md`, README, `pyproject.toml` | B | 1 | any | `pytest` runs green; `uvicorn app.main:app` serves `/health` → `{"ok": true}` |
+| 1 | Contracts: Schemas + examples (§15.5); pydantic models | B | 1.5 | any | `test_contracts.py`: every example validates, and every enum in §15.5 appears in a schema |
+| 2 | `data/cards.json` + schema (5 cards, ~10 merchants, categories); `catalog.py` | B (+D check) | 3 + 2 (G5) | any | `test_catalog.py` passes; every protection has `limits`, `source` and `verification`; demo-card protections `verified` by Fri 6 PM |
+| 3 | Fixtures (§15.4): 7 wallets, 22 scenarios, 13 cases, demo OCR text + carts, replay files | D | 4 | any | Committed **before** step 4 merges; each expectation hand-computed; `test_privacy.py` finds no real names, addresses or ≥12-digit runs, and no file matching the real-app pattern (`realapp-*`, `*-private*`) |
+| 4 | `engine.py` (§7.2) + `copy.py` (§6.3) + `parser_rules.py` + `POST /v1/check` | B | 5 | any | `test_scenarios.py` ≥20/22 with **0 false switches and 0 protection drops** (5, 21, 22 pass); S1 returns the exact §6.3 copy; ≥12-digit bodies → 400 privacy_rejected; p50 < 50 ms locally |
+| 5 | Demo store: `checkout.html?item=` laptop / laptop-renewed / earbuds / mug, saved-card selector (Mastercard ••5678 default, Visa ••4321, Visa ••1234), `confirm.html`; static deploy Thu; served by the backend at `/store/` on Fri | D | 3.5 (+B 0.5) | any | Loads over HTTPS on cellular by Thu 11 PM; Change card works; the 7 screenshots captured; page header starts below 80 pt |
+| 6 | iOS **S1 chain**: app + widget extension + App Group; `CheckCheckoutIntent` as in §15.5 with a fake result; Shortcut "Fine Print" with the input branch, bound to the Action Button and Back Tap; os_signpost per link | C | 4 | Mac | **G1:** ≥9/10 Action Button presses over the deployed store and 2 real apps show the correct underlying screenshot in a debug list and show the island; Back Tap tallied; timings in `docs/spikes.md` |
+| 7 | **S2/S3/S6**: Pattern A (`ShowsSnippetIntent` + `CheckResultSnippetIntent` + `SavePurchaseIntent` button + reload) and Pattern B; `.named("silent.caf")` alert; `.transient` probe; island state 5 min after Done; Shortcuts indicator during the 4-s Keep hold; capture via wired QuickTime / AirPlay; Share Sheet branch | C | 3.5 | Mac | `docs/spikes.md` records Y/N + counts for each item; G2/G3 decided per §6.6 |
+| 8 | On-device top-strip crop (`TOP_CROP_PT = 62` × scale, tuned here) + OCR (Vision `RecognizeDocumentsRequest` or `VNRecognizeTextRequest`) + checkout gate (money total + a checkout keyword) + redaction (Luhn-valid runs, any ≥12-digit run, "ending in dddd" → `[CARD]`, emails, phones, lines after "Ship to" / "Deliver to" / "Name") | A | 5 | Mac (regexes: any) | On the 7 demo screenshots: merchant + total kept 7/7; no status-bar text in the output; 0 digit runs ≥12, 0 emails, 0 phones, 0 "Alex Doe" or address lines; p50 ≤400 ms inside the background intent; the feed is rejected on device |
+| 9 | `parser_llm.py`: schema-constrained Cart JSON; reads numbers, never computes; Σ items vs total checked in code | A | 3 | any | On `fixtures/ocr/*`: merchant + total 100%, items + condition ≥85%; latency logged; `PARSER_MODE` switch works |
+| 10 | Wiring: POST with a 6.0 s timeout → *Couldn't check*; `{last4:…}` and `{ppCap}` filled on device; `CheckRecord` written [C]. Replay: key = `merchantId` (a merchant name from the bundled `cards.json` found in the OCR text) + total cents (regex on "Total") → `fixtures/replay/<merchantId>_<totalCents>.json`, labeled "replayed"; What-we-sent screen lists `CheckRecord.sentPayload` [A] | C 2.5 + A 2 | 4.5 | Mac | Press on the demo laptop → real Switch snippet with the §6.3 copy; airplane mode → *Couldn't check* within 7 s, or a replay hit when replay is on; **replay still hits after ≥2 min, at a different battery %, and with another Live Activity running** |
+| 11 | App shell: onboarding (tiles from the bundled `cards.json`, default, optional last 4, "Use demo wallet"); "Check a screenshot" (PhotosPicker → same pipeline → in-app `CheckResultView`); Purchases (planned / confirmed, "I bought this") | A | 4 | Mac | A non-teammate sets up 3 cards in ≤60 s; an in-app check matches the press result |
+| 12a | `SavePurchaseIntent` + `ShowSentIntent` + Saved / Sent views | C | 2 | Mac | **G2 button test:** ≥9/10 taps over Safari create one planned Purchase (idempotent on a double tap) and reload to Saved; Purchases shows "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028" |
+| 12b | `POST /v1/coverage` (`coverage.py`; `COVERAGE_MODE`; LLM cause classification by A) | B 2 + A 1 | 3 | any | `test_coverage.py` ≥12/13; every not_covered case right; cases 3 and 13 return `payoutCapUsd: 500`; every verdict cites section + version date |
+| 12c | `templates/verdict.html` + `?format=html` (the §5.5 copy) | D | 2 | any | Cases 1, 2, 7 and 13 render correctly in a phone-width browser |
+| 12d | SwiftUI claim input (confirm card + date → `confirmed`; maker's warranty 1 yr / 2 yr / don't know; text + cause chips) + `WKWebView` showing the HTML verdict | A | 1.5 | Mac | Cases 1 and 2 work end to end on the device with a date override |
+| 13 | `visa_acceptance.py` + `/v1/store/pay`; `confirm.html` shows the transaction ID | B | 3 | any | **G4:** the sandbox approves the demo Visa ••1234 order with a transaction ID; `PAY_MODE=mock` works offline |
+| 14 | Trigger setup screen (Shortcut link, Action Button first, Back Tap, practice press) | D | 1.5 | Mac | On a clean phone: install → bind → practice press with no surprise prompt, in ≤2:00 |
+| 15 | Metrics harness + rehearsal script (latency, accuracy on 30 screenshots with aggregates only, scenario/coverage runs, 10 clean arcs) | A + all | 5.5 | scripts any; runs on device | Numbers in `docs/metrics.md`; the harness prints aggregates only |
+
+### 15.8 Stubs and mocks allowed in v1
+- **Allowed:** `PARSER_MODE=rules`, `COVERAGE_MODE=rules`, `PAY_MODE=mock`; replay for demo fixtures (always labeled); placeholder card art; seeded demo wallet; date override for "14 months later"; the client-side mock payment in Thursday's static store; a fake result in the S1 spike.
+- **Not allowed:** faking a live press on stage with a recording; showing `partial` or `unverified` values as fact; saying "Visa-verified"; saying "Nothing left your phone" when text was sent; saying the Visa transaction is attached to the purchase in P0.
+
+### 15.9 Do NOT build yet
+Settings-screenshot onboarding · receipt press on the confirmation · Why sheet · claim PDF · Apple Pay / Stripe path · VDBP · Visual Intelligence · Safari or share extension · widget · on-device Foundation Models · rewards-optimizer features (money-leak audit, caps, rotating categories, FX/DCC, order splitting, expected value) · offline rules engine · push notifications or a push-based Live Activity end · the lingering island reminder · accounts / login · analytics · iOS 26 support · more than 5 cards · photo analysis in the coverage check · an `AppShortcutsProvider` entry for `CheckCheckoutIntent`.
+
+---
+
+## 16. Risks & open questions
 
 | Risk | Mitigation |
 |---|---|
-| Live Activity start from a Shortcut-run intent fails on iOS 27 (docs say it works; DTS confirms) | 2:30 PM test; `SnippetIntent` fallback |
-| "Take Screenshot" behavior on iOS 27 / Shortcuts banner appears in screenshot (u) | Test Friday; crop top strip |
-| Island hidden while Apple Pay sheet is open (u) | Deliver the result before the user taps Apple Pay; card art matches the sheet |
-| Apple Pay last 4 differs from plastic last 4 (u which one Settings shows) | Store both; confirm once when a receipt shows an unknown last 4 |
-| Latency on venue Wi-Fi | On-device OCR, text-only upload, cached replay mode, two hotspots |
-| Wrong benefit data | Hand-verify demo cards; version + "last verified" dates; confidence badges |
-| Judges: "iOS 27 already shows rewards" | "Apple shows cash back; we add protections, fees, how to pay, and claims" |
-| Judges: "CardPointers has Live Activities / screenshot reading" | Theirs are location-triggered or multi-step Visual Intelligence; ours is one tap at the payment screen, content-aware, total value + coverage follow-through |
-| Visa-only = no in-person judging | Video is first-class; consider a side track after Discord answers |
-| Team roster (5 names) | Resolve before Saturday |
+| **Pre-event code vs the rules.** The '24 Hacker Guide says "Any projects submitted must be started and completed during the duration of DubHacks '24" and sets a 70-30 rule (at most 30% of code not written during the hackathon). '25 reportedly says the same; '26 rules not seen yet. The required public repo's commit history will show pre-event commits. | The team decided pre-event code is allowed, with no disclosure. D reads the '26 rules on Friday; the team decides whether to ask organizers. |
+| Take Screenshot from a hardware trigger on iOS 27 captures the app underneath (u) | Gate G1 + §6.6 |
+| Snippet appearance and buttons from an Action Button-run Shortcut (u) | Gate G2 + Pattern B + §6.6 |
+| Silent alert sound (u) | G2; fall back to `.default` |
+| Island / snippet capture for the video (u) | G3; external camera |
+| Visa Acceptance sandbox activation | Sign up Thursday night; G4 |
+| Demo-card benefit data (Active Cash extended warranty / purchase protection; Apple Card; Freedom cap per item vs per claim; notice deadlines) | G5; copy shows verified values only |
+| Few students hold a protection-bearing card | Interviews map card products; P1 non-Chase card; Q&A card on how the catalog generalizes |
+| Apple or wallets add best-card hints (Automatic Selection already surfaces co-brand cards) | Moat = protections + saved purchase + claim check |
+| Latency on venue Wi-Fi | On-device OCR, text-only upload, replay keyed on merchant + total, two hotspots |
+| Only one Mac | Single-Mac plan (§14.2) |
+| Judges: "CardPointers / iOS 27 already do this" | "CardPointers picks by merchant and offers (including Visual Intelligence on screenshots); Apple shows rewards and balances. We read the cart, weigh protections and eligibility, save the purchase and check the claim." |
+| Judges: "Is this just a Chase reminder?" | The engine and data are card-agnostic; v1's 5-card catalog is narrow because each card's benefits are hand-verified. P1 adds a non-Chase card. |
+| Track structure and judging mode in '26 (u) | Confirm on Discord. In '24, each project entered one title track plus optional sponsor tracks, and judging was in person, expo-style. |
+| Live Activity start from a Shortcut-run intent | Apple docs say a `LiveActivityIntent` can start one from the background; spike S1 confirms on device |
 
-**Unverified (test or confirm):** Take Screenshot on iOS 27; island during Apple Pay and in QuickTime; Amazon/Walmart/Best Buy in-app Apple Pay; VDBP sandbox contents for our demo cards; Active Cash and Freedom Unlimited tiers; exact notice/claim deadlines in the Freedom Unlimited Guide to Benefits; Cybersource Apple Pay setup time; whether adding a side track changes Visa judging.
+**Unverified (test or confirm):** snippet appearance and buttons from a hardware-run Shortcut; Take Screenshot from a hardware trigger on iOS 27; whether the iOS 27 screenshot automation runs without a prompt; Apple Card protections in 2026; Active Cash extended warranty / purchase protection; Amazon in-app Apple Pay; Walmart online/in-app Apple Pay; the '26 rules, Visa prompt and rubric; our island during the Apple Pay sheet / Face ID (P1 only); QuickTime/AirPlay capture of the island and snippet; the J.D. Power "29%" figure.
+
+### 16.1 Open questions for the team
+1. **Macs:** how many Macs with Xcode 27, and whose? About 30 ph of P0 needs a Mac. With one, the single-Mac plan applies.
+2. **Tonight's sign-ups (B, ~15 min):** Visa Acceptance sandbox; paid LLM key and billing (who pays?); the HTTPS host.
+3. **Rules vs pre-event code:** your decision stands. Who reads the '26 rules on Friday (proposed: D)? Ask organizers on Discord?
+4. **Track:** where did "Visa: Reimagine Shopping" come from? Paste the prompt and rubric. Is Visa a title track or a side prize in '26, and do Visa judges visit tables?
+5. **Roster:** the README lists 5 handles; teams are capped at 4 ('24 rule). Who are the 4?
+6. **Hours:** the plan assumes ≈8.5–11 ph each before Saturday (≈40 total). If anyone has less, say so tonight so the low-case plan applies.
+7. **Demo phone:** may we bind its Action Button to Fine Print? Case or mount? Laptop + USB-C cable for mirroring?
+8. **Real Wallet cards (P1 only):** does any teammate's phone hold cards that fit an Apple Pay version of S1?
+9. **Interviews:** may D approach 10–12 UW students on Thu/Fri for 5 minutes, asking only which card *products* they hold and recording aggregate counts?
 
 ---
 
-## 16. Business model (one line)
-Free for consumers; revenue from issuers/Visa for benefit engagement via the Digital Benefits Platform (never paid ranking), plus an optional claim concierge fee only when a claim pays.
+## 17. Business model (one line)
+Free for consumers; no referral fees or paid ranking. Future revenue: issuers/Visa paying for benefit engagement, never for ranking.
 
 ---
 
-## 17. Sources
-- Apple: [Live Activities HIG](https://developer.apple.com/design/human-interface-guidelines/live-activities) · [ActivityKit](https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities) · [LiveActivityIntent](https://developer.apple.com/documentation/appintents/liveactivityintent) · [App Intents supportedModes](https://developer.apple.com/documentation/appintents/appintent/supportedmodes) · [Interactive snippets](https://developer.apple.com/documentation/appintents/displaying-static-and-interactive-snippets) · [Vision RecognizeDocumentsRequest](https://developer.apple.com/documentation/vision/recognizedocumentsrequest) · [Back Tap with Shortcuts](https://support.apple.com/guide/shortcuts/run-shortcuts-tapping-iphone-apd897693606/ios) · [Visual Intelligence](https://developer.apple.com/documentation/visualintelligence/integrating-your-app-with-visual-intelligence) · [Apple Card Daily Cash merchants](https://support.apple.com/en-us/120400)
-- iOS 27 Apple Pay: [9to5Mac](https://9to5mac.com/2026/09/27/ios-27-makes-it-easier-to-switch-between-apple-pay-cards/)
-- Visa: [Digital Benefits Platform](https://developer.visa.com/capabilities/vdbp) · [VDBP how-to](https://developer.visa.com/capabilities/vdbp/docs-how-to) · [Extended Warranty](https://usa.review.visa.com/supporting-info/extended-warranty-protection.html) · [DCC](https://www.visa.com/en-us/personal/travel/dynamic-currency-conversion) · [Visa Intelligent Commerce](https://developer.visa.com/capabilities/visa-intelligent-commerce) · [Cybersource BIN Lookup](https://developer.cybersource.com/docs/cybs/en-us/bin-lookup/developer/all/rest/bin-lookup.html)
-- Benefits: [Chase Freedom benefits](https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide) · [Wells Fargo Active Cash guide](https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/) · [Consumer Reports laptop reliability](https://www.consumerreports.org/electronics-computers/laptops-chromebooks/most-reliable-laptop-brands-a1961456199/) · [Food delivery rewards rules (NerdWallet)](https://www.nerdwallet.com/credit-cards/learn/credit-cards-and-food-delivery-what-are-the-rules-on-rewards-rates)
-- Demand: [J.D. Power 2025 via Financial Brand](https://thefinancialbrand.com/news/payments-trends/card-satisfaction-muted-by-surcharges-rewards-confusion-and-debt-levels-192110) · [CFPB Circular 2024-07](https://www.consumerfinance.gov/compliance/circulars/consumer-financial-protection-circular-2024-07-design-marketing-and-administration-of-credit-card-rewards-programs/) · [HBS Working Knowledge](https://www.library.hbs.edu/working-knowledge/how-credit-card-rewards-became-multibillion-dollar-wealth-transfer) · [Adobe 2025 holiday mobile share](https://www.supplychain247.com/article/online-holiday-spending-2025-adobe-data/e_commerce) · [UW tuition payment fees](https://finance.uw.edu/sfs/tuition/payment)
-- Privacy: [Gemini API terms](https://ai.google.dev/gemini-api/terms) · [Gemini abuse monitoring](https://ai.google.dev/gemini-api/docs/abuse-monitoring) · [PCI truncated PAN FAQ](https://www.pcisecuritystandards.org/faq/articles/Frequently_Asked_Question/are-truncated-primary-account-numbers-pan-required-to-be-protected-in-accordance-with-pci-dss)
-- Rules: [DubHacks '26 Devpost](https://dubhacks-2026.devpost.com/rules)
-- Data: [CardWise (MIT)](https://github.com/novus-tech-tw/CardWise) · [mcc-codes](https://github.com/greggles/mcc-codes)
+## 18. Sources
+
+Notes on access: most of these were checked on Oct 15, 2026. devpost.com, dubhacks.co, support.apple.com, 9to5mac.com and several issuer and competitor sites weren't reachable from our research environment, so those items rest on search-result summaries and are marked as such where they matter.
+
+- **Apple (fetched from developer.apple.com):** [Live Activities HIG](https://developer.apple.com/design/human-interface-guidelines/live-activities) · [Action button HIG](https://developer.apple.com/design/human-interface-guidelines/action-button) · [Displaying live data with Live Activities](https://developer.apple.com/documentation/activitykit/displaying-live-data-with-live-activities) · [LiveActivityIntent](https://developer.apple.com/documentation/appintents/liveactivityintent) · [App Intents supportedModes](https://developer.apple.com/documentation/appintents/appintent/supportedmodes) · [Displaying static and interactive snippets](https://developer.apple.com/documentation/appintents/displaying-static-and-interactive-snippets) · [Creating controls](https://developer.apple.com/documentation/widgetkit/creating-controls-to-perform-actions-across-the-system) · [Visual Intelligence integration](https://developer.apple.com/documentation/visualintelligence/integrating-your-app-with-visual-intelligence) · [Foundation Models](https://developer.apple.com/documentation/foundationmodels) · [FinanceKit](https://developer.apple.com/documentation/financekit) · [App Clip functionality](https://developer.apple.com/documentation/appclip/choosing-the-right-functionality-for-your-app-clip) · [Vision RecognizeDocumentsRequest](https://developer.apple.com/documentation/vision/recognizedocumentsrequest) · [What's new in Apple Pay](https://developer.apple.com/apple-pay/whats-new/) · WWDC25 session 281 (snippets) · WWDC26 sessions 223 (Live Activities), 297 (Visual Intelligence), 310 (Shortcuts)
+- **Apple (search summaries):** [Back Tap with Shortcuts](https://support.apple.com/guide/shortcuts/run-shortcuts-tapping-iphone-apd897693606/ios) · [Apple Card Daily Cash merchants](https://support.apple.com/en-us/120400) · [Pay with rewards](https://support.apple.com/120479)
+- **iOS 27 Apple Pay (secondary):** [9to5Mac (Sep 27, 2026; a re-dated copy of a Jun 13 story)](https://9to5mac.com/2026/09/27/ios-27-makes-it-easier-to-switch-between-apple-pay-cards/) · [Digital Trends](https://www.digitaltrends.com/phones/ios-27s-apple-pay-fix-wont-have-you-hunting-for-the-right-card-before-checkout/) · [switchingtomac](https://www.switchingtomac.com/ios-27-apple-pay-card-switching-iphone/)
+- **Visa / payments:** [Digital Benefits Platform](https://developer.visa.com/capabilities/vdbp) · [VDBP how-to](https://developer.visa.com/capabilities/vdbp/docs-how-to) · [Cybersource BIN Lookup](https://developer.cybersource.com/docs/cybs/en-us/bin-lookup/developer/all/rest/bin-lookup.html) · Cybersource developer community threads on sandbox activation (search) · [Visa Intelligent Commerce](https://developer.visa.com/capabilities/visa-intelligent-commerce) · [DCC](https://www.visa.com/en-us/personal/travel/dynamic-currency-conversion) · Stripe "Testing Apple Pay" and domain registration docs (search)
+- **Benefits:** [Chase Freedom benefits](https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide) and Chase Freedom Unlimited card page (search: 120 days, $500 per item; +1 yr warranty) · [Wells Fargo Active Cash guide](https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/) · [Discover cuts benefits (NerdWallet)](https://www.nerdwallet.com/article/credit-cards/discover-to-cut-some-card-benefits-2018) · [Doctor of Credit](https://www.doctorofcredit.com/discover-remove-many-card-benefits-february-28th-2018/) · [Visa Extended Warranty](https://usa.review.visa.com/supporting-info/extended-warranty-protection.html)
+- **Demand:** [J.D. Power 2026 U.S. Credit Card Satisfaction Study](https://www.jdpower.com/business/press-releases/2026-u-s-credit-card-satisfaction-study/) ([BusinessWire, Aug 13, 2026](https://www.businesswire.com/news/home/20260813093708/en/Financial-Stress-Deepens-Divide-among-U.S.-Credit-Card-Customers-According-to-JD-Power)) · Adobe 2025 holiday shopping results (Jan 2026; search summary) · [UW tuition payment fees](https://finance.uw.edu/sfs/tuition/payment)
+- **Competitors:** [CardPointers 8 (9to5Mac, Sep 21, 2026)](https://9to5mac.com/2026/09/21/cardpointers-updated-for-ios-27-with-siri-ai-automatic-offer-syncing-and-much-more/) · [CardPointers AutoPilot](https://help.cardpointers.com/article/5-autopilot) · [MaxRewards Best Card Live Activity](https://help.maxrewards.com/en/articles/15880013-introducing-the-best-card-live-activity-tracker) · [Kudos × Samsung (PR Newswire)](https://www.prnewswire.com/news-releases/kudos-partners-with-samsung-to-power-the-new-samsung-pay-benefits-shopping-assistant-302620794.html) · [Samsung Next on Kudos](https://www.samsungnext.com/blog/why-we-invested-in-kudos) · [Norte purchase protection guide](https://norteapp.io/guide/purchase-protection-credit-cards)
+- **Merchants:** [Walmart Apple Pay (iclarified)](https://www.iclarified.com/101840/walmart-to-roll-out-apple-pay-at-us-stores-starting-august-24) · [Modern Retail](https://www.modernretail.co/technology/walmart-finally-starts-supporting-apple-pay-and-google-pay/) · Amazon Apple Pay: third-party blogs only (u)
+- **Privacy:** [Gemini API terms](https://ai.google.dev/gemini-api/terms) · [Gemini abuse monitoring](https://ai.google.dev/gemini-api/docs/abuse-monitoring) · [PCI truncated PAN FAQ](https://www.pcisecuritystandards.org/faq/articles/Frequently_Asked_Question/are-truncated-primary-account-numbers-pan-required-to-be-protected-in-accordance-with-pci-dss)
+- **Rules:** [DubHacks '24 Hacker Guide](https://dubhacks.notion.site/The-DubHacks-24-Hacker-Guide-16da323fc21b4c6c8c0c2fbca1b7755e) (search summary) · DubHacks '25 Devpost (rubric and rules, reported by the judge reviewer via search; (u)) · [DubHacks '26 Devpost rules](https://dubhacks-2026.devpost.com/rules) ((u): not reachable / not confirmed) · unofficial '26 schedule mirror: github.com/syedjafri06193/DubHacks-2026-Hack
+- **Data:** [CardWise (MIT)](https://github.com/novus-tech-tw/CardWise) · [mcc-codes](https://github.com/greggles/mcc-codes)

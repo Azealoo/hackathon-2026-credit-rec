@@ -7,7 +7,7 @@ Status: researched 2026-10-14. Items marked **(u)** are unconfirmed; where each 
 Owner: B (backend). SPEC §14 says to submit the sign-up in the first 15 minutes of tonight's work, because activation can stall.
 
 1. **Sign up** (about 5 minutes) at <https://developer.cybersource.com/hello-world/sandbox.html>. The form asks for:
-   - an **Organization ID**: use something like `finefrint_sandbox` (6–25 letters, digits or underscores; the page says it can't easily be renamed). **This is your merchant ID.**
+   - an **Organization ID**: use something like `fineprint_sandbox` (6–25 letters, digits or underscores; the page says it can't easily be renamed). **This is your merchant ID.**
    - company, name, country, state, city, ZIP, email and phone. Use a real, monitored email: activation arrives there. Use a team inbox, not a personal one, if one exists.
    - the "Payment Technology Provider" question: answer No.
    - Terms and a reCAPTCHA, then **Create Account**. You must tick and solve these yourself.
@@ -144,7 +144,7 @@ HTTP `201` on success (reported in Cybersource community material; not confirmed
 
 Don't copy numbers into the repo, this doc, issues, PR text or chat logs.
 
-- Cybersource's testing guide (sandbox instructions and test data): <https://developer.cybersource.com/docs/cybs/en-us/getting-started/developer/all/rest/getting-started/gs-testing.html> **(u)**: this exact URL wasn't loaded (several docs URLs I tried returned 404). If it 404s, open <https://developer.cybersource.com/> and search "Testing" / "test card numbers" from the Getting Started section.
+- Cybersource's testing guide (sandbox instructions and test data): I could not confirm its URL (several docs URLs I tried returned 404). Open <https://developer.cybersource.com/> and search "Testing" / "test card numbers" under Getting Started. **(u)**
 - Per the Account Updater test guide, Cybersource's test environment points to its per-network lists: Visa, Mastercard, American Express test card numbers: <https://developer.cybersource.com/library/documentation/dev_guides/Account_Updater_UG/html/Topics/ch_testing.htm>.
 - Visa's own pages on developer.visa.com: I could not find an official test-card page there; Visa's developer site points Cybersource users to developer.cybersource.com / developer.visaacceptance.com **(u)**.
 - Use only cards from those pages. Third-party "test card" sites turned up in search; ignore them.

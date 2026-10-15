@@ -1,4 +1,4 @@
-# LLM provider for Fine Print
+# LLM provider for Paywise
 
 Decision doc, 2026-10-14. Does not edit SPEC.md; §10 copy below is a proposed replacement. **(u)** = could not confirm.
 
@@ -69,7 +69,7 @@ Structured outputs cache the JSON **schema** (not prompts or outputs) for up to 
 ## Replacement copy for SPEC §10 (Claude)
 
 **Consent screen:**
-> Fine Print sends only a redacted order summary, such as "Northbay Electronics, Aero 14 Laptop (New), $1,499.00, Mastercard", to Anthropic's Claude API so it can read the items and prices. Card numbers, names and addresses are removed on your iPhone first, and your screenshot never leaves your phone. Anthropic doesn't use this text to train its models. It deletes API inputs and outputs within 30 days, and can keep them longer, up to 2 years, if its safety systems flag them. Tap "What we sent" any time to see exactly what was sent.
+> Paywise sends only a redacted order summary, such as "Northbay Electronics, Aero 14 Laptop (New), $1,499.00, Mastercard", to Anthropic's Claude API so it can read the items and prices. Card numbers, names and addresses are removed on your iPhone first, and your screenshot never leaves your phone. Anthropic doesn't use this text to train its models. It deletes API inputs and outputs within 30 days, and can keep them longer, up to 2 years, if its safety systems flag them. Tap "What we sent" any time to see exactly what was sent.
 
 **Retention copy:**
 > Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider, Anthropic, may keep the redacted order text for up to 30 days, and longer if its safety systems flag it. It isn't used for model training.

@@ -32,7 +32,7 @@ Checked **2026-10-14** in the built-in browser, public pages only (no sign-in, n
 
 > Use generative AI to craft smarter, effortless commerce experiences. Design and build a commerce experience that makes shopping more intuitive and personalized, transforming one or more stages of the journey: discovery, decision-making, personalization, checkout, payments, loyalty and rewards, or post-purchase.
 
-Note it asks for **generative AI**. Fine Print's LLM cart parsing and cause classification (§7.3) are the answer to that. The rules-only fallback modes alone would not be.
+Note it asks for **generative AI**. Paywise's LLM cart parsing and cause classification (§7.3) are the answer to that. The rules-only fallback modes alone would not be.
 
 **Judging rubric (verbatim headings, [overview, Judging Criteria](https://dubhacks-2026.devpost.com/), 2026-10-14).** This is the event-wide rubric. No Visa-specific rubric is published.
 

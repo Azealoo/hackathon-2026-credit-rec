@@ -7,7 +7,7 @@ Status: researched 2026-10-14. Items marked **(u)** are unconfirmed; where each 
 Owner: B (backend). SPEC §14 says to submit the sign-up in the first 15 minutes of tonight's work, because activation can stall.
 
 1. **Sign up** (about 5 minutes) at <https://developer.cybersource.com/hello-world/sandbox.html>. The form asks for:
-   - an **Organization ID**: use something like `fineprint_sandbox` (6–25 letters, digits or underscores; the page says it can't easily be renamed). **This is your merchant ID.**
+   - an **Organization ID**: use something like `paywise_sandbox` (6–25 letters, digits or underscores; the page says it can't easily be renamed). **This is your merchant ID.**
    - company, name, country, state, city, ZIP, email and phone. Use a real, monitored email: activation arrives there. Use a team inbox, not a personal one, if one exists.
    - the "Payment Technology Provider" question: answer No.
    - Terms and a reCAPTCHA, then **Create Account**. You must tick and solve these yourself.
@@ -155,7 +155,7 @@ Check: use a **Visa** test card for the Visa ••1234 demo card so the story s
 
 - Time to activation: unknown (§2).
 - Whether the sandbox account needs a separate "enable payments" step before `/pts/v2/payments` works: unknown (u); the first hello-world call (Fri 9 AM–12 PM in SPEC §14) will show it.
-- Whether the sign-up form wants a real company: use "Fine Print (DubHacks '26 project)"; (u) whether anything is checked.
+- Whether the sign-up form wants a real company: use "Paywise (DubHacks '26 project)"; (u) whether anything is checked.
 
 ## Sources
 

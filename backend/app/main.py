@@ -2,6 +2,8 @@
 
 from fastapi import FastAPI
 
+from app import catalog  # noqa: F401  Loads and validates data/cards.json: a bad catalog stops startup (§15.3).
+
 app = FastAPI(title="Paywise", version="0.1.0")
 
 

@@ -73,7 +73,7 @@
           }
         },
         "protections": {"type": "array", "items": {"$ref": "#/$defs/protection"}},
-        "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/cardSource"}},
         "notes": {"$ref": "#/$defs/notes"}
       },
       "if": {"properties": {"rewardCurrency": {"const": "cash_back"}}},
@@ -142,7 +142,8 @@
           "required": ["conditionsAllowed", "paymentRequirement", "excludedCategories"],
           "properties": {
             "conditionsAllowed": {
-              "type": "array",
+              "description": "null when item condition doesn't apply (cell phone protection covers the phone on the wireless bill).",
+              "type": ["array", "null"],
               "uniqueItems": true,
               "items": {"type": "string", "enum": ["new", "renewed", "used"]}
             },
@@ -225,6 +226,20 @@
         "versionDate": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
         "url": {"type": ["string", "null"]},
         "quote": {"type": ["string", "null"]}
+      }
+    },
+    "cardSource": {
+      "description": "A card-level citation (earn rates, benefit lists): a named document someone read on checkedOn.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document", "section", "versionDate", "url", "quote", "checkedOn"],
+      "properties": {
+        "document": {"type": "string"},
+        "section": {"type": ["string", "null"]},
+        "versionDate": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+        "url": {"type": "string"},
+        "quote": {"type": ["string", "null"]},
+        "checkedOn": {"$ref": "#/$defs/date"}
       }
     },
     "merchant": {

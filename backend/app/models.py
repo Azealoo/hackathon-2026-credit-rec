@@ -298,11 +298,12 @@ class Purchase(Contract):
 
 class LiveActivityContentState(Contract):
     phase: Literal["checking", "keep", "no_checkout", "error", "switch_fallback"]
-    glyph: Literal["fp", "check", "warning", "card"]
+    glyph: Literal["paywise", "check", "warning", "card"]
     card_short_name: str | None
     last4: Annotated[str, Field(pattern=r"^[0-9]{4}$")] | None
     line1: str
     line2: str | None
+    line3: str | None = None
     lock_screen_text: str
 
 
@@ -321,6 +322,8 @@ class CoveragePurchase(Contract):
     manufacturer_warranty_months: Annotated[int, Field(ge=0)] | None
     manufacturer_warranty_source: Literal["user", "assumed"]
     paid_with: Literal["card_full", "card_partial", "bnpl", "unknown"]
+    # Part of the price charged to the card (card_partial caps the payout at this, §5.5). Optional.
+    amount_on_card_usd: Usd | None = None
 
 
 class Incident(Contract):

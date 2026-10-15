@@ -46,7 +46,7 @@ SPEC_ENUMS = [
     ("view", {"result", "saved", "sent"}),
     ("status", {"planned", "confirmed"}),  # Purchase.status
     ("phase", {"checking", "keep", "no_checkout", "error", "switch_fallback"}),
-    ("glyph", {"fp", "check", "warning", "card"}),
+    ("glyph", {"paywise", "check", "warning", "card"}),
     ("manufacturerWarrantySource", {"user", "assumed"}),
     ("paidWith", {"card_full", "card_partial", "bnpl", "unknown"}),
     ("cause", {"failure", "accidental_damage", "theft", "loss", "cosmetic", "unknown"}),

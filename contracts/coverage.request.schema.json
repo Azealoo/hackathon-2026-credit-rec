@@ -28,7 +28,11 @@
           "type": "string",
           "enum": ["user", "assumed"]
         },
-        "paidWith": {"type": "string", "enum": ["card_full", "card_partial", "bnpl", "unknown"]}
+        "paidWith": {"type": "string", "enum": ["card_full", "card_partial", "bnpl", "unknown"]},
+        "amountOnCardUsd": {
+          "description": "Optional. The part of the price charged to the card, for paidWith card_partial: the payout cap is at most this (SPEC.md §5.5). null or absent means unknown; with card_full the amount charged is priceUsd.",
+          "anyOf": [{"$ref": "common.schema.json#/$defs/usd"}, {"type": "null"}]
+        }
       }
     },
     "incident": {

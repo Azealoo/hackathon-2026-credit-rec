@@ -1,0 +1,56 @@
+{
+  "description": "SPEC v2.1 §15.4 demo wallets. The first card listed is the default. Last 4 are fake (1234, 5678, 4321 only) and stay on the phone: never put them in a /v1/check request.",
+  "wallets": [
+    {
+      "id": "demo-3card",
+      "cards": [
+        {"cardId": "apple-card", "last4": "5678"},
+        {"cardId": "wf-active-cash", "last4": "4321"},
+        {"cardId": "chase-freedom-unlimited", "last4": "1234"}
+      ]
+    },
+    {
+      "id": "apple-ac",
+      "cards": [
+        {"cardId": "apple-card", "last4": "5678"},
+        {"cardId": "wf-active-cash", "last4": "4321"}
+      ]
+    },
+    {
+      "id": "no-protection",
+      "cards": [
+        {"cardId": "apple-card", "last4": "5678"},
+        {"cardId": "discover-it-student-cash-back", "last4": "4321"}
+      ]
+    },
+    {
+      "id": "rise-2card",
+      "cards": [
+        {"cardId": "apple-card", "last4": "5678"},
+        {"cardId": "chase-freedom-rise", "last4": "1234"}
+      ]
+    },
+    {
+      "id": "fu-default",
+      "cards": [
+        {"cardId": "chase-freedom-unlimited", "last4": "1234"},
+        {"cardId": "wf-active-cash", "last4": "4321"},
+        {"cardId": "apple-card", "last4": "5678"}
+      ]
+    },
+    {
+      "id": "discover-fu",
+      "cards": [
+        {"cardId": "discover-it-student-cash-back", "last4": "4321"},
+        {"cardId": "chase-freedom-unlimited", "last4": "1234"}
+      ]
+    },
+    {
+      "id": "rise-ac",
+      "cards": [
+        {"cardId": "chase-freedom-rise", "last4": "1234"},
+        {"cardId": "wf-active-cash", "last4": "4321"}
+      ]
+    }
+  ]
+}

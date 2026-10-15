@@ -1,0 +1,18 @@
+NORTHBAY Electronics
+Checkout
+Ceramic Coffee Mug, 12 oz  $18.00
+New
+Qty 1
+Ship to
+[NAME]
+[ADDRESS]
+Free delivery in 2–4 days
+Contact
+[EMAIL] · [PHONE]
+Pay with  Mastercard [CARD]  Change
+Shipping  Free
+Total  $18.00
+Place order
+Northbay Electronics is a fictional store made for a
+hackathon demo. Nothing here is for sale and no money
+moves.

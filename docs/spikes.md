@@ -143,19 +143,21 @@ Read `docs/benefits-verification.md` §1 and open each cited URL to check the qu
 
 ## Results (fill in)
 
+Also found on Oct 16: no new screenshot in Photos after the presses, so Take Screenshot keeps the image in memory. Presses 1–2 of the assisted run were *replayed* because a push redeployed Render mid-test (restart 09:56:36). The first live parse after the restart took 4.8 s, close to the phone's 6 s timeout. Don't push during a demo.
+
 | Item | Target | Result | When |
 |---|---|---|---|
 | S6 setup time | ≤2:00 | | |
-| Signed Shortcut file imports | Y | | |
-| G1 store presses | ≥9/10 | | |
+| Signed Shortcut file imports | Y | **Y** (AirDropped `ios/Shortcut/Paywise.shortcut`, Add Shortcut, runs) | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
+| G1 store presses | ≥9/10 | **5/5 so far with Back Tap** (4 in `testAssistedPresses` + 1 manual): each captured the store page and showed the exact Switch copy. 5 more needed for the gate. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
 | G1 real app 1 / app 2 | ≥9/10 overall | | |
-| Back Tap | tally | | |
+| Back Tap | tally | **5/5**. In the assisted run each double tap made **two** `/v1/check` calls a few seconds apart; the second one read the snippet over the page and returned *items unreadable*. The manual press made one call. Watch for double fires. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
 | Press → *Checking* p50 | ≤1.0 s | | |
 | Press → answer p50 / p90 | ≤3.5 s / ≤5 s | | |
-| G2 snippet appears (Safari) | ≥9/10 | | |
+| G2 snippet appears (Safari) | ≥9/10 | **5/5** over Safari (in SpringBoard's tree; lines 2–3 exact) | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
 | G2 snippet appears (third-party app) | ≥1 | | |
-| G2 button saves + reloads | ≥9/10 | | |
-| Double tap → one purchase | Y | | |
+| G2 button saves + reloads | ≥9/10 | **Manual 1/1**: a planned Purchase row in the phone's store (Aero 14, Freedom, $1,499, check a9d3b20a), and the card reloaded to Saved. XCUITest's synthetic taps on the snippet button saved **0/4**: they don't reach a system-presented snippet, so this gate needs human taps. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
+| Double tap → one purchase | Y | not yet on the phone (simulator: 2 racing saves → 1 row) | |
 | Island empty 5 min after Done | Y | | |
 | Silent alert: no sound, expands | Y | | |
 | Shortcuts indicator during the Keep hold | Y/N | | |
@@ -163,5 +165,5 @@ Read `docs/benefits-verification.md` §1 and open each cited URL to check the qu
 | G3 wired QuickTime / AirPlay | Y | | |
 | OCR p50 on the phone | ≤400 ms | | |
 | Replay after 2 min / other battery % / other Live Activity | Y / Y / Y | | |
-| G4 approved transaction ID | Y | | |
+| G4 approved transaction ID | Y | **N: account-side.** Processor `fdiglobal` is missing `usd_outlet_id` and `usd_terminal_id` (`scripts/visa_txn.py`); Cybersource support must fix it | Oct 16, 08:33–09:00 |
 | G5 human review | done | | |

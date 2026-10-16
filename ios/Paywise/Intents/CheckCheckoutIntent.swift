@@ -24,20 +24,35 @@ struct CheckCheckoutIntent: AppIntent, LiveActivityIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ShowsSnippetIntent {
+        try await perform(trace: CheckTrace(source: .intent))
+    }
+
+    /// `perform()`, timed by `trace` (SPEC §15.7 step 6: os_signpost per link, `CheckTrace`). Tests pass their own
+    /// trace to read the links back. `result` and `press-to-result` end when the answer is handed to the system or the
+    /// island alert is sent, before any hold.
+    @MainActor
+    func perform(trace: CheckTrace) async throws -> some IntentResult & ShowsSnippetIntent {
+        trace.begin(.pressToResult)
+        trace.begin(.intentToChecking)
         let deps = Dependencies.current
-        let outcome = await CheckFlow(deps: deps).run(imageData: image?.data)
+        let outcome = await CheckFlow(deps: deps).run(imageData: image?.data, trace: trace)
+        trace.begin(.result)
 
         switch outcome {
         case .notSetUp:
+            trace.resultShown()
             return .result(snippetIntent: MessageSnippetIntent.notSetUp)
 
         case .snippet(let checkId):
             // The Live Activity is ended before the snippet appears (§6.3).
             await deps.island.end()
+            trace.resultShown()
             return .result(snippetIntent: CheckResultSnippetIntent(checkId: checkId))
 
         case .confirm(let checkId, let actionName):
             await deps.island.end()
+            // The confirmation prompt shows the result snippet; the wait for the user's tap isn't timed.
+            trace.resultShown()
             do {
                 try await requestConfirmation(
                     actionName: .custom(
@@ -57,12 +72,14 @@ struct CheckCheckoutIntent: AppIntent, LiveActivityIntent {
 
         case .island(let alert):
             if await deps.island.alert(checkId: alert.checkId, state: alert.state, sound: alert.sound) {
+                trace.resultShown()
                 try? await Task.sleep(for: alert.hold)
                 await deps.island.end()
                 return .result(snippetIntent: EmptySnippetIntent())
             }
             // No Live Activity could show (§6.6): the same state as a static snippet.
             await deps.island.end()
+            trace.resultShown()
             if alert.hasRecord {
                 return .result(snippetIntent: CheckResultSnippetIntent(checkId: alert.checkId))
             }

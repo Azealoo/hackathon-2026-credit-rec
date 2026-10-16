@@ -331,5 +331,49 @@ struct ResultTextTests {
     @Test func savedWithoutItemNameDropsIt() {
         #expect(ResultText.saved(.init(priceUsd: 1_499)).line1 == "✓ Saved · $1,499")
         #expect(ResultText.saved(.init(item: "Aero 14 Laptop, 14-inch", priceUsd: 1_499)).line1 == "✓ Saved: Aero 14 · $1,499")
+        #expect(ResultText.saved(.init(priceUsd: 1_499)).line1Cuts == ["✓ Saved · $1,499"])
+    }
+
+    /// The lines Saved line 1 falls back to when it can't fit at 70%: the whole line first, then the item name cut
+    /// shorter (never mid-space or after a dash), then no name; the price is in every one.
+    @Test func savedLine1CutsKeepThePrice() {
+        let cuts = ResultText.saved(.init(item: "Studio Headphones, Over-Ear", priceUsd: 120)).line1Cuts
+        #expect(cuts.first == "✓ Saved: Studio Headphones · $120")
+        #expect(cuts.dropFirst().first == "✓ Saved: Studio Headphone… · $120")
+        #expect(cuts.contains("✓ Saved: Studio… · $120"))
+        #expect(!cuts.contains("✓ Saved: Studio … · $120"))
+        #expect(cuts.last == "✓ Saved · $120")
+        #expect(cuts.allSatisfy { $0.hasPrefix("✓ Saved") && $0.hasSuffix(" · $120") })
+        #expect(Set(cuts).count == cuts.count)
+    }
+
+    /// §6.3: only *Switch, cash* puts an eligibility note in an empty line 3. *Keep, default best* shows none ("—"),
+    /// though the engine attaches notes to Keep results too (the renewed laptop on a wallet whose default is best).
+    @MainActor @Test func eligibilityNoteFillsLine3OnlyOnSwitchCash() throws {
+        let catalog = CardCatalog.bundled()
+        let note = "Renewed, no warranty: no card covers it"
+        let cash = try #require(GalleryState.resultCash.record(catalog: catalog))
+        #expect(cash.filledCopy.line3 == nil)
+        #expect(CheckResultView.displayedCopy(cash).line3 == note)
+
+        func record(_ decision: CheckResponse.Decision) throws -> CheckRecord {
+            var response = try #require(DemoChecks.renewedSwitchCash(catalog))
+            response.decision = decision
+            return try #require(DemoChecks.record(
+                response, wallet: .demo3Card, catalog: catalog, ocrText: DemoChecks.renewedOCRText
+            ))
+        }
+        var keep = DemoChecks.keepDefaultBest(catalog)
+        keep.eligibilityNotes = [note]
+        let kept = try record(keep)
+        #expect(CheckResultView.displayedCopy(kept) == kept.filledCopy)
+        #expect(CheckResultView.displayedCopy(kept).line3 == nil)
+
+        // Over §6.2's 44 characters a note never fills line 3, as in the backend's `switch_cash`.
+        var long = try #require(DemoChecks.renewedSwitchCash(catalog).flatMap(\.decision))
+        long.eligibilityNotes = ["Item condition unclear: no card cover counted"]
+        #expect(CheckResultView.displayedCopy(try record(long)).line3 == nil)
+        long.eligibilityNotes = ["Item condition unclear: no card cover counted", note]
+        #expect(CheckResultView.displayedCopy(try record(long)).line3 == note)
     }
 }

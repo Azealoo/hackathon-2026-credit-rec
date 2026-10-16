@@ -88,6 +88,21 @@ enum DemoChecks {
         return try? json.decode(CheckResponse.self)
     }
 
+    /// *Switch, protection* on long-named headphones ($299, fake data): the earbuds check with a name too long for one
+    /// Saved line 1, "Noise-Cancelling Headphones, Black".
+    static func headphonesSwitch() -> CheckResponse? {
+        guard var response = earbudsSwitch() else { return nil }
+        let name = "Noise-Cancelling Headphones, Black"
+        response.cart?.items?[0].name = name
+        response.cart?.items?[0].priceUsd = 299
+        response.cart?.totalUsd = 299
+        // Freedom 1.5% = $4.49 vs Active Cash 2% = $5.98 (each rounded to cents first, §6.3).
+        response.decision?.copy?.line3 = "$1.49 less cash back than Active Cash"
+        response.purchaseDraft?.item = name
+        response.purchaseDraft?.priceUsd = 299
+        return response
+    }
+
     /// *Switch, protection, pick also cash-best* (scenario 16, `discover-fu`).
     static func laptopSwitchAlsoCashBest(_ catalog: CardCatalog) -> CheckResponse? {
         guard var response = laptopSwitch(), var decision = response.decision else { return nil }
@@ -197,6 +212,17 @@ enum DemoChecks {
     Noise-Cancelling
     Pay with  Mastercard [CARD]  Change
     Total  $249.00
+    Place order
+    """
+
+    /// The long-named headphones' screen text (fake data), as on-device reading would send it.
+    static let headphonesOCRText = """
+    NORTHBAY Electronics
+    Checkout
+    Noise-Cancelling Headphones,  $299.00
+    Black
+    Pay with  Mastercard [CARD]  Change
+    Total  $299.00
     Place order
     """
 

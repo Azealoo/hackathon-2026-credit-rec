@@ -33,43 +33,40 @@ struct CheckFlow: Sendable {
 
     // MARK: Steps 1–6
 
-    func run(imageData: Data?) async -> Outcome {
+    /// `trace` times each link (os_signpost + one `.info` line each, `CheckTrace`). The intent begins
+    /// `intent-to-checking` before calling this; the in-app check never does, so that link is a no-op there.
+    func run(imageData: Data?, trace: CheckTrace = CheckTrace(source: .inApp)) async -> Outcome {
         let checkId = RequestID.make()
 
         // 1. End any Paywise activity.
         await deps.island.endAll()
-        guard let imageData else { return .notSetUp }
+        guard let imageData else {
+            trace.abandon(.intentToChecking)
+            return .notSetUp
+        }
 
         // 2. Start *Checking*; if ActivityKit refuses, carry on without it (§6.6).
         _ = await deps.island.startChecking(checkId: checkId)
+        trace.end(.intentToChecking)
 
-        // 3–4. Crop, OCR, gate and redaction, all on the phone.
-        let reader = deps.screenReader
-        let reading: ScreenReading
-        do {
-            reading = try await withDeadline(deps.readTimeout) { try await reader.read(imageData) }
-        } catch {
-            // No total was read and nothing was sent: §6.3 *No checkout, on device*.
-            Self.log.error("Screen reading failed: \(String(describing: error), privacy: .public)")
+        // 3–4. Crop, OCR, gate and redaction, all on the phone; then the body and its privacy check.
+        trace.begin(.read)
+        let prepared = await prepare(imageData: imageData, checkId: checkId)
+        trace.end(.read)
+        guard let prepared else {
             return .island(onDeviceAlert(checkId: checkId, state: Self.noCheckoutOnDevice))
         }
-        guard reading.isCheckout else {
-            // Nothing is uploaded from a screen that isn't a checkout (§10).
-            return .island(onDeviceAlert(checkId: checkId, state: Self.noCheckoutOnDevice))
-        }
+        let wallet = prepared.wallet
 
         // 5. POST /v1/check (6.0 s); on failure, replay or *Couldn't check*.
-        let wallet = deps.walletStore.load()
-        let request = makeRequest(checkId: checkId, reading: reading, wallet: wallet)
-        guard let body = try? JSONCoding.encoder.encode(request), PrivacyGuard.isSendable(body) else {
-            // The body would break the backend's privacy rule (or didn't encode): it is never sent, so the answer
-            // is §6.3 *No checkout, on device*, not the backend's privacy_rejected.
-            Self.log.error("The check body failed the on-device privacy check; nothing was sent.")
-            return .island(onDeviceAlert(checkId: checkId, state: Self.noCheckoutOnDevice))
-        }
-        let (responseJSON, replayed) = await fetch(body: body, checkId: checkId, ocrText: request.screen.ocrText)
+        trace.begin(.post)
+        let (responseJSON, replayed) = await fetch(
+            body: prepared.body, checkId: checkId, ocrText: prepared.request.screen.ocrText
+        )
+        trace.end(.post)
 
         // 6. Write the CheckRecord.
+        trace.begin(.record)
         let response = (try? responseJSON.decode(CheckResponse.self)) ?? CheckResponse()
         let filled = CopyFill.fill(
             response.decision?.copy,
@@ -79,7 +76,7 @@ struct CheckFlow: Sendable {
         let record = CheckRecord(
             checkId: checkId,
             createdAt: CheckRecord.timestamp(deps.now(), timeZone: deps.timeZone),
-            sentPayload: (try? JSONValue(data: body)) ?? .null,
+            sentPayload: (try? JSONValue(data: prepared.body)) ?? .null,
             response: responseJSON,
             filledCopy: filled,
             replayed: replayed
@@ -91,9 +88,45 @@ struct CheckFlow: Sendable {
             stored = false
             Self.log.error("Couldn't write the check record: \(String(describing: error), privacy: .public)")
         }
+        trace.end(.record)
 
         // 7 (decided here, shown by the intent).
         return present(record: record, decision: response.decision, wallet: wallet, stored: stored)
+    }
+
+    /// A checkout read on the phone, turned into a body that passed the privacy check.
+    private struct Prepared {
+        var request: CheckRequest
+        var body: Data
+        var wallet: Wallet
+    }
+
+    /// Steps 3–4 and the request body. nil means §6.3 *No checkout, on device*: reading failed, the screen isn't a
+    /// checkout, or the body would break the privacy rule. Nothing has been sent in any of those cases.
+    private func prepare(imageData: Data, checkId: String) async -> Prepared? {
+        let reader = deps.screenReader
+        let reading: ScreenReading
+        do {
+            reading = try await withDeadline(deps.readTimeout) { try await reader.read(imageData) }
+        } catch {
+            // No total was read and nothing was sent: §6.3 *No checkout, on device*.
+            Self.log.error("Screen reading failed: \(String(describing: error), privacy: .public)")
+            return nil
+        }
+        guard reading.isCheckout else {
+            // Nothing is uploaded from a screen that isn't a checkout (§10).
+            return nil
+        }
+
+        let wallet = deps.walletStore.load()
+        let request = makeRequest(checkId: checkId, reading: reading, wallet: wallet)
+        guard let body = try? JSONCoding.encoder.encode(request), PrivacyGuard.isSendable(body) else {
+            // The body would break the backend's privacy rule (or didn't encode): it is never sent, so the answer
+            // is §6.3 *No checkout, on device*, not the backend's privacy_rejected.
+            Self.log.error("The check body failed the on-device privacy check; nothing was sent.")
+            return nil
+        }
+        return Prepared(request: request, body: body, wallet: wallet)
     }
 
     // MARK: Request

@@ -68,10 +68,16 @@ struct CheckResultView: View {
             && ResultText.primaryButtonTitle(decision: response.decision, catalog: catalog) != nil
     }
 
-    /// Lines 1–3 with eligibility notes standing in for an empty line 3 (Switch, cash).
-    private var copy: CheckRecord.FilledCopy {
+    private var copy: CheckRecord.FilledCopy { Self.displayedCopy(record) }
+
+    /// Lines 1–3 as shown. Only *Switch, cash* puts an eligibility note in an empty line 3 (§6.3): the first one
+    /// within §6.2's 44 characters, as the backend's `switch_cash` does. Every other state keeps line 3 as sent:
+    /// *Keep, default best* has none ("—") even when the decision carries a note.
+    static func displayedCopy(_ record: CheckRecord) -> CheckRecord.FilledCopy {
         var copy = record.filledCopy
-        if copy.line3 == nil, let note = decision?.eligibilityNotes?.first, !note.isEmpty {
+        let decision = record.parsedResponse.decision
+        if copy.line3 == nil, decision?.kind == .switch, decision?.reason == .cash,
+           let note = decision?.eligibilityNotes?.first(where: { !$0.isEmpty && $0.count <= 44 }) {
             copy.line3 = note
         }
         return copy
@@ -149,14 +155,18 @@ struct CheckResultView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center, spacing: 12) {
                 cardArt(response.purchaseDraft?.cardId)
-                // Wraps from XL like lines 2–3: at XXL one line can't hold "✓ Saved: Wireless Earbuds · $249" even
-                // at 70%, and the cut would drop the price.
-                Text(saved.line1)
-                    .font(.system(size: line1Size, weight: .bold))
-                    .tracking(-0.5)
-                    .lineLimit(oneLine && !savedLinesWrap ? 1 : 3)
-                    .minimumScaleFactor(0.7)
-                    .fixedSize(horizontal: false, vertical: true)
+                if oneLine && !savedLinesWrap {
+                    SavedLine1(lines: saved.line1Cuts, size: line1Size)
+                } else {
+                    // Wraps from XL like lines 2–3: at XXL one line can't hold "✓ Saved: Wireless Earbuds · $249"
+                    // even at 70%, and the cut would drop the price.
+                    Text(saved.line1)
+                        .font(.system(size: line1Size, weight: .bold))
+                        .tracking(-0.5)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.7)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             ForEach([saved.line2, showsLine3 ? saved.line3 : nil].compactMap { $0 }, id: \.self) { line in
                 // One line at the default sizes (shrinking a little); from XL a line wraps rather than cut off a
@@ -236,6 +246,53 @@ struct CheckResultView: View {
     private var showsLine3: Bool { typeSize < .accessibility2 }
     private var showsFootnote: Bool { typeSize < .accessibility1 }
     private var showsInstruction: Bool { typeSize < .accessibility4 }
+}
+
+/// *Saved* line 1 on one line: "✓ Saved: Aero 14 · $1,499" shrinks to 70% like the verdict line; past that, the first
+/// of `lines` (`Saved.line1Cuts`) that fits at 70% shows, so a long item name is cut and the price never is
+/// ("✓ Saved: Noise-Cancelling He… · $299").
+private struct SavedLine1: View {
+    let lines: [String]
+    let size: CGFloat
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            ForEach(lines, id: \.self) { line in
+                // Taken when the line fits at 70%. The text's own floor is lower: SwiftUI cuts a line that should
+                // just fit at its floor (seen on iOS 27 up to about 72% for a 70% floor), and this text is only ever
+                // offered a width that fits it at 70% or more, so it never gets that far.
+                FitsWhenShrunk(scale: 0.7) {
+                    Text(line)
+                        .font(.system(size: size, weight: .bold))
+                        .tracking(-0.5)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .monospacedDigit()
+        // VoiceOver reads the whole name, not the cut.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(lines.first ?? "")
+    }
+}
+
+/// Reports its content's ideal width at `scale`, so `ViewThatFits` takes text that `minimumScaleFactor` can shrink to
+/// fit; any other proposal passes straight through.
+private struct FitsWhenShrunk: Layout {
+    var scale: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let subview = subviews.first else { return .zero }
+        guard proposal.width == nil else { return subview.sizeThatFits(proposal) }
+        let ideal = subview.sizeThatFits(proposal)
+        return CGSize(width: (ideal.width * scale).rounded(.up), height: ideal.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+    }
 }
 
 /// Wraps an optional record: a pruned or missing check shows §6.3 *Couldn't check*'s line 1 alone (§6.3 has no state

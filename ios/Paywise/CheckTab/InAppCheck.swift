@@ -53,7 +53,8 @@ final class InAppCheck {
     func run(imageData: Data) async {
         phase = .checking
         let deps = deps
-        let outcome = await CheckFlow(deps: deps).run(imageData: imageData)
+        // Signposts `read`, `post` and `record` like a press (CheckTrace), labeled "in-app".
+        let outcome = await CheckFlow(deps: deps).run(imageData: imageData, trace: CheckTrace(source: .inApp))
         switch outcome {
         case .snippet(let checkId), .confirm(let checkId, _):
             show(checkId: checkId, fallback: nil)

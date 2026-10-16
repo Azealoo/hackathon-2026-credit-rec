@@ -46,7 +46,7 @@ iOS Simulator tool's screenshot (`xcrun simctl io … screenshot` omits the isla
 |---|---|
 | `-demoActivity <state>` | Starts that Live Activity with the §6.3 copy for the demo wallet and leaves it running (never stale): `checking`, `keep`, `keepMethod`, `noCheckout`, `couldntCheck`, `switchFallback`, `stale` (staleDate in the past). Result states alert, so the island expands. |
 | `-demoActivity end` | Ends every Paywise activity. |
-| `-gallery <state>` | Opens on the result snippet in that state, full screen: `result`, `resultCashBest`, `resultCash`, `keepProtected`, `saved`, `savedEarbuds` (the longer "Wireless Earbuds" Saved line 1), `sent`, `notSetUp`. |
+| `-gallery <state>` | Opens on the result snippet in that state, full screen: `result`, `resultCashBest`, `resultCash`, `keepProtected`, `saved`, `savedEarbuds` (the longer "Wireless Earbuds" Saved line 1), `savedLongName` (a name too long for one line: cut, price kept), `sent`, `notSetUp`. |
 | `-checkState <state>` | Opens the Check tab on an answer the island shows after a press, as "Check a screenshot" shows it: `keepDefault`, `keepMethod`, `keepItemsUnreadable`, `noCheckoutOnDevice`, `noCheckoutFromBackend`, `alreadyPaid`, `couldntCheck`, `tookTooLong` (use with `-skipOnboarding -tab check`). |
 
 ```bash

@@ -328,7 +328,10 @@ final class ScreenshotTourUITests: XCTestCase {
 
     @MainActor
     private func gallery() {
-        for state in ["result", "resultCashBest", "resultCash", "keepProtected", "saved", "savedEarbuds", "sent", "notSetUp"] {
+        for state in [
+            "result", "resultCashBest", "resultCash", "keepProtected", "saved", "savedEarbuds", "savedLongName", "sent",
+            "notSetUp",
+        ] {
             let app = Launch.app(["-gallery", state])
             XCTAssertTrue(app.staticTexts["Paywise"].firstMatch.waitForExistence(timeout: 10), "gallery \(state)")
             shots.snap("gallery-\(state)")

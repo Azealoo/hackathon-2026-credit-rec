@@ -87,7 +87,7 @@ PAYWISE_UI testCheckAScreenshotLive: Switch copy on screen 4.17 s after the pick
 
 | Metric (§13) | Target | Needs | Owner |
 |---|---|---|---|
-| Press → *Checking* | p50 ≤1.0 s | iPhone, 20 presses. No os_signpost was built, so time them from a video (`docs/spikes.md` step 1) | A |
+| Press → *Checking* | p50 ≤1.0 s | iPhone, 20 presses. The `intent-to-checking` signpost times the app's part (`docs/spikes.md` › Timing a press); press → intent start needs a video (step 1) | A |
 | Press → result | p50 ≤3.5 s, p90 ≤5 s on venue Wi-Fi or a hotspot | Same. The live `/v1/check` above (p50 1.1–1.5 s) is only the network + server part | A |
 | Chain reliability | ≥19/20 presses capture the right screen and show a result | iPhone (G1) | C |
 | Snippet save | ≥9/10 taps create a planned Purchase and reload to Saved | iPhone (G2). The simulator only shows two racing saves make one purchase | C |

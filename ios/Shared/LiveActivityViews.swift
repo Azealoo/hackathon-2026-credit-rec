@@ -9,7 +9,7 @@ import SwiftUI
 /// | keep | card art | ✓ | ✓ | lines 1–2 |
 /// | switch_fallback | card art | ••last4 (compact) / glyph (expanded) | card art | lines 1–3 |
 /// | no_checkout, error | glyph | ⚠ | ⚠ | lines 1–3 |
-/// | stale (any) | glyph | — | glyph | — |
+/// | stale (any) | glyph | — | glyph | — (`IslandExpandedBottom`) |
 ///
 /// The island is always black, so its parts draw in the dark appearance (`accent` resolves to accentDark #5b74ff).
 typealias ActivityState = PaywiseActivityAttributes.ContentState
@@ -195,6 +195,21 @@ struct IslandLines: View {
             }
             .monospacedDigit()
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+/// The expanded island's full-width bottom region: lines 1–3, 8 pt in from each side so the first letters clear the
+/// island's rounded corners. Nothing when stale (the leading glyph alone remains).
+struct IslandExpandedBottom: View {
+    let state: ActivityState
+    let isStale: Bool
+
+    var body: some View {
+        if !isStale {
+            IslandLines(state: state)
+                .padding(.horizontal, 8)
+                .padding(.top, 2)
         }
     }
 }

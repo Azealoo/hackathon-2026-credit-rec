@@ -27,12 +27,14 @@ struct DebugHookTests {
         #expect(!DemoActivity.checking.alerts && !DemoActivity.stale.alerts && DemoActivity.keep.alerts)
     }
 
-    /// `stale` is requested 5 s before it goes stale, so the system flips it (a staleDate already past at request time
-    /// draws nothing in the island); the other demo states never go stale.
-    @Test func onlyTheStaleDemoGoesStaleFiveSecondsAfterTheRequest() {
-        #expect(DemoActivity.stale.staleDelay == 5)
+    /// `stale` is requested as *Checking*, then updated 2 s later with a staleDate already past, so `context.isStale`
+    /// flips (on the simulator a future staleDate never redrew the island, and a request already stale draws nothing);
+    /// the other demo states never go stale.
+    @Test func onlyTheStaleDemoIsUpdatedStaleTwoSecondsAfterTheRequest() {
+        #expect(DemoActivity.stale.staleUpdateDelay == .seconds(2))
+        #expect(DemoActivity.stale.state(deps: TestEnvironment(reading: .laptopCheckout).deps) == .checking)
         for demo in DemoActivity.allCases where demo != .stale {
-            #expect(demo.staleDelay == nil, "\(demo.rawValue)")
+            #expect(demo.staleUpdateDelay == nil, "\(demo.rawValue)")
         }
     }
 
@@ -43,7 +45,8 @@ struct DebugHookTests {
         #expect(GalleryState.requested(arguments: ["Paywise", "-gallery", "nonsense"]) == nil)
         #expect(GalleryState.requested(arguments: ["Paywise"]) == nil)
         #expect(Set(GalleryState.allCases.map(\.rawValue)) == [
-            "result", "resultCashBest", "resultCash", "keepProtected", "saved", "savedEarbuds", "sent", "notSetUp",
+            "result", "resultCashBest", "resultCash", "keepProtected", "saved", "savedEarbuds", "savedLongName", "sent",
+            "notSetUp",
         ])
     }
 
@@ -109,8 +112,10 @@ struct DebugHookTests {
     @Test func gallerySaved() throws {
         let record = try #require(GalleryState.saved.record(catalog: .bundled()))
         #expect(record.view == .saved)
-        #expect(ResultText.saved(record.parsedResponse.purchaseDraft) == .init(
-            line1: "✓ Saved: Aero 14 · $1,499",
+        let saved = ResultText.saved(record.parsedResponse.purchaseDraft)
+        #expect(saved.line1 == "✓ Saved: Aero 14 · $1,499")
+        #expect(saved == .init(
+            item: "Aero 14", price: "$1,499",
             line2: "Theft & damage cover up to $500 to Feb 14, 2027",
             line3: "Extra warranty year to Oct 17, 2028*",
             footnote: "*If the maker's warranty is 1 year. Planned: confirm after you pay."
@@ -120,12 +125,27 @@ struct DebugHookTests {
     @Test func gallerySavedEarbuds() throws {
         let record = try #require(GalleryState.savedEarbuds.record(catalog: .bundled()))
         #expect(record.view == .saved)
-        #expect(ResultText.saved(record.parsedResponse.purchaseDraft) == .init(
-            line1: "✓ Saved: Wireless Earbuds · $249",
+        let saved = ResultText.saved(record.parsedResponse.purchaseDraft)
+        #expect(saved.line1 == "✓ Saved: Wireless Earbuds · $249")
+        #expect(saved == .init(
+            item: "Wireless Earbuds", price: "$249",
             line2: "Theft & damage cover up to $500 to Feb 14, 2027",
             line3: "Extra warranty year to Oct 17, 2028*",
             footnote: "*If the maker's warranty is 1 year. Planned: confirm after you pay."
         ))
+    }
+
+    /// A name too long for one line (R6 keeps "Noise-Cancelling Headphones" whole): the snippet cuts the name and
+    /// keeps the price, from the same lines 2–3.
+    @Test func gallerySavedLongName() throws {
+        let record = try #require(GalleryState.savedLongName.record(catalog: .bundled()))
+        #expect(record.view == .saved)
+        let saved = ResultText.saved(record.parsedResponse.purchaseDraft)
+        #expect(saved.line1 == "✓ Saved: Noise-Cancelling Headphones · $299")
+        #expect(saved.line2 == "Theft & damage cover up to $500 to Feb 14, 2027")
+        #expect(saved.line3 == "Extra warranty year to Oct 17, 2028*")
+        #expect(saved.line1Cuts.contains("✓ Saved: Noise-Cancelling Hea… · $299"))
+        #expect(saved.line1Cuts.allSatisfy { $0.hasSuffix(" · $299") })
     }
 
     @Test func gallerySentShowsTheRedactedTextWithoutLast4() throws {

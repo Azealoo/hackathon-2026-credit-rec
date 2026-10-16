@@ -218,6 +218,14 @@ struct TestEnvironment {
         }
     }
 
+    /// Runs the intent with these dependencies, timed by `trace`.
+    @MainActor
+    func perform(_ intent: CheckCheckoutIntent, trace: CheckTrace, deps: AppDependencies? = nil) async throws {
+        try await Dependencies.$current.withValue(deps ?? self.deps) {
+            _ = try await intent.perform(trace: trace)
+        }
+    }
+
     static func screenshot() -> CheckCheckoutIntent {
         CheckCheckoutIntent(image: .init(data: Data([0x89, 0x50, 0x4e, 0x47]), filename: "screenshot.png", type: .png))
     }

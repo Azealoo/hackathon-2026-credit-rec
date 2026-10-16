@@ -19,8 +19,11 @@ enum GalleryState: String, CaseIterable, Sendable {
     case keepProtected
     /// *Saved* after [Paying with Freedom].
     case saved
-    /// *Saved* for the demo earbuds: the longest Saved line 1 in the fixtures ("✓ Saved: Wireless Earbuds · $249").
+    /// *Saved* for the demo earbuds, a longer Saved line 1 that still fits ("✓ Saved: Wireless Earbuds · $249").
     case savedEarbuds
+    /// *Saved* for a name too long for one line: the name is cut, the price kept ("✓ Saved: Noise-Cancelling He… · $299"
+    /// on Paywise Dev 18).
+    case savedLongName
     /// *Sent* after [What we sent].
     case sent
     /// *Not set up*: the intent ran with no image.
@@ -66,6 +69,12 @@ enum GalleryState: String, CaseIterable, Sendable {
         case .savedEarbuds:
             return DemoChecks.earbudsSwitch().flatMap {
                 DemoChecks.record($0, wallet: .demo3Card, catalog: catalog, ocrText: DemoChecks.earbudsOCRText, view: .saved)
+            }
+        case .savedLongName:
+            return DemoChecks.headphonesSwitch().flatMap {
+                DemoChecks.record(
+                    $0, wallet: .demo3Card, catalog: catalog, ocrText: DemoChecks.headphonesOCRText, view: .saved
+                )
             }
         case .sent:
             return DemoChecks.laptopSwitch().flatMap {

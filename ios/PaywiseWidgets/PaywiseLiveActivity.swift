@@ -4,8 +4,8 @@ import WidgetKit
 
 /// The Paywise Live Activity (SPEC §6.3, §6.4): *Checking*, then the island results `CheckCheckoutIntent` alerts
 /// with (Keep, No checkout, Couldn't check, the switch fallback). The parts live in `Shared/LiveActivityViews.swift`;
-/// this file places them. Long lines go in the full-width bottom region (the center region clips ~40-character lines),
-/// 8 pt in from each side so the first letters clear the island's rounded corners.
+/// this file places them. Long lines go in the full-width bottom region (the center region clips ~40-character lines;
+/// `IslandExpandedBottom`).
 struct PaywiseLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: PaywiseActivityAttributes.self) { context in
@@ -28,12 +28,8 @@ struct PaywiseLiveActivity: Widget {
                         .islandAppearance()
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    if !isStale {
-                        IslandLines(state: state)
-                            .padding(.horizontal, 8)
-                            .padding(.top, 2)
-                            .islandAppearance()
-                    }
+                    IslandExpandedBottom(state: state, isStale: isStale)
+                        .islandAppearance()
                 }
             } compactLeading: {
                 IslandLeadingMark(state: state, isStale: isStale, slot: .compact)

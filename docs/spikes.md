@@ -23,7 +23,7 @@ SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, c
 | Spike | What (§14.2) | Seen on the simulator | Still open (iPhone) |
 |---|---|---|---|
 | **S0** | Project, signing, widget extension, App Group | Builds and tests green. The Live Activity renders, which needs the signed extension. | Nothing. A device build and install worked at 18:20 (u: from the build log). |
-| **S1** | Press → Shortcut → intent → island → result; os_signpost per link | Intent, OCR and live backend (see G1) | The press chain, and its timings. **No os_signpost was built** (grep of `ios/`), so time presses from a video. |
+| **S1** | Press → Shortcut → intent → island → result; os_signpost per link | Intent, OCR and live backend (see G1) | The press chain, and its timings. os_signpost per link is built (`CheckTrace`, see [Timing a press](#timing-a-press-os_signpost)) but not yet read on the phone. The part before the app runs (press → Shortcut → Take Screenshot → intent start) still needs the video. |
 | **S2** | Snippet Patterns A and B, button + reload, silent sound, `.transient` probe, island 5 min after Done, Shortcuts indicator during the 4 s Keep hold | Patterns A and B and the island fallback are built. Settings › Results switches them without a rebuild (`light-default/41-settings.png`). Pattern B without a card name falls back to a static snippet (`confirmWithoutCardNameShowsStaticSnippet`). | Every Y/N item. **The `.transient` probe isn't built** (grep of `ios/`). |
 | **S3** | Capture rig | Nothing | Same as G3 |
 | **S6** | Setup in ≤2:00 + Share Sheet branch | Steps in `ios/Shortcut/README.md`. Signed `ios/Shortcut/Paywise.shortcut` (u: signing from the build log). Setup screens `*/07–09`, `*/45`. | Stopwatch. Share Sheet branch. Whether the signed file imports. |
@@ -34,7 +34,45 @@ SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, c
 |---|---|---|---|
 | OCR + redaction time | p50 ≤400 ms (§15.7 step 8) | p50 443 ms, p90 527 ms, n = 21 (Mac CPU; `readTimeP50`, 18:02 run) | Open |
 | `silent.caf` | No sound; the island still expands | Silent PCM in both bundles | Open (G2) |
+| Stale island | The bare glyph, nothing else (§6.4) | `StaleRenderTests` renders every island part and the Lock Screen with `isStale = true` for 4 states: the glyph only, no text, art or last 4 (`live-activity/stale-rendered.png`). `-demoActivity stale` (23:19): ActivityKit reports `stale` 1 s after the past-staleDate update. The redrawn island itself wasn't seen (simctl screenshots omit the island) | Open |
 | Replay robustness | Still hits after ≥2 min, at another battery %, and with another Live Activity running (§15.7 step 10) | `replayHitAfterFailure` (replay after a failure) and `replayOffMeansCouldntCheck` (replay off → *Couldn't check*) in `CheckCheckoutIntentTests`; both passed in the 18:02 run | Open |
+
+## Timing a press (os_signpost)
+
+SPEC §15.7 step 6 asks for os_signpost per link. Built in `ios/Paywise/Check/CheckTrace.swift` (Oct 15, 23:20): subsystem `com.azealoo.paywise`, category `check`, one interval per link per check, each with its own signpost ID. When an interval ends, one `.info` line logs `<name> <ms> ms (<source>)`. Only names and durations are logged: no OCR text, amounts, cards or stores. The source is `intent` for a press, `in-app` for "Check a screenshot".
+
+| Interval | From → to |
+|---|---|
+| `intent-to-checking` | `CheckCheckoutIntent.perform()` starts → *Checking* requested from ActivityKit |
+| `read` | Crop + OCR + checkout gate + redaction, then the request body's on-device privacy check |
+| `post` | `POST /v1/check` (6.0 s timeout), including the replay lookup after a failure |
+| `record` | `CheckRecord` built and written to the App Group |
+| `result` | The flow's answer → the snippet or confirmation handed to the system, or the island alert sent |
+| `press-to-result` | `perform()` starts → the end of `result`. Doesn't include the 4 s / 8 s island hold after it |
+
+"Press" here means the intent's start. The Action Button press, the Shortcut and Take Screenshot run before the app does anything (§9 budget: 0.5–1.0 s), so only the video shows them. Press → *Checking* on the video minus `intent-to-checking` ≈ the time before the intent starts. A link that doesn't run has no interval: no checkout means no `post` and no `record`. With no screenshot (*Not set up*), `intent-to-checking` ends as "abandoned" and logs no duration.
+
+**On the simulator** (checked 23:17 on Paywise Dev 18 during the unit suite: 20 intent runs that got as far as the POST logged all six links, and no line had OCR text, a store, a card or an amount):
+
+```bash
+xcrun simctl spawn <udid> log stream --info --signpost --style compact \
+  --predicate 'subsystem == "com.azealoo.paywise" AND category == "check"'
+```
+
+```
+… Sp Paywise[…] [com.azealoo.paywise:check] [spid 0x3f2, process, begin] press-to-result: intent
+… Sp Paywise[…] [com.azealoo.paywise:check] [spid 0x3f2, process,   end] intent-to-checking
+… I  Paywise[…] [com.azealoo.paywise:check] intent-to-checking 0 ms (intent)
+… I  Paywise[…] [com.azealoo.paywise:check] read 1 ms (intent)
+… I  Paywise[…] [com.azealoo.paywise:check] post 6 ms (intent)
+… I  Paywise[…] [com.azealoo.paywise:check] press-to-result 9 ms (intent)
+```
+
+(Unit-test numbers with a stub server and a fixture reader, so they're only an example of the format.) Without `--info` the duration lines are hidden; without `--signpost` the intervals are.
+
+**On the iPhone** (u: neither route has been run on the phone yet). `log stream` on the Mac reads only the Mac's own log, so use one of these:
+- **Instruments:** open Xcode › Open Developer Tool › Instruments, pick the iPhone and **All Processes** (the intent runs in Paywise launched in the background), and use the **os_signpost** instrument (in the Logging template, or add it to a Blank one). Record, do the presses, stop, then filter to subsystem `com.azealoo.paywise`. Each interval shows its duration (u: template and menu names not checked on Instruments 27).
+- **Console.app:** pick the iPhone in the sidebar, turn on Action › Include Info Messages, search `subsystem:com.azealoo.paywise category:check`, and press. The `.info` lines carry the durations (u: menu names not checked on macOS 27).
 
 ## Morning test on the iPhone (about 30 min)
 
@@ -53,7 +91,7 @@ Follow `ios/Shortcut/README.md` sections A–C with a stopwatch: AirDrop `Paywis
 5. Open Paywise › Settings › **What we sent**. Each check shows the text that was read; it must be the store's checkout, not Shortcuts or Paywise.
 6. Do 5 presses on each of 2 real apps' cart or checkout screens (look only; don't buy). Count presses that showed *Checking* and an answer about that screen. Never save those screenshots in the repo.
 7. Back Tap: **Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise**. Do 10 double taps on the store page and count.
-8. From the video, for each press note the time from the press to *Checking* and to the answer. Targets: press → *Checking* p50 ≤1.0 s; press → answer p50 ≤3.5 s, p90 ≤5 s.
+8. From the video, for each press note the time from the press to *Checking* and to the answer. Targets: press → *Checking* p50 ≤1.0 s; press → answer p50 ≤3.5 s, p90 ≤5 s. Record the signposts during the presses too ([Timing a press](#timing-a-press-os_signpost)): they split each time into the app's links, and the rest is press → intent start.
 
 Fail (<9/10) → SPEC §6.6 G1: try the iOS 27 screenshot automation, then the Share Sheet path.
 
@@ -76,7 +114,7 @@ Fail → film with an external camera and add an overlay (§14.2).
 
 ### 4. OCR time on the phone, ≈3 min
 
-The press path has no timing log, so run the timing test on the phone (unlocked, on the cable). This reinstalls the same Debug build:
+The `read` signpost from step 1 times crop + OCR + gate + redaction inside the background intent on the phone ([Timing a press](#timing-a-press-os_signpost)); write down its p50. As a cross-check, run the timing test on the phone (unlocked, on the cable). This reinstalls the same Debug build:
 
 ```bash
 cd ios

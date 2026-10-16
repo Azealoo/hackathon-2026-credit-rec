@@ -11,8 +11,10 @@ import os
 ///
 /// Result states are requested and then updated with an alert, as a real press does, so the island expands.
 /// Unlike a real check (staleDate = now + 2 min, §6.2) a demo state never goes stale, so a screenshot taken minutes
-/// later still shows it. `stale` is requested with a staleDate 5 s ahead (`staleDelay`) and the system flips it to
-/// stale then: an activity requested already stale draws nothing in the island.
+/// later still shows it. `stale` requests *Checking* the same way, then 2 s later (`staleUpdateDelay`) updates it with
+/// the same state and a staleDate 1 s in the past, so `context.isStale` flips and the island redraws as the bare glyph.
+/// Two other routes failed on the simulator: a future staleDate (now + 5 s) never redrew the island (still *Checking*
+/// 90 s later), and an activity requested already stale draws nothing in the island.
 enum DemoActivity: String, CaseIterable, Sendable {
     case checking
     case keep
@@ -51,10 +53,10 @@ enum DemoActivity: String, CaseIterable, Sendable {
         }
     }
 
-    /// Seconds after the request at which the system marks the activity stale: only `stale`, 5 s, so it starts as
-    /// *Checking* and turns into the bare glyph by itself. A staleDate already past at request time draws nothing.
-    var staleDelay: TimeInterval? {
-        self == .stale ? 5 : nil
+    /// How long after the request `stale` is updated with a staleDate already past (only `stale`, 2 s). It starts as
+    /// *Checking* and the update turns it into the bare glyph.
+    var staleUpdateDelay: Duration? {
+        self == .stale ? .seconds(2) : nil
     }
 
     /// Result states alert (the island expands); *Checking* and stale don't.
@@ -105,8 +107,7 @@ enum DemoActivity: String, CaseIterable, Sendable {
         }
 
         let state = demo.state(deps: deps)
-        let staleDate: Date? = demo.staleDelay.map { Date.now.addingTimeInterval($0) }
-        let content = ActivityContent(state: state, staleDate: staleDate)
+        let content = ActivityContent(state: state, staleDate: nil)
         let enabled = ActivityAuthorizationInfo().areActivitiesEnabled
         let activity: Activity<PaywiseActivityAttributes>
         do {
@@ -136,6 +137,21 @@ enum DemoActivity: String, CaseIterable, Sendable {
             )
             await activity.update(content, alertConfiguration: alert)
             log.notice("demoActivity \(demo.rawValue, privacy: .public): alert update sent to \(id, privacy: .public)")
+        }
+        if let delay = demo.staleUpdateDelay {
+            try? await Task.sleep(for: delay)
+            // The same state, already stale: the update makes the system redraw with `context.isStale == true`.
+            await activity.update(ActivityContent(state: state, staleDate: Date.now.addingTimeInterval(-1)))
+            log.notice("""
+            demoActivity \(demo.rawValue, privacy: .public): stale update sent to \(id, privacy: .public), \
+            state \(String(describing: activity.activityState), privacy: .public)
+            """)
+            // ActivityKit may apply the staleDate after the update returns: log the state once more.
+            try? await Task.sleep(for: .seconds(1))
+            log.notice("""
+            demoActivity \(demo.rawValue, privacy: .public): 1 s after the stale update, \
+            state \(String(describing: activity.activityState), privacy: .public)
+            """)
         }
         return "Started \(demo.rawValue) (\(id))"
     }

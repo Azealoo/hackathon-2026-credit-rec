@@ -11,6 +11,7 @@
 		02DF4324C7393BC54071E511 /* CheckLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02CF820C6516F2225B273F3 /* CheckLifecycleTests.swift */; };
 		04409158A8DC79DD842A49FF /* PaywiseLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2F8DFF0D8112E3C9A6E716 /* PaywiseLiveActivity.swift */; };
 		0B4E6BDB520AFB8D4D8CC8B9 /* check.request.example.json in Resources */ = {isa = PBXBuildFile; fileRef = 92B4E97EC6C9EA3FD7EE314F /* check.request.example.json */; };
+		0CF8A8104C5E76FCEEF08C60 /* DevicePressUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ADD2196A4BB90DC50066BD0 /* DevicePressUITests.swift */; };
 		103F6A6FCF987CCCE3EB337F /* PaywiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1690B4C28A2D74519C8DB82 /* PaywiseApp.swift */; };
 		107790AC3806AE68689B9F20 /* CardCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0B46265DB4ABE9657BEDB4 /* CardCatalog.swift */; };
 		1574CB6C0F919FA3193C6A5E /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83968CE77789F62D255851EB /* AppGroup.swift */; };
@@ -216,6 +217,7 @@
 		99C390DAE8695563CEDE54EA /* CheckTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckTabView.swift; sourceTree = "<group>"; };
 		9A3CF9DD2D04B045A1E17C0F /* laptop-confirmation.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "laptop-confirmation.png"; sourceTree = "<group>"; };
 		9A63A6AF4849162377131A1B /* PaywiseUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PaywiseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9ADD2196A4BB90DC50066BD0 /* DevicePressUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePressUITests.swift; sourceTree = "<group>"; };
 		A00973F6A13177A7B1C65860 /* mug-checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "mug-checkout.png"; sourceTree = "<group>"; };
 		A08E0D7F7E2D2A4F335382C9 /* CheckCheckoutIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckCheckoutIntentTests.swift; sourceTree = "<group>"; };
 		A15B2BF01ABDDDD28CD49BB3 /* Day.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Day.swift; sourceTree = "<group>"; };
@@ -527,6 +529,7 @@
 			isa = PBXGroup;
 			children = (
 				06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */,
+				9ADD2196A4BB90DC50066BD0 /* DevicePressUITests.swift */,
 				B46C76289888872578D362E7 /* HomeIconUITests.swift */,
 				F6832974306CEAB55784FF03 /* ScreenshotTourUITests.swift */,
 				0D6ECDF622C12553E8F34159 /* UITestSupport.swift */,
@@ -813,6 +816,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C5ACA586BBFFA1B9E3D6783F /* AppShellUITests.swift in Sources */,
+				0CF8A8104C5E76FCEEF08C60 /* DevicePressUITests.swift in Sources */,
 				CACBC2667DC6D71521E8DAC8 /* HomeIconUITests.swift in Sources */,
 				D3AB13DA1FACCE62ADB56AE3 /* ScreenshotTourUITests.swift in Sources */,
 				3CD81D8A57BF225E92DCDCDD /* UITestSupport.swift in Sources */,

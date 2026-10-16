@@ -222,7 +222,8 @@ def payment_body(order_id: str, amount: Decimal, card: ProcessorCard | None) -> 
     """The authorization request. card=None leaves paymentInformation out (the auth probe)."""
     body: dict = {
         "clientReferenceInformation": {"code": order_id},
-        "processingInformation": {"capture": False},
+        # commerceIndicator "internet" (an e-commerce order) as in Cybersource's REST samples.
+        "processingInformation": {"capture": False, "commerceIndicator": "internet"},
     }
     if card is not None:
         card_fields = {"number": card.number, "expirationMonth": card.exp_month, "expirationYear": card.exp_year}

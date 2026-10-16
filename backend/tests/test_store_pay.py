@@ -179,7 +179,7 @@ def test_payment_body_per_the_doc():
     body = visa_acceptance.payment_body("NB-100234", Decimal("1499.00"), card)
     assert body == {
         "clientReferenceInformation": {"code": "NB-100234"},
-        "processingInformation": {"capture": False},
+        "processingInformation": {"capture": False, "commerceIndicator": "internet"},
         "paymentInformation": {"card": {
             "number": CARD_NUMBER, "expirationMonth": "12", "expirationYear": "2031", "securityCode": "123",
         }},
@@ -370,7 +370,7 @@ def test_probe_auth_sends_no_card(transport):
     outcome = run(visa_acceptance.probe_auth(visa_env("")))
     assert outcome.http_status == 400 and outcome.reason == "MISSING_FIELD"
     assert "paymentInformation" not in seen[0]
-    assert seen[0]["processingInformation"] == {"capture": False}
+    assert seen[0]["processingInformation"] == {"capture": False, "commerceIndicator": "internet"}
 
 
 # --- Mock mode and PAY_MODE ---------------------------------------------------------------------

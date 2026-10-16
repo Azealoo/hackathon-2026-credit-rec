@@ -19,9 +19,15 @@ before parsing or logging. Rulings:
 - The privacy_rejected reply echoes the requestId only when it holds no 12+ digit run, and nothing about
   a rejected body is logged.
 
-RateLimit: a small in-memory sliding window per client (60 POSTs a minute to /v1/check by default;
-RATE_LIMIT_PER_MIN, 0 turns it off). The client is the first X-Forwarded-For hop (Render's proxy
-sets it), else the socket peer. Answers 429 with the §15.5 error shape.
+RateLimit: a small in-memory sliding window per client (60 requests a minute by default; RATE_LIMIT_PER_MIN,
+0 turns it off) for every request that can carry a body (any method but GET, HEAD and OPTIONS). /v1/check,
+/v1/coverage and /v1/store/pay each have their own window; every other path shares one, so the privacy scan
+can't be run unthrottled on /health or a 404. The client is the first X-Forwarded-For hop (Render's proxy
+sets it), else the socket peer. Answers 429 with the §15.5 error shape. It runs before PrivacyGuard.
+
+PrivacyGuard reads at most MAX_BODY_BYTES (32 KiB: a /v1/check body is a few KB; parser_llm sends at most
+6,000 characters of OCR text), answers a body on GET, HEAD or OPTIONS with 400 bad_request without scanning
+it, and answers JSON nested too deeply to scan with 400 bad_request.
 
 Neither guard logs or echoes the body.
 """
@@ -36,12 +42,15 @@ from collections.abc import Iterator
 from app import copy as copy_text
 from app.models import CheckError, ErrorDecision, ErrorDetail
 
-MAX_BODY_BYTES = 256 * 1024
+MAX_BODY_BYTES = 32 * 1024
+BODYLESS_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 _LITERAL_RUN = re.compile(r"\d{12,}")
-# What may sit between two digit groups of a card number (the Redactor's set, plus Unicode spaces and
-# hyphens); a period followed by exactly two digits is a decimal point ("$18.00"), not a separator.
-_SEPARATOR = r"(?:[ \t\u00a0\u2007\u202f\-\u2010\u2011\u2012\u2013\u2014\u2212]|\.(?!\d{2}(?!\d)))"
+# What may sit between two digit groups of a card number (the Redactor's set, plus line breaks as its cross-row
+# check counts them, every Unicode space, and Unicode hyphens); a period followed by exactly two digits is a
+# decimal point ("$18.00"), not a separator.
+_SEPARATOR = (r"(?:[ \t\n\r\x0b\x0c\x85\u00a0\u1680\u2000-\u200b\u2028\u2029\u202f\u205f\u3000\ufeff"
+              r"\-\u2010-\u2014\u2212]|\.(?!\d{2}(?!\d)))")
 MAX_SEPARATORS = 5
 _SEPARATED_RUN = re.compile(r"\d(?:" + _SEPARATOR + "{0," + str(MAX_SEPARATORS) + r"}\d){12,}")
 _SEPARATORS = re.compile(_SEPARATOR + "+")
@@ -190,7 +199,13 @@ class PrivacyGuard:
             chunks.append(chunk)
             more = message.get("more_body", False)
         body = b"".join(chunks)
-        if body and not body_is_private(body):
+        if body and scope.get("method") in BODYLESS_METHODS:
+            return await _respond(send, 400, error_body("bad_request", "This request takes no body."))
+        try:
+            private = not body or body_is_private(body)
+        except RecursionError:  # JSON nested deeper than the decoder or the scan can follow
+            return await _respond(send, 400, error_body("bad_request", "The request body is nested too deeply."))
+        if not private:
             return await _respond(send, 400, error_body(
                 "privacy_rejected", "The request held a run of 12 or more digits, so it wasn't read.",
                 request_id_from(body)))
@@ -243,7 +258,9 @@ def _limit_from_env() -> int:
 
 
 LIMITER = SlidingWindowLimiter(_limit_from_env())
-RATE_LIMITED_PATHS = frozenset({"/v1/check"})
+# Routes with a window of their own; any other path's requests share the "other" window.
+RATE_LIMITED_PATHS = frozenset({"/v1/check", "/v1/coverage", "/v1/store/pay"})
+OTHER_PATHS = "other"
 
 
 def client_key(scope) -> str:
@@ -261,10 +278,12 @@ class RateLimit:
         self.app, self.limiter, self.paths = app, limiter, paths
 
     async def __call__(self, scope, receive, send):
-        if (scope["type"] == "http" and scope["method"] == "POST" and scope["path"] in self.paths
-                and not self.limiter.allow(client_key(scope))):
-            # 429 with code bad_request: the §15.5 error codes have no rate-limit value.
-            body = error_body("bad_request", "Too many checks; try again in a minute.",
-                              line2="Too many checks \u00b7 wait a minute")
-            return await _respond(send, 429, body, [(b"retry-after", b"60")])
+        if scope["type"] == "http" and scope["method"] not in BODYLESS_METHODS:
+            window = scope["path"] if scope["path"] in self.paths else OTHER_PATHS
+            if not self.limiter.allow(f"{window} {client_key(scope)}"):
+                # 429 with code bad_request: the §15.5 error codes have no rate-limit value.
+                what = "checks" if window == "/v1/check" else "requests"
+                body = error_body("bad_request", f"Too many {what}; try again in a minute.",
+                                  line2="Too many checks \u00b7 wait a minute")
+                return await _respond(send, 429, body, [(b"retry-after", b"60")])
         await self.app(scope, receive, send)

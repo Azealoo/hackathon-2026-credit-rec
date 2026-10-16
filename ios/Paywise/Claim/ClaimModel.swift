@@ -15,7 +15,9 @@ final class ClaimModel {
     private(set) var purchase: PurchaseSnapshot
     let deps: AppDependencies
     let wallet: Wallet
-    /// Today for this claim: "Pretend today is…" when it is on (§12.1 "14 months later"), else the phone's date.
+    /// Today for this claim: "Pretend today is…" when it is on (§12.1 "14 months later"), else the phone's date; never
+    /// before the purchase date. A purchase saved while the override was later than today would otherwise leave no
+    /// incident date the backend accepts (it needs purchaseDate ≤ incident.date ≤ asOf), and every check would fail.
     let today: String
 
     private(set) var paid: PaidAnswer?
@@ -42,7 +44,9 @@ final class ClaimModel {
         self.purchase = purchase
         self.deps = deps
         self.wallet = wallet
-        let today = Day.today(settings: deps.settings, now: deps.now(), timeZone: deps.timeZone)
+        let phoneToday = Day.today(settings: deps.settings, now: deps.now(), timeZone: deps.timeZone)
+        // yyyy-MM-dd strings compare as dates.
+        let today = PaywiseSettings.isDay(purchase.purchaseDate) ? max(phoneToday, purchase.purchaseDate) : phoneToday
         self.today = today
         incidentDate = Day.date(today, timeZone: deps.timeZone) ?? deps.now()
         warranty = WarrantyAnswer(storedMonths: purchase.manufacturerWarrantyMonths)
@@ -70,7 +74,7 @@ final class ClaimModel {
 
     var incidentDay: String { Day.string(incidentDate, timeZone: deps.timeZone) }
 
-    /// The incident can't be after today, or before the purchase (unless today itself is earlier).
+    /// The incident can't be after today, or before the purchase (today is never earlier than the purchase).
     var incidentRange: ClosedRange<Date> {
         let upper = Day.date(today, timeZone: deps.timeZone) ?? deps.now()
         let bought = Day.date(purchase.purchaseDate, timeZone: deps.timeZone) ?? upper

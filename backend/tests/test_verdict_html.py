@@ -232,3 +232,12 @@ def test_autoescaping():
 def test_assumed_label_shows():
     _, page = render(1, purchase={"manufacturerWarrantySource": "assumed"})
     assert "Assumed" in page.text and "Don't know" in page.text
+
+
+def test_partial_payment_without_amount_shows_the_benefit_cap_not_the_price():
+    """BE-4: the page never states the full $1,499 as the cap when only part was paid on the card."""
+    _, page = render(1, purchase={"paidWith": "card_partial", "amountOnCardUsd": None})
+    assert "Payout cap $10,000.00" in page.text
+    assert "The per-item cap. The payout is also at most the repair or replacement cost and the part paid on the card." \
+        in page.text
+    assert "Payout cap $1,499.00" not in page.text

@@ -99,8 +99,20 @@ def _citation_parts(citation) -> list[str]:
 
 def _payout(req: CoverageRequest, result: CoverageResponse) -> dict | None:
     limit = result.limit
-    if result.verdict != "may_be_eligible" or limit.payout_cap_usd is None:
+    if result.verdict != "may_be_eligible":
         return None
+    if limit.payout_cap_usd is None:
+        # card_partial without amountOnCardUsd: the part paid on the card is unknown, so show the benefit's own cap
+        # and say the payout is also limited to that part (§5.5).
+        benefit_cap = limit.per_item_usd if limit.per_item_usd is not None else limit.per_claim_usd
+        if req.purchase.paid_with != "card_partial" or benefit_cap is None:
+            return None
+        kind = "per-item" if limit.per_item_usd is not None else "per-claim"
+        return {
+            "amount": coverage.fmt_usd_cents(benefit_cap),
+            "note": f"The {kind} cap. The payout is also at most the repair or replacement cost and the part "
+                    "paid on the card.",
+        }
     charged = "the part paid on the card" if req.purchase.paid_with == "card_partial" else "the amount charged to the card"
     if limit.per_item_usd is not None:
         cap = f", and the {coverage.fmt_usd(limit.per_item_usd)} per-item cap"

@@ -75,10 +75,26 @@ def dec(value: float | int | Decimal) -> Decimal:
     return value if isinstance(value, Decimal) else Decimal(str(value))
 
 
+class DateOutOfRange(ValueError):
+    """A purchaseDraft coverage date would fall after Dec 31, 9999 (a clientDate near the calendar's end): a 400."""
+
+
+OUT_OF_RANGE = "A coverage date would fall after Dec 31, 9999: check clientDate."
+
+
 def add_months(day: dt.date, months: int) -> dt.date:
     years, month0 = divmod(day.month - 1 + months, 12)
     year, month = day.year + years, month0 + 1
+    if not dt.MINYEAR <= year <= dt.MAXYEAR:
+        raise DateOutOfRange(OUT_OF_RANGE)
     return dt.date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
+
+
+def add_days(day: dt.date, days: int) -> dt.date:
+    try:
+        return day + dt.timedelta(days=days)
+    except OverflowError:
+        raise DateOutOfRange(OUT_OF_RANGE) from None
 
 
 # --- Rule 1: cash per card ----------------------------------------------------------------------
@@ -388,19 +404,23 @@ class _Context:
         statuses = [r.status for r in rates] + [p.verification.status for p in protections]
         return "high" if all(s == "verified" for s in statuses) else "medium"
 
-    def _main_item(self) -> Item:
+    def _main_item(self, picked: Card, prefer: set[str]) -> Item:
+        """The item the draft saves: the priciest one the picked card covers (one holding a `prefer` type first,
+        e.g. the cover a protection switch gains), else the priciest qualifying item, else the priciest item."""
+        covered = [i for i in self.cart.items if self.rules.eligible(picked, i)]
+        preferred = [i for i in covered if prefer & set(self.rules.eligible(picked, i))]
         qualifying = [i for i in self.cart.items if self.rules.qualifying_types(i)]
-        return max(qualifying or self.cart.items, key=lambda i: dec(i.price_usd))
+        return max(preferred or covered or qualifying or self.cart.items, key=lambda i: dec(i.price_usd))
 
-    def _draft(self, picked: Card) -> PurchaseDraft:
+    def _draft(self, picked: Card, prefer: set[str] = frozenset()) -> PurchaseDraft:
         """The purchase [Paying with …] saves, with coverage dates (§5.4, §15.5)."""
-        item = self._main_item()
+        item = self._main_item(picked, prefer)
         coverage = []
         for protection in self.rules.eligible(picked, item).values():
             if protection.type == "purchase_protection" and protection.window_days:
                 coverage.append(CoverageEntry(
                     type=protection.type,
-                    until=self.client_date + dt.timedelta(days=protection.window_days),
+                    until=add_days(self.client_date, protection.window_days),
                     limit_usd=_float(copy_text.verified_cap(protection))))
             elif protection.type == "extended_warranty" and protection.extends_by_months:
                 maker = policy.ASSUMED_MANUFACTURER_WARRANTY_MONTHS
@@ -449,7 +469,7 @@ class _Context:
                notes: list[str] | None = None) -> EngineResult:
         notes = self.notes() if notes is None else notes
         decision = self._decision("switch", reason, picked, gained, copy, notes, gained, [])
-        return EngineResult(decision, self._draft(picked),
+        return EngineResult(decision, self._draft(picked, {p.type for p in gained}),
                             self._sources(picked, gained, cash_copy=reason == "cash"))
 
     def keep(self, reason: str, copy, kept: list[Protection] | None = None,

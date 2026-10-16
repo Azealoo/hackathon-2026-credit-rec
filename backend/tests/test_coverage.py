@@ -386,10 +386,20 @@ def test_assumed_maker_warranty_is_labeled():
     assert any("Don't know" in a for a in data["assumptions"])
 
 
-def test_partial_payment_without_amount_caps_at_price_and_says_so():
+def test_partial_payment_without_amount_states_no_payout_cap_and_says_so():
+    """BE-4: §5.5 caps card_partial at the part paid on the card; unknown here, so no figure (not the full price)."""
     data = verdict(body_for(1, purchase={"paidWith": "card_partial", "amountOnCardUsd": None}))
-    assert data["limit"]["payoutCapUsd"] == 1499.0
+    assert data["verdict"] == "may_be_eligible"
+    assert data["limit"]["payoutCapUsd"] is None
+    assert data["limit"]["perItemUsd"] == 10000.0
     assert any("at most that part" in a for a in data["assumptions"])
+    CoverageResponse.model_validate(data)
+
+
+def test_partial_payment_without_amount_keeps_the_benefit_cap_in_the_headline():
+    data = verdict(body_for(13, purchase={"paidWith": "card_partial", "amountOnCardUsd": None}))
+    assert data["limit"]["payoutCapUsd"] is None
+    assert "up to $500 of the $1,499" in data["headline"]
 
 
 def test_theft_r9_never_routes_to_the_maker():

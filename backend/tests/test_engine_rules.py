@@ -180,6 +180,27 @@ def test_purchase_draft_follows_the_most_expensive_qualifying_item():
     assert [c.type for c in result.purchase_draft.coverage] == ["purchase_protection", "extended_warranty"]
 
 
+RENEWED_LAPTOP_AND_EARBUDS = (("Aero 14 Laptop, 14-inch", 1099.0, "computers", "renewed"),
+                              ("Wireless Earbuds", 249.0, "audio", "new"))
+
+
+def test_protection_switch_draft_saves_the_item_the_cover_is_for():
+    """BE-2: the renewed laptop costs more but no card covers it; the draft saves the earbuds the switch is for."""
+    result = decide(cart(items=RENEWED_LAPTOP_AND_EARBUDS),
+                    wallet("apple-card", "wf-active-cash", "chase-freedom-unlimited"))
+    assert (result.decision.kind, result.decision.reason) == ("switch", "protection")
+    draft = result.purchase_draft
+    assert (draft.item, draft.condition, draft.price_usd) == ("Wireless Earbuds", "new", 249.0)
+    assert [c.type for c in draft.coverage] == ["purchase_protection", "extended_warranty"]
+
+
+def test_already_protected_draft_saves_the_covered_item():
+    result = decide(cart(items=RENEWED_LAPTOP_AND_EARBUDS),
+                    wallet("chase-freedom-unlimited", "wf-active-cash", "apple-card"))
+    assert (result.decision.kind, result.decision.reason) == ("keep", "already_protected")
+    assert result.purchase_draft.item == "Wireless Earbuds" and result.purchase_draft.coverage
+
+
 def test_switch_cash_draft_has_no_coverage():
     result = decide(cart(), wallet("apple-card", "wf-active-cash"))
     assert result.decision.reason == "cash" and result.purchase_draft.coverage == []
@@ -189,6 +210,16 @@ def test_switch_cash_draft_has_no_coverage():
 def test_add_months_clamps_to_the_month_end():
     assert engine.add_months(dt.date(2026, 1, 31), 1) == dt.date(2026, 2, 28)
     assert engine.add_months(dt.date(2026, 10, 17), 24) == dt.date(2028, 10, 17)
+
+
+def test_draft_dates_past_year_9999_raise_date_out_of_range():
+    """BE-5: a typed error the route turns into 400 bad_request, not an OverflowError (500)."""
+    with pytest.raises(engine.DateOutOfRange):
+        engine.add_months(dt.date(9999, 10, 1), 24)
+    with pytest.raises(engine.DateOutOfRange):
+        engine.add_days(dt.date(9999, 12, 31), 120)
+    with pytest.raises(engine.DateOutOfRange):
+        engine.decide("checkout", cart(), wallet("apple-card", "chase-freedom-unlimited"), dt.date(9999, 12, 31))
 
 
 # --- §8.2 display rule ------------------------------------------------------------------------

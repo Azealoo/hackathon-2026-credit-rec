@@ -353,6 +353,34 @@ struct ClaimModelTests {
         #expect(PrivacyGuard.isSendable(body))
     }
 
+    /// A purchase dated after today (saved while "Pretend today is…" was later, then turned off or moved back): the
+    /// claim's today and incident date start at the purchase date, so the body is one the backend accepts
+    /// (purchaseDate ≤ incident.date ≤ asOf) instead of a 400 on every check.
+    @Test func aPurchaseDatedAfterTodayStillGivesAValidRequest() throws {
+        let env = TestEnvironment(reading: .laptopCheckout)
+        env.deps.settings.dateOverrideEnabled = true
+        env.deps.settings.dateOverrideValue = "2026-01-05"
+        let purchase = try laptopPurchase(status: .confirmed)
+        #expect(purchase.purchaseDate == "2026-10-17")
+        let model = try model(env, purchase: purchase)
+        #expect(model.today == "2026-10-17")
+        #expect(model.incidentRange.lowerBound == model.incidentRange.upperBound)
+        #expect(Day.string(model.incidentRange.upperBound, timeZone: env.deps.timeZone) == "2026-10-17")
+        let request = model.verdictRequest()
+        #expect(request.asOf == "2026-10-17")
+        #expect(request.incident.date == "2026-10-17")
+        #expect(request.purchase.purchaseDate <= request.incident.date && request.incident.date <= request.asOf)
+    }
+
+    @Test func todayBeforeAnOverrideIsUnchangedForAnEarlierPurchase() throws {
+        let env = TestEnvironment(reading: .laptopCheckout)
+        env.deps.settings.dateOverrideEnabled = true
+        env.deps.settings.dateOverrideValue = "2027-12-18"
+        let model = try model(env, status: .confirmed)
+        #expect(model.today == "2027-12-18")
+        #expect(Day.string(model.incidentRange.lowerBound, timeZone: env.deps.timeZone) == "2026-10-17")
+    }
+
     @Test func classificationPreselectsTheChip() async throws {
         let reply = Data(#"{"verdict":"may_be_eligible","incident":{"cause":"accidental_damage","causeSource":"llm"}}"#.utf8)
         let env = TestEnvironment(reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply)))

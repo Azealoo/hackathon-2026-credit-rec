@@ -2,7 +2,7 @@
 included at the end of this file (one line each).
 
 Request bodies are never logged. PrivacyGuard (app/middleware.py) rejects any body with a
-card-number-like digit run before a route reads it; RateLimit caps /v1/check per client.
+card-number-like digit run before a route reads it; RateLimit caps each client's requests per route.
 """
 
 import logging
@@ -92,6 +92,8 @@ async def check(request: Request) -> Response:
 
     try:
         body, kind, reason = check_response(payload, parsed, parse_ms)
+    except engine.DateOutOfRange as exc:  # a schema-valid clientDate whose coverage dates pass Dec 31, 9999
+        return _error(400, "bad_request", str(exc), payload.request_id)
     except Exception as exc:
         log.error("check %s engine failed (%s)", loggable_id(payload.request_id), type(exc).__name__)
         return _error(500, "server_error", "Something went wrong on our side.", payload.request_id)

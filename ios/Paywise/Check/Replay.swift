@@ -45,7 +45,8 @@ struct ReplayStore: Sendable {
         return found
     }
 
-    /// "$1,499.00" → 149900; "$18" → 1800.
+    /// "$1,499.00" → 149900; "$18" → 1800. nil when the amount doesn't fit in an Int of cents (OCR text is untrusted:
+    /// "$100,000,000,000,000,000.00" must not trap).
     static func moneyCents(in text: String) -> Int? {
         guard let range = text.range(of: #"\$\s?[0-9][0-9,]*(\.[0-9]{2})?"#, options: .regularExpression) else {
             return nil
@@ -54,6 +55,8 @@ struct ReplayStore: Sendable {
         let parts = digits.split(separator: ".", omittingEmptySubsequences: false)
         guard let dollars = Int(parts[0]) else { return nil }
         let cents = parts.count > 1 ? Int(parts[1]) ?? 0 : 0
-        return dollars * 100 + cents
+        let (dollarCents, overflowed) = dollars.multipliedReportingOverflow(by: 100)
+        let (total, overflowedAdding) = dollarCents.addingReportingOverflow(cents)
+        return overflowed || overflowedAdding ? nil : total
     }
 }

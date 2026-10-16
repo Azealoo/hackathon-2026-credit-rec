@@ -36,6 +36,10 @@ COND_RENEWED = re.compile(r"^(?:condition:?\s*)?(?:certified\s+)?(?:renewed|refu
                           re.I)
 COND_USED = re.compile(r"^(?:condition:?\s*)?(?:used|pre-?owned|second[\s-]hand)\b", re.I)
 QTY = re.compile(r"^(?:qty|quantity)\s*:?\s*(\d{1,3})\b", re.I)
+SUBTOTAL_LINE = re.compile(r"^(?:items\s+)?sub\s?-?total\b", re.I)
+EXTRA_LINE = re.compile(r"^(?:shipping|delivery(?:\s+fee)?|handling|(?:sales\s+|estimated\s+)?tax(?:es)?|"
+                        r"(?:service\s+)?fees?|tip)\b", re.I)
+DISCOUNT_LINE = re.compile(r"^(?:discount|promo|coupon|savings|you save|you saved)\b", re.I)
 SOLD_BY = re.compile(r"^sold by:?\s+(.+)$", re.I)
 
 CONFIRMATION = re.compile(
@@ -160,6 +164,15 @@ def _total(lines: list[str]) -> tuple[int | None, Decimal | None]:
     return found
 
 
+def _header(lines: list[str]) -> list[str]:
+    """The lines above the first priced line: where a page names its store. Item lines are left out, so a
+    brand in a product name ("Apple MacBook Air" at Gadget Hut) is never read as the store."""
+    for index, line in enumerate(lines):
+        if MONEY.search(line):
+            return lines[:index]
+    return lines
+
+
 def _merchant(lines: list[str], text: str) -> tuple[CartMerchant, float]:
     for line in lines:  # 1. a line that is exactly a catalog merchant name ("NORTHBAY Electronics")
         merchant = catalog.merchant_by_name(line)
@@ -169,7 +182,8 @@ def _merchant(lines: list[str], text: str) -> tuple[CartMerchant, float]:
         merchant = catalog.merchant_by_domain(domain)
         if merchant:
             return CartMerchant(name=merchant.names[0], merchant_id=merchant.id), CONFIDENCE_MERCHANT_CATALOG
-    scrubbed = NOT_A_STORE.sub(" ", text)  # 3. a catalog name inside the text, earliest first
+    header = _header(lines)
+    scrubbed = NOT_A_STORE.sub(" ", "\n".join(header))  # 3. a catalog name inside the header, earliest first
     hits = []
     for merchant in catalog.CATALOG.merchants:
         for name in merchant.names:
@@ -179,7 +193,7 @@ def _merchant(lines: list[str], text: str) -> tuple[CartMerchant, float]:
     if hits:
         merchant = min(hits, key=lambda h: h[:2])[2]
         return CartMerchant(name=merchant.names[0], merchant_id=merchant.id), CONFIDENCE_MERCHANT_CATALOG
-    for line in lines[:3]:  # 4. the page heading, for a store the catalog doesn't know
+    for line in header[:3]:  # 4. the page heading, for a store the catalog doesn't know
         if (re.search(r"[A-Za-z]{2}", line) and len(line) <= 40 and not MONEY.search(line)
                 and not HEADING_SKIP.match(line) and "[" not in line):
             return CartMerchant(name=_clean_name(line), merchant_id=None), CONFIDENCE_MERCHANT_HEADING
@@ -209,11 +223,12 @@ def _is_attribute(line: str) -> bool:
     return bool(_condition_of(line) or QTY.match(line) or SOLD_BY.match(line))
 
 
-def _items(lines: list[str], end: int, merchant: CartMerchant) -> list[Item]:
+def _items(lines: list[str], end: int, merchant: CartMerchant) -> list[tuple[Item, Decimal]]:
+    """(item, the amount printed on its line) per item line, the price read as the line total (÷ qty)."""
     merchant_category = None
     if merchant.merchant_id:
         merchant_category = catalog.merchant(merchant.merchant_id).category
-    items: list[Item] = []
+    items: list[tuple[Item, Decimal]] = []
     index = 0
     while index < end:
         line = lines[index]
@@ -248,12 +263,56 @@ def _items(lines: list[str], end: int, merchant: CartMerchant) -> list[Item]:
                 seller = "merchant" if merchant.name and seller_name == merchant.name.casefold() else "third_party"
         category = category_for(name, merchant_category)
         unit_price = (line_amount / quantity).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        items.append(Item(
+        items.append((Item(
             name=name, price_usd=float(unit_price), quantity=quantity, category=category,
             # No condition on the page: retail default is new (a renewed or used listing says so).
             condition=condition or "new", seller=seller,
-            is_gift_card=category == "gift_card", is_service_plan=category == "services"))
+            is_gift_card=category == "gift_card", is_service_plan=category == "services"), line_amount))
     return items
+
+
+def _last_amount(line: str) -> Decimal | None:
+    amounts = list(MONEY.finditer(line))
+    return _money(amounts[-1]) if amounts else None
+
+
+def _sum_targets(lines: list[str], end: int, total: Decimal | None) -> list[Decimal]:
+    """What Σ(price × qty) may equal: the printed subtotal, the total, and the total less the printed extras."""
+    subtotal, extras = None, Decimal("0")
+    for line in lines[:end]:
+        amount = _last_amount(line)
+        if amount is None:
+            continue
+        if SUBTOTAL_LINE.match(line):
+            subtotal = amount
+        elif DISCOUNT_LINE.match(line):
+            extras -= amount
+        elif EXTRA_LINE.match(line):
+            extras += amount
+    targets = [t for t in (subtotal, total) if t is not None]
+    if total is not None and extras:
+        targets.append(total - extras)
+    return targets
+
+
+def _read_quantities(priced: list[tuple[Item, Decimal]], targets: list[Decimal]) -> tuple[list[Item], bool]:
+    """A price printed beside "Qty 2" is the line total ($36.00 for two $18.00 mugs) or the unit price ($150.00
+    each, $300.00 in all). Keep the reading whose Σ(price × qty) matches a printed amount; the line-total reading
+    when neither does. Returns (items, doubtful): doubtful when both readings match, so the screen can't tell."""
+    as_line = [item for item, _ in priced]
+    if not targets or not any(item.quantity > 1 for item in as_line):
+        return as_line, False
+    as_unit = [item.model_copy(update={"price_usd": float(amount)}) if item.quantity > 1 else item
+               for item, amount in priced]
+
+    def fits(items: list[Item]) -> bool:
+        total = sum((Decimal(str(i.price_usd)) * i.quantity for i in items), Decimal("0"))
+        return any(abs(total - target) <= Decimal("0.01") for target in targets)
+
+    line_fits, unit_fits = fits(as_line), fits(as_unit)
+    if unit_fits and not line_fits:
+        return as_unit, False
+    return as_line, line_fits and unit_fits
 
 
 def _payment(lines: list[str], text: str, confirmation: bool) -> tuple[list[str], SelectedPayment, bool]:
@@ -317,11 +376,14 @@ def parse(ocr_text: str) -> ParsedScreen:
         screen_type = "checkout"
 
     merchant, merchant_confidence = _merchant(lines, text)
-    items = _items(lines, total_index if total_index is not None else len(lines), merchant)
+    end = total_index if total_index is not None else len(lines)
+    items, doubtful = _read_quantities(_items(lines, end, merchant), _sum_targets(lines, end, total))
     options, selected, bnpl = _payment(lines, text, screen_type == "order_confirmation")
 
     items_confidence = CONFIDENCE_ITEMS if items else 0.0
-    if items and total is not None:
+    if doubtful:
+        items_confidence = CONFIDENCE_ITEMS_DOUBTFUL
+    elif items and total is not None:
         items_sum = sum((Decimal(str(i.price_usd)) * i.quantity for i in items), Decimal("0"))
         if not (total * Decimal("0.5") <= items_sum <= total * Decimal("1.5")):
             items_confidence = CONFIDENCE_ITEMS_DOUBTFUL

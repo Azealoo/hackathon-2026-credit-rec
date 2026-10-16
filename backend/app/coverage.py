@@ -322,12 +322,22 @@ class _Assessment:
             return min(price, to_decimal(self.purchase.amount_on_card_usd))
         return price
 
-    def payout_cap(self, protection: Protection) -> Decimal:
-        """§5.5: the lesser of the benefit's per-item cap and the amount charged to the card."""
+    @staticmethod
+    def benefit_cap(protection: Protection) -> Decimal | None:
         limits = protection.limits
         cap = limits.per_item_usd if limits.per_item_usd is not None else limits.per_claim_usd
+        return None if cap is None else to_decimal(cap)
+
+    def payout_cap(self, protection: Protection) -> Decimal | None:
+        """§5.5: the lesser of the benefit's per-item cap and the amount charged to the card.
+
+        None for card_partial without amountOnCardUsd: the cap is the part paid on the card (§5.5), which the
+        request doesn't give, so no figure is stated (the assumption says the payout is at most that part)."""
+        cap = self.benefit_cap(protection)
         charged = self.charged_usd()
-        return charged if cap is None else min(to_decimal(cap), charged)
+        if self.purchase.paid_with == "card_partial" and self.purchase.amount_on_card_usd is None:
+            return None
+        return charged if cap is None else min(cap, charged)
 
     def deadline(self, protection: Protection) -> Deadline:
         notice = protection.notice
@@ -434,8 +444,11 @@ class _Assessment:
         verified = protection.verification.status == "verified"
         if not verified:
             self.assume("Paywise hasn't fully verified these terms yet; check the cited clause.")
-        if verified and cap < price:
-            headline = f"May be eligible: {BENEFIT_NAMES[benefit]}, up to {fmt_usd(cap)} of the {fmt_usd(price)}."
+        # With the part paid on the card unknown, the benefit's own cap is still a true upper bound for the headline.
+        headline_cap = cap if cap is not None else self.benefit_cap(protection)
+        if verified and headline_cap is not None and headline_cap < price:
+            headline = (f"May be eligible: {BENEFIT_NAMES[benefit]}, up to {fmt_usd(headline_cap)} "
+                        f"of the {fmt_usd(price)}.")
         else:
             headline = f"May be eligible: {BENEFIT_NAMES[benefit]} ({self.name})."
         return self.respond(

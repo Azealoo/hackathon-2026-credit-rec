@@ -379,6 +379,15 @@ def build(data: dict, ocr_text: str = "") -> ParsedScreen:
     return ParsedScreen(screen_type=raw.screen, cart=build_cart(raw, ocr_text))
 
 
+_DATA_TAG = re.compile(r"<\s*/?\s*screen_text\b[^>]*>", re.IGNORECASE)
+
+
+def fenced(text: str) -> str:
+    """The screen text with any <screen_text> or </screen_text> it holds defused (‹/screen_text›), so text on a
+    page can't close the data block and put words outside it."""
+    return _DATA_TAG.sub(lambda tag: tag.group(0).replace("<", "‹").replace(">", "›"), text)
+
+
 async def parse(ocr_text: str) -> ParsedScreen:
     """Redacted OCR text -> ParsedScreen via the LLM. Raises llm.LLMError on any failure."""
     text = (ocr_text or "").strip()
@@ -388,7 +397,7 @@ async def parse(ocr_text: str) -> ParsedScreen:
         raise llm.LLMError("screen text is too long to send")
     data = await llm.complete_json(
         system=system_prompt(),
-        user=f"<screen_text>\n{text}\n</screen_text>",
+        user=f"<screen_text>\n{fenced(text)}\n</screen_text>",
         schema=output_schema(),
         max_tokens=MAX_TOKENS,
         timeout_s=PARSE_TIMEOUT_S,

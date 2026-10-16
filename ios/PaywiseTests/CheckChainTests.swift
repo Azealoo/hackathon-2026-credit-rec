@@ -77,6 +77,16 @@ struct ReplayTests {
         #expect(ReplayStore.totalCents(in: "Order total\n$18.00\nPlace order") == 1_800)
         #expect(ReplayStore.totalCents(in: "Subtotal $10.00") == nil)
     }
+
+    /// An 18-digit comma-grouped total passes the gate and the redactor (commas aren't digit separators), so the
+    /// replay key must not trap on it: no key, no crash.
+    @Test func hugeTotalsGiveNoKeyInsteadOfTrapping() {
+        #expect(ReplayStore.moneyCents(in: "Total $100,000,000,000,000,000.00") == nil)
+        #expect(ReplayStore.moneyCents(in: "Total $92,233,720,368,547,758.08") == nil)
+        #expect(ReplayStore.moneyCents(in: "Total $92,233,720,368,547,758.07") == Int.max)
+        let text = "Amazon.com\nReview your order\nSubtotal  $18.00\nOrder total  $100,000,000,000,000,000.00\nPlace your order"
+        #expect(ReplayStore.key(for: text, catalog: .bundled()) == nil)
+    }
 }
 
 /// The tolerant response mirror: unknown enum strings and malformed fields never fail the decode.

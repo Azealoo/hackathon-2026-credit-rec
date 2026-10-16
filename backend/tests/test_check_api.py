@@ -61,6 +61,10 @@ def check_body(ocr_text: str | None = None, wallet: str = "demo-3card", request_
     }
 
 
+def wallet_of(*card_ids: str) -> dict:
+    return {"cards": [{"cardId": card_id, "isDefault": i == 0} for i, card_id in enumerate(card_ids)]}
+
+
 def post(body, **kwargs):
     if isinstance(body, (dict, list)):
         return client.post("/v1/check", json=body, **kwargs)
@@ -148,6 +152,28 @@ def test_s1_k_freedom_default_keeps_with_a_snippet():
     assert data["purchaseDraft"]["cardId"] == "chase-freedom-unlimited"
 
 
+def test_a_brand_name_item_at_an_unknown_store_is_no_false_cash_switch():
+    """BE-1: an Apple laptop at Gadget Hut earns Apple Card's 1%, not its 3% Apple-store rate: keep Active Cash."""
+    body = check_body("Gadget Hut\nCheckout\nApple MacBook Air 13-inch  $999.00\nNew\nQty 1\n"
+                      "Pay with  Visa [CARD]  Change\nTotal  $999.00\nPlace order")
+    body["wallet"] = wallet_of("wf-active-cash", "apple-card")
+    data = post(body).json()
+    assert schema_errors(data) == []
+    assert data["cart"]["merchant"] == {"name": "Gadget Hut", "merchantId": None}
+    assert (data["decision"]["kind"], data["decision"]["reason"]) == ("keep", "default_best")
+    assert data["decision"]["cash"]["byCard"] == {"wf-active-cash": 19.98, "apple-card": 9.99}
+
+
+def test_a_unit_price_beside_qty_2_keeps_the_protection_switch():
+    """BE-3: two $150.00 earbuds ($300.00 total) qualify for Freedom's cover; read as $75.00 each they didn't."""
+    data = post(check_body("NORTHBAY Electronics\nCheckout\nWireless Earbuds  $150.00\nNew\nQty 2\n"
+                           "Pay with  Mastercard [CARD]  Change\nTotal  $300.00\nPlace order")).json()
+    assert schema_errors(data) == []
+    assert (data["cart"]["items"][0]["priceUsd"], data["cart"]["items"][0]["quantity"]) == (150.0, 2)
+    assert (data["decision"]["kind"], data["decision"]["reason"]) == ("switch", "protection")
+    assert data["decision"]["recommendedCardId"] == "chase-freedom-unlimited"
+
+
 def test_copy_lines_fit_section_6_2():
     """Lines 2–3 ≤44 and the instruction ≤48 characters with the last 4 filled in (§6.2)."""
     from app.copy import filled_length
@@ -195,6 +221,18 @@ def test_invalid_requests_are_bad_request(mutate):
     assert response.status_code == 400
     assert schema_errors(response.json()) == []
     assert response.json()["error"]["code"] == "bad_request"
+
+
+@pytest.mark.parametrize("client_date", ["9999-12-31", "9999-10-01"])
+def test_a_client_date_near_year_9999_is_bad_request_not_a_server_error(client_date):
+    """BE-5: the purchaseDraft's coverage dates would pass Dec 31, 9999."""
+    body = check_body()
+    body["clientDate"] = client_date
+    response = post(body)
+    assert response.status_code == 400
+    data = response.json()
+    assert data["error"]["code"] == "bad_request" and data["requestId"] == REQUEST_ID
+    assert schema_errors(data) == []
 
 
 def test_unreadable_json_is_bad_request_with_null_request_id():
@@ -371,6 +409,38 @@ def test_rate_limit_answers_429(monkeypatch):
     assert schema_errors(response.json()) == []
     # Another client has its own window.
     assert post(check_body(), headers={"x-forwarded-for": "198.51.100.4"}).status_code == 200
+
+
+def coverage_case_13() -> dict:
+    case = next(c for c in json.loads((FIXTURES / "coverage_cases.json").read_text(encoding="utf-8"))["cases"]
+                if c["id"] == 13)
+    return {"purchase": case["purchase"], "incident": case["incident"], "asOf": case["asOf"]}
+
+
+def test_coverage_and_store_pay_are_rate_limited_in_their_own_windows(monkeypatch):
+    """BSEC-3: /v1/coverage spends the same LLM budget as /v1/check; /v1/store/pay signs processor requests."""
+    monkeypatch.setattr(middleware.LIMITER, "per_minute", 3)
+    monkeypatch.setenv("COVERAGE_MODE", "rules")
+    monkeypatch.setenv("PAY_MODE", "mock")
+    headers = {"x-forwarded-for": "203.0.113.9"}
+    coverage = [client.post("/v1/coverage", json=coverage_case_13(), headers=headers).status_code for _ in range(4)]
+    assert coverage == [200, 200, 200, 429]
+    pay = {"orderId": "NB-100234", "savedCardId": "demo-visa-1234", "amountUsd": 18.0}
+    assert [client.post("/v1/store/pay", json=pay, headers=headers).status_code for _ in range(4)] == [200, 200, 200, 429]
+    limited = client.post("/v1/store/pay", json=pay, headers=headers)
+    assert limited.headers["retry-after"] == "60" and limited.json()["error"]["code"] == "bad_request"
+    # Each route has its own window: the checks are still allowed.
+    assert post(check_body(), headers=headers).status_code == 200
+
+
+def test_requests_to_other_paths_share_one_window(monkeypatch):
+    """BSEC-5: a POST to /health or a path with no route is limited too (its body is still privacy-scanned)."""
+    monkeypatch.setattr(middleware.LIMITER, "per_minute", 3)
+    headers = {"x-forwarded-for": "203.0.113.9"}
+    codes = [client.post(path, content=b'{"x": 1}', headers=headers).status_code
+             for path in ("/health", "/nope", "/v2/check", "/health")]
+    assert codes == [405, 404, 404, 429]
+    assert client.get("/health", headers=headers).status_code == 200  # reads are never limited
 
 
 def test_sliding_window_frees_up_after_a_minute():

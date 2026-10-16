@@ -106,6 +106,47 @@ def test_separated_card_numbers_are_rejected_by_coverage(sep):
         assert formatted not in response.text
 
 
+# BSEC-1: a card number split across OCR rows, or by a Unicode space, as the phone's Redactor counts it
+# (crossLineDigitRun: "4111 1111\n1111 1111").
+CROSS_LINE = [
+    pytest.param(f"{GROUPS[0]} {GROUPS[1]}\n{GROUPS[2]} {GROUPS[3]}", id="two-rows"),
+    pytest.param("\n".join(GROUPS), id="newline"),
+    pytest.param("\r\n".join(GROUPS), id="crlf"),
+    pytest.param("\r".join(GROUPS), id="cr"),
+    pytest.param("\x0b".join(GROUPS), id="vertical-tab"),
+    pytest.param("\x0c".join(GROUPS), id="form-feed"),
+    pytest.param("\u2002".join(GROUPS), id="en-space"),
+    pytest.param("\u2009".join(GROUPS), id="thin-space"),
+    pytest.param("\u200b".join(GROUPS), id="zero-width-space"),
+    pytest.param("\u3000".join(GROUPS), id="ideographic-space"),
+    pytest.param("\u2028".join(GROUPS), id="line-separator"),
+]
+
+
+@pytest.mark.parametrize("formatted", CROSS_LINE)
+def test_card_numbers_across_rows_or_unicode_spaces_are_rejected_by_check(formatted):
+    assert middleware.has_card_number(formatted)
+    response = client.post("/v1/check", json=check_body(f"Northbay Electronics\nCard number {formatted}\nTotal $18.00"))
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "privacy_rejected"
+    assert formatted not in response.text
+
+
+@pytest.mark.parametrize("formatted", CROSS_LINE[:3])
+def test_card_numbers_across_rows_are_rejected_by_coverage(formatted):
+    for fmt in ("json", "html"):
+        response = client.post(f"/v1/coverage?format={fmt}", json=coverage_body(f"Stolen with my card\n{formatted}"))
+        assert response.status_code == 400, fmt
+        assert response.json()["error"]["code"] == "privacy_rejected"
+
+
+def test_ocr_rows_of_ordinary_numbers_still_pass():
+    text = ("Northbay Electronics\nCheckout\nAero 14 Laptop, 14-inch  $1,499.00\nNew\nQty 1\nOrder 2026\n1017\n"
+            "Subtotal  $1,499.00\nTax  $0.00\nTotal  $1,499.00\nPlace order")
+    assert not middleware.has_card_like_run(text)
+    assert client.post("/v1/check", json=check_body(text)).status_code == 200
+
+
 def test_a_4_6_5_number_with_wide_separators_is_card_like():
     assert middleware.luhn_ok(AMEX_SHAPED)
     for sep in ("  ", " - ", "—"):
@@ -152,3 +193,43 @@ def test_ordinary_numbers_still_pass(text):
 def test_ordinary_numbers_pass_coverage():
     response = client.post("/v1/coverage", json=coverage_body("Stolen from my bag. Order 112 - 3456789 - 1234567, $1,499.00"))
     assert response.status_code == 200
+
+
+# --- Body limits (BSEC-5, BSEC-6) ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize("path", ["/v1/check", "/v1/coverage", "/v1/store/pay", "/health"])
+def test_a_body_over_32_kib_is_refused_unread(path):
+    response = client.post(path, content=b'{"x": "' + b"1 " * (16 * 1024 + 8) + b'"}',
+                           headers={"content-type": "application/json"})
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "bad_request"
+    assert middleware.MAX_BODY_BYTES == 32 * 1024
+
+
+def test_a_full_size_check_body_still_fits():
+    """6,000 characters of OCR text (parser_llm's cap) is far under the limit."""
+    text = ("Northbay Electronics\nCheckout\nAero 14 Laptop, 14-inch  $1,499.00\nTotal  $1,499.00\nPlace order\n"
+            + "Free returns within 30 days on most items. " * 140)[:6000]
+    assert len(json.dumps(check_body(text)).encode()) < middleware.MAX_BODY_BYTES
+    assert client.post("/v1/check", json=check_body(text)).status_code == 200
+
+
+def test_a_body_on_a_get_is_refused_without_a_scan(monkeypatch):
+    scanned = []
+    monkeypatch.setattr(middleware, "body_is_private", lambda body: scanned.append(body) or True)
+    response = client.request("GET", "/health", content=b'{"x": "1 1 1"}')
+    assert response.status_code == 400 and response.json()["error"]["code"] == "bad_request"
+    assert scanned == []
+    assert client.get("/health").json() == {"ok": True}
+
+
+@pytest.mark.parametrize("depth", [900, 3000, 15000])
+@pytest.mark.parametrize("path", ["/v1/check", "/v1/coverage?format=json", "/v1/coverage?format=html", "/v1/store/pay"])
+def test_deeply_nested_json_is_a_bad_request_not_a_server_error(path, depth):
+    """BSEC-6: nesting the decoder (15,000) or the privacy scan (3,000) can't follow is a 400 in the error shape."""
+    lenient = TestClient(app, raise_server_exceptions=False)
+    response = lenient.post(path, content=b"[" * depth + b"]" * depth, headers={"content-type": "application/json"})
+    assert response.status_code == 400
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["error"]["code"] == "bad_request"

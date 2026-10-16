@@ -97,6 +97,35 @@ def test_unknown_store_keeps_its_heading_without_an_id():
 
 
 @pytest.mark.parametrize(
+    "text, store",
+    [
+        ("Gadget Hut\nCheckout\nApple MacBook Air 13-inch  $999.00\nNew\nQty 1\nPay with  Visa [CARD]  Change\n"
+         "Total  $999.00\nPlace order", "Gadget Hut"),
+        ("Foot Locker\nCheckout\nNike Air Max 90 Sneakers  $300.00\nQty 1\nApple Pay\nTotal  $300.00\nPlace order",
+         "Foot Locker"),
+        ("Corner Market\nCheckout\nHoneycrisp Apple Gift Box  $60.00\nTotal  $60.00\nPlace order", "Corner Market"),
+    ],
+)
+def test_a_brand_in_an_item_name_is_not_the_store(text, store):
+    """BE-1: a catalog name on an item line (Apple, Nike) doesn't make an unknown store that brand's store."""
+    cart = parse(text).cart
+    assert (cart.merchant.name, cart.merchant.merchant_id) == (store, None)
+    assert cart.confidence.merchant < 0.8
+
+
+def test_a_store_without_a_heading_is_unknown_not_the_item_brand():
+    """BE-1: no store line above the items; "Sold by Best Buy" and the item's brand don't name the store."""
+    cart = parse("Checkout\nApple MacBook Air 13-inch  $999.00\nNew\nSold by Best Buy\nTotal  $999.00\n"
+                 "Place order").cart
+    assert (cart.merchant.name, cart.merchant.merchant_id) == (None, None)
+
+
+def test_a_catalog_name_in_the_heading_still_names_the_store():
+    cart = parse("Welcome back to Best Buy\nCheckout\nApple MacBook Air 13-inch  $999.00\nTotal  $999.00").cart
+    assert cart.merchant.merchant_id == "best-buy"
+
+
+@pytest.mark.parametrize(
     "line, condition",
     [("New", "new"), ("Renewed · no warranty", "renewed"), ("Refurbished", "renewed"), ("Used - Good", "used"),
      ("Pre-owned", "used")],
@@ -109,6 +138,32 @@ def test_condition_lines(line, condition):
 def test_quantity_gives_a_unit_price():
     cart = parse("Northbay Electronics\nCeramic Coffee Mug, 12 oz  $36.00\nQty 2\nTotal  $36.00").cart
     assert (cart.items[0].quantity, cart.items[0].price_usd) == (2, 18.0)
+
+
+@pytest.mark.parametrize(
+    "tail",
+    ["Total  $300.00",
+     "Subtotal  $300.00\nEstimated tax  $30.60\nTotal  $330.60",
+     "Shipping  $9.99\nTotal  $309.99"],
+)
+def test_a_unit_price_beside_qty_2_reads_as_the_unit_price(tail):
+    """BE-3: "$150.00" + "Qty 2" with $300.00 of items is $150.00 each, not $75.00."""
+    cart = parse(f"NORTHBAY Electronics\nCheckout\nWireless Earbuds  $150.00\nNew\nQty 2\n{tail}\nPlace order").cart
+    assert (cart.items[0].quantity, cart.items[0].price_usd) == (2, 150.0)
+    assert cart.confidence.items >= 0.8
+
+
+def test_a_line_total_beside_qty_2_still_reads_as_the_line_total_with_a_subtotal():
+    cart = parse("Northbay Electronics\nCeramic Coffee Mug, 12 oz  $36.00\nQty 2\nSubtotal  $36.00\n"
+                 "Estimated tax  $3.67\nTotal  $39.67").cart
+    assert (cart.items[0].quantity, cart.items[0].price_usd) == (2, 18.0)
+    assert cart.confidence.items >= 0.8
+
+
+def test_qty_2_that_fits_both_readings_is_doubtful():
+    # The subtotal fits the line-total reading, the total fits the unit-price reading: the screen can't tell.
+    cart = parse("Northbay Electronics\nWireless Earbuds  $150.00\nQty 2\nSubtotal  $150.00\nTotal  $300.00").cart
+    assert cart.confidence.items < 0.8
 
 
 def test_gift_cards_and_protection_plans_are_flagged():

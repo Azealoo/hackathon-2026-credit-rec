@@ -109,7 +109,8 @@ struct LaunchOptions: Equatable, Sendable {
             for key in [
                 PaywiseSettings.Key.wallet, PaywiseSettings.Key.onboarded, PaywiseSettings.Key.dateOverrideEnabled,
                 PaywiseSettings.Key.dateOverride, PaywiseSettings.Key.inAppCheckCount, PaywiseSettings.Key.triggerSetupDone,
-                PaywiseSettings.Key.lastPressCheckId,
+                PaywiseSettings.Key.lastPressCheckId, PaywiseSettings.Key.triggerSetupConfirmed,
+                PaywiseSettings.Key.backTapPromptDeclined, PaywiseSettings.Key.backTapPromptReoffered,
             ] {
                 settings.defaults.removeObject(forKey: key)
             }

@@ -10,6 +10,9 @@ struct CheckResultView: View {
     struct InAppActions {
         var save: @MainActor () -> Void
         var showSent: @MainActor () -> Void
+        /// [Done] beside [What we sent] in the Saved view, and under the Sent view: the app's own Done, back to the
+        /// Check tab's start (the system snippet's Done is drawn by iOS). nil: no [Done].
+        var done: (@MainActor () -> Void)?
     }
 
     let record: CheckRecord
@@ -190,15 +193,46 @@ struct CheckResultView: View {
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("result.saved")
 
-        Group {
-            if let actions {
-                Button(action: actions.showSent) { Text("What we sent") }
-            } else {
-                Button(intent: ShowSentIntent(checkId: record.checkId)) { Text("What we sent") }
-            }
+        if let actions {
+            savedButtons(actions)
+        } else {
+            // The system snippet: iOS draws its own Done below the view, where nothing can share its row, so
+            // [What we sent] is a compact pill that keeps the card short.
+            Button(intent: ShowSentIntent(checkId: record.checkId)) { Text("What we sent") }
+                .buttonStyle(SnippetPillButtonStyle())
+                .accessibilityIdentifier("result.whatWeSent")
         }
-        .buttonStyle(SnippetButtonStyle(prominent: false))
-        .accessibilityIdentifier("result.whatWeSent")
+    }
+
+    /// In the app: [What we sent] and [Done] side by side, equal widths, 10 pt apart (design.md §4); stacked when the
+    /// text size can't fit both on one row.
+    @ViewBuilder private func savedButtons(_ actions: InAppActions) -> some View {
+        if let done = actions.done {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    whatWeSentButton(actions)
+                    doneButton(done)
+                }
+                VStack(spacing: 10) {
+                    whatWeSentButton(actions)
+                    doneButton(done)
+                }
+            }
+        } else {
+            whatWeSentButton(actions)
+        }
+    }
+
+    private func whatWeSentButton(_ actions: InAppActions) -> some View {
+        Button(action: actions.showSent) { Text("What we sent") }
+            .buttonStyle(SnippetButtonStyle(prominent: false))
+            .accessibilityIdentifier("result.whatWeSent")
+    }
+
+    private func doneButton(_ done: @escaping @MainActor () -> Void) -> some View {
+        Button(action: done) { Text("Done") }
+            .buttonStyle(SnippetButtonStyle(prominent: false))
+            .accessibilityIdentifier("result.done")
     }
 
     // MARK: Sent
@@ -219,6 +253,10 @@ struct CheckResultView: View {
         Text("Cards sent as product names only. No screenshot, no last 4.")
             .font(.system(size: footnoteSize))
             .foregroundStyle(.secondary)
+        if let done = actions?.done {
+            // §6.3 *Sent*: Done (in the system snippet, iOS draws it).
+            doneButton(done)
+        }
     }
 
     /// The exact payload (§10): the redacted text as sent, then every other field as sent (`CheckRecord.sentFields`).
@@ -407,6 +445,27 @@ private struct SnippetHeader: View {
                     .accessibilityIdentifier("result.replayed")
             }
         }
+    }
+}
+
+/// The system snippet's [What we sent]: a compact secondary pill, 38 pt like design.md §4's chips and hugging its
+/// label, so the Saved snippet stays short above iOS's own Done. Its tap area is 44 pt tall.
+struct SnippetPillButtonStyle: ButtonStyle {
+    @ScaledMetric(relativeTo: .subheadline) private var size: CGFloat = 15
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: size, weight: .semibold))
+            .tracking(-0.2)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .foregroundStyle(Color.primary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 38)
+            .background(Color(.tertiarySystemFill), in: Capsule())
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.75 : 1)
     }
 }
 

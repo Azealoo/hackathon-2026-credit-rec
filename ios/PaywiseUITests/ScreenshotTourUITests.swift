@@ -26,6 +26,7 @@ final class ScreenshotTourUITests: XCTestCase {
         claims()
         settings()
         emptyStates()
+        backTapSetup()
         gallery()
         print("PAYWISE_UI tour: \(shots.count) screenshots in \(shots.dir.path)")
     }
@@ -56,17 +57,37 @@ final class ScreenshotTourUITests: XCTestCase {
         shots.snap("onboarding-first-result")
         app.buttons["onboarding.firstResult.continue"].tap()
 
+        // The trigger step leads with the Back Tap prompt (owner request, Oct 16).
+        let setUp = app.buttons["backTapPrompt.setUp"]
+        XCTAssertTrue(setUp.waitForExistence(timeout: 5), "the Back Tap prompt")
+        XCTAssertTrue(app.buttons["backTapPrompt.notNow"].exists)
+        shots.snap("onboarding-backtap-prompt", settle: 1.2)
+        setUp.tap()
+
         XCTAssertTrue(app.buttons["trigger.skip"].waitForExistence(timeout: 5))
-        shots.snap("onboarding-make-it-one-press")
+        shots.snap("onboarding-set-up-back-tap")
         app.swipeUp()
-        shots.snapIfScrolled("onboarding-make-it-one-press-bottom")
-        app.buttons["trigger.shortcutSteps"].tap()
+        shots.snapIfScrolled("onboarding-set-up-back-tap-bottom")
+
+        let tryIt = app.buttons["trigger.tryItNow"]
+        XCTAssertTrue(app.scrollTo(tryIt), "Try it now")
+        tryIt.tap()
+        XCTAssertTrue(app.staticTexts["tryItNow.instruction"].waitForExistence(timeout: 5))
+        shots.snap("onboarding-try-it-now")
+        app.swipeUp()
+        shots.snapIfScrolled("onboarding-try-it-now-bottom")
+        app.goBack()
+
+        let steps = app.buttons["trigger.shortcutSteps"]
+        XCTAssertTrue(app.scrollTo(steps), "Show the steps")
+        steps.tap()
         XCTAssertTrue(app.descendants(matching: .any)["trigger.guide"].waitForExistence(timeout: 5))
         shots.snap("onboarding-shortcut-steps")
         // The sheet's own Done (the screen behind it has a Done button too).
         app.navigationBars.buttons["Done"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["trigger.skip"].waitForExistence(timeout: 5))
-        app.buttons["trigger.skip"].tap()
+        let skip = app.buttons["trigger.skip"]
+        XCTAssertTrue(app.scrollTo(skip))
+        skip.tap()
 
         XCTAssertTrue(app.buttons["check.pickScreenshot"].waitForExistence(timeout: 5))
         shots.snap("check-idle")
@@ -97,7 +118,9 @@ final class ScreenshotTourUITests: XCTestCase {
         shots.snap("check-result-switch")
 
         save.tap()
-        XCTAssertTrue(app.buttons["result.whatWeSent"].waitForExistence(timeout: 5))
+        // Saved in the app: [What we sent] and [Done] side by side.
+        XCTAssertTrue(app.buttons["result.done"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["result.whatWeSent"].exists)
         shots.snap("check-saved")
         app.buttons["result.whatWeSent"].tap()
         XCTAssertTrue(app.staticTexts["result.sentText"].waitForExistence(timeout: 5))
@@ -108,7 +131,14 @@ final class ScreenshotTourUITests: XCTestCase {
         shots.snap("what-we-sent")
         app.goBack()
 
-        // §5.1 step 3: "Make it one press" is offered again after the 2nd in-app check.
+        // The in-app Done: back to the tab's start.
+        let done = app.buttons["result.done"]
+        XCTAssertTrue(app.scrollTo(done))
+        done.tap()
+        XCTAssertTrue(done.waitForAbsence(timeout: 5))
+        shots.snap("check-idle-after-done")
+
+        // §5.1 step 3: the setup is offered again after the 2nd in-app check.
         XCTAssertTrue(app.buttons["check.pickScreenshot"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["check.triggerSetup"].exists, "not offered after one check")
         app.buttons["check.pickScreenshot"].tap()
@@ -116,8 +146,8 @@ final class ScreenshotTourUITests: XCTestCase {
         app.newestPhoto.tap()
         XCTAssertTrue(app.buttons["result.save"].waitForExistence(timeout: 10))
         let offer = app.buttons["check.triggerSetup"]
-        XCTAssertTrue(app.scrollTo(offer), "Make it one press is offered after the 2nd check")
-        shots.snap("check-second-check-one-press-offer")
+        XCTAssertTrue(app.scrollTo(offer), "Set Up Back Tap is offered after the 2nd check")
+        shots.snap("check-second-check-setup-offer")
 
         app.tabBars.buttons["Purchases"].tap()
         let row = app.buttons.matching(identifier: "purchase.row").firstMatch
@@ -128,6 +158,57 @@ final class ScreenshotTourUITests: XCTestCase {
         XCTAssertTrue(app.buttons["purchase.somethingHappened"].waitForExistence(timeout: 5))
         shots.snap("purchase-detail-planned")
         app.terminate()
+
+        // Back at the Check tab's start on the next launch: the Back Tap prompt, offered once more (setup was never
+        // done here). The prompt and the setup it opens follow the system appearance over the light tab.
+        let again = Launch.app(["-tab", "check"])
+        let setUp = again.buttons["backTapPrompt.setUp"]
+        XCTAssertTrue(setUp.waitForExistence(timeout: 10), "the prompt after the 2nd check")
+        shots.snap("check-backtap-prompt-again", settle: 1.2)
+        setUp.tap()
+        XCTAssertTrue(again.buttons["trigger.tryItNow"].waitForExistence(timeout: 5), "setup in a sheet")
+        shots.snap("check-set-up-back-tap-sheet")
+        again.terminate()
+    }
+
+    // MARK: The Back Tap prompt and Try it now (`-showBackTapPrompt`, `-forceReduceMotion`, `-simulateBackTap`)
+
+    @MainActor
+    private func backTapSetup() {
+        let app = Launch.app(["-resetState", "-skipOnboarding", "-tab", "check", "-forceReduceMotion", "-showBackTapPrompt"])
+        XCTAssertTrue(app.descendants(matching: .any)["backTapPrompt.still"].waitForExistence(timeout: 10), "Reduce Motion: still frames")
+        XCTAssertEqual(
+            app.descendants(matching: .any)["backTapPrompt.still"].label,
+            "Illustration: a finger double-taps the back of an iPhone"
+        )
+        shots.snap("backtap-prompt-reduce-motion")
+        app.terminate()
+
+        // A press on Try it now (simulated: the real check on a render of the screen) → "Back Tap works ✓".
+        let press = Launch.app(["-skipOnboarding", "-tab", "check", "-showBackTapPrompt", "-simulateBackTap"])
+        let setUp = press.buttons["backTapPrompt.setUp"]
+        XCTAssertTrue(setUp.waitForExistence(timeout: 10))
+        setUp.tap()
+        let tryIt = press.buttons["trigger.tryItNow"]
+        XCTAssertTrue(press.scrollTo(tryIt))
+        tryIt.tap()
+        XCTAssertTrue(press.staticTexts["tryItNow.instruction"].waitForExistence(timeout: 5))
+        let works = press.staticTexts["trigger.works"]
+        XCTAssertTrue(works.waitForExistence(timeout: 25), "the press arrives: Back Tap works")
+        XCTAssertEqual(works.label, "Back Tap works")
+        shots.snap("try-it-now-works")
+        press.buttons["tryItNow.done"].tap()
+        XCTAssertTrue(press.buttons["check.pickScreenshot"].waitForExistence(timeout: 5), "Done closes the setup")
+        press.terminate()
+
+        // Confirmed: the prompt never shows again on its own, and the setup screen says it works.
+        let after = Launch.app(["-tab", "settings"])
+        let trigger = after.buttons["settings.trigger"]
+        XCTAssertTrue(after.scrollTo(trigger))
+        XCTAssertTrue(after.tap(trigger, until: after.buttons["trigger.done"]))
+        XCTAssertTrue(after.staticTexts["trigger.works"].waitForExistence(timeout: 5))
+        shots.snap("settings-set-up-back-tap-confirmed")
+        after.terminate()
     }
 
     // MARK: The island's answers, as the Check tab shows them (`-checkState`, light)
@@ -291,10 +372,14 @@ final class ScreenshotTourUITests: XCTestCase {
         app.goBack()
 
         let trigger = app.buttons["settings.trigger"]
-        XCTAssertTrue(app.scrollTo(trigger), "Settings › Make it one press")
-        XCTAssertTrue(app.tap(trigger, until: app.buttons["trigger.done"]))
-        shots.snap("settings-make-it-one-press")
-        app.goBack()
+        XCTAssertTrue(app.scrollTo(trigger), "Settings › Set Up Back Tap")
+        let setupDone = app.buttons["trigger.done"]
+        XCTAssertTrue(app.tap(trigger, until: setupDone))
+        shots.snap("settings-set-up-back-tap")
+        // A sheet, as from the Check tab: [Done] closes it.
+        XCTAssertTrue(app.scrollTo(setupDone), "Set Up Back Tap › Done")
+        setupDone.tap()
+        XCTAssertTrue(setupDone.waitForAbsence(timeout: 5), "Done closes the setup sheet")
 
         let sent = app.buttons["settings.whatWeSent"]
         XCTAssertTrue(app.scrollTo(sent), "Settings › What we sent")

@@ -64,6 +64,21 @@ xcrun simctl spawn <device> log show --last 2m --predicate 'subsystem == "com.az
 | `-dateOverride YYYY-MM-DD` | Turns on Settings › "Pretend today is…" with that day (the check's `clientDate` and the claim's `asOf`). |
 | `-tab check\|purchases\|settings` | Opens on that tab. |
 | `-doubleSave` | The in-app [Paying with …] starts two saves at once and reports what each returned (`debug.saveOutcomes`), so a UI test can show two racing saves make one purchase. A synthesized double tap reaches a SwiftUI button as one action. |
+| `-showBackTapPrompt` | The Check tab opens with the Back Tap prompt up (use with `-skipOnboarding -tab check`). |
+| `-forceReduceMotion` | Reduce Motion reads as on everywhere (the prompt's two still frames, a still breadcrumb). |
+| `-simulateBackTap` | "Try it now" gets a press 1.5 s after it opens: the real check (`CheckFlow`, live backend) on a render of its own screen, as the Shortcut would run it, so it turns to "Back Tap works ✓". |
+
+### Back Tap prompt and setup
+
+iOS has no Back Tap API: an app can't turn it on, read whether it's on, or open Accessibility › Touch › Back Tap
+(`openSettingsURLString` opens Paywise's own page). So the app asks in its own sheet
+(`Paywise/Onboarding/BackTapPrompt.swift`: a looping KeyframeAnimator demo with a CoreHaptics two-tap, still frames
+under Reduce Motion), shows the path (`TriggerSetupView`: Back Tap first, the Action Button as "Prefer a button?"),
+and confirms it on "Try it now": the Shortcut runs Check Checkout in the app's process, so a `CheckRecord` that wasn't
+in the App Group when the step opened means the press arrived. The prompt is onboarding's trigger step and shows once
+more in the Check tab, back at the tab's start after the 2nd in-app check, if setup was skipped; [Not Now]
+(`backTapPromptDeclined`) and a confirmed setup (`triggerSetupConfirmed`) end it. `BackTapSetupTests` covers the rules,
+the haptic timing and a render of "Try it now" read by `VisionScreenReader` and the gate.
 
 ### UI tests against the live backend, and the screenshot tour
 
@@ -76,7 +91,8 @@ plain `test` runs it too (about 6 minutes, network needed): pick a suite with `-
 | `AppShellUITests/testCheckAScreenshotLive` | "Check a screenshot" → newest photo → the exact §6.3 *Switch* lines and instruction within 6 s of the pick (time printed as `PAYWISE_UI`). |
 | `AppShellUITests/testSaveIsIdempotent` | [Paying with Freedom] with `-doubleSave` → two saves race on one check, one returns "saved" and one "alreadySaved" → *Saved* → Purchases has one row, the §15.7 step 12a line word for word (also after a relaunch). A double tap on the system snippet stays the on-device check in §15.7 step 12a. |
 | `AppShellUITests/testClaimCases1and2` | The purchase checked and saved on Oct 17, 2026, then claims on Dec 18, 2027: case 1 → "May be eligible" + "Extended warranty"; case 2 → "Not covered" (read from the web view). |
-| `ScreenshotTourUITests/testScreenshotTour` | Every screen and state (including the `-checkState` answers, [No, another card], [Don't know] → "Assumed", the delete confirmation and the "Make it one press" offer after the 2nd check), plus the `-gallery` snippet states, as `docs/overnight-shots/<appearance>-<size>/NN-<screen>.png`. |
+| `BackTapPromptUITests` | The Back Tap prompt is onboarding's trigger step with [Set Up Back Tap] and [Not Now]; [Not Now] holds after a relaunch and after the 2nd in-app check; with setup skipped, the prompt shows once after the 2nd check; Saved's [What we sent] and [Done] sit side by side (same row, equal widths, 10 pt apart); Settings › Set Up Back Tap (a sheet) › Try it now with `-simulateBackTap` → "Back Tap works ✓" → [Done] closes the setup, back to Settings. |
+| `ScreenshotTourUITests/testScreenshotTour` | Every screen and state (including the `-checkState` answers, [No, another card], [Don't know] → "Assumed", the delete confirmation, the Back Tap prompt in onboarding, again after the 2nd check and under Reduce Motion, Set Up Back Tap, Try it now and "Back Tap works ✓"), plus the `-gallery` snippet states, as `docs/overnight-shots/<appearance>-<size>/NN-<screen>.png`. |
 
 They pick the newest photo in the PhotosPicker, so add the demo laptop checkout to the simulator's Photos first:
 

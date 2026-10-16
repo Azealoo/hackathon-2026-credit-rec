@@ -17,6 +17,7 @@ struct SettingsView: View {
     @AppStorage(PaywiseSettings.Key.dateOverride, store: PaywiseSettings.appGroup.defaults)
     private var dateOverride = PaywiseSettings.defaultDateOverride
     @State private var wallet: Wallet?
+    @State private var showingTriggerSetup = false
 
     #if DEBUG
     @State private var debugStatus = ""
@@ -73,8 +74,27 @@ struct SettingsView: View {
                         SentListView(checkStore: deps.checkStore, catalog: deps.catalog)
                     }
                     .accessibilityIdentifier("settings.whatWeSent")
-                    NavigationLink("Make it one press") {
-                        TriggerSetupView(mode: .standalone, settings: deps.settings) {}
+                    // In a sheet, as from the Check tab: [Done] on the setup screen and on "Try it now" both close it.
+                    // (Pushed here, "Try it now"'s [Done] couldn't: the dismiss it calls belongs to the screen under it.)
+                    Button {
+                        showingTriggerSetup = true
+                    } label: {
+                        // Drawn like the rows around it (and the Check tab's setup row): concrete label colors, so
+                        // the button's accent tint doesn't wash the subtitle out.
+                        HStack(spacing: 8) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(TriggerSetupView.title)
+                                    .foregroundStyle(Color.primary)
+                                Text("Double-tap the back of your iPhone on any checkout")
+                                    .font(.footnote)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(Color(.tertiaryLabel))
+                                .accessibilityHidden(true)
+                        }
                     }
                     .accessibilityIdentifier("settings.trigger")
                     Button("Run setup again") { app.rerunOnboarding() }
@@ -97,6 +117,11 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .onAppear { wallet = deps.walletStore.load() }
+            .sheet(isPresented: $showingTriggerSetup) {
+                NavigationStack {
+                    TriggerSetupView(mode: .standalone, settings: deps.settings, checkStore: deps.checkStore) {}
+                }
+            }
         }
     }
 

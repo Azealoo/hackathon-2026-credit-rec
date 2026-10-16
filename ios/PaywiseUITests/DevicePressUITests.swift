@@ -1,11 +1,13 @@
 import XCTest
 
-/// Gates G1/G2 on a real iPhone (SPEC §14.2, §15.7 steps 6–7, 12a): the Action Button runs the "Paywise"
-/// Shortcut over the demo store's laptop checkout in Safari, and we count what happens.
+/// Gates G1/G2 on a real iPhone (SPEC §14.2, §15.7 steps 6–7, 12a): a double tap on the back of the iPhone (Back Tap)
+/// or the Action Button runs the "Paywise" Shortcut over the demo store's laptop checkout in Safari, and we count what
+/// happens.
 ///
-/// Needs: the iPhone unlocked with UI Automation on (Settings › Developer), the Paywise Shortcut bound to the
-/// Action Button, and one practice press done (it clears Shortcuts' first-run prompts). Device only; skipped on the
-/// simulator, which has no Action Button. Run with:
+/// Needs: the iPhone unlocked with UI Automation on (Settings › Developer), the Paywise Shortcut bound to Back Tap
+/// (Settings › Accessibility › Touch › Back Tap › Double Tap) for the assisted run, or to the Action Button for the
+/// automatic run, and one practice press done (it clears Shortcuts' first-run prompts). Device only; skipped on the
+/// simulator, which has neither. Run with:
 ///
 ///     xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'id=<UDID>' \
 ///       -allowProvisioningUpdates -only-testing:PaywiseUITests/DevicePressUITests test
@@ -84,14 +86,15 @@ final class DevicePressUITests: XCTestCase {
         #endif
     }
 
-    /// Assisted run: XCUITest can only tap the Action Button (no press-and-hold), so a person presses and holds it
-    /// each time the laptop checkout is on screen; the test watches for the result, saves, dismisses and reloads.
+    /// Assisted run: XCUITest can't double-tap the back of the phone (and can only tap the Action Button, not press and
+    /// hold it), so a person double-taps the back (or presses and holds the Action Button) each time the laptop
+    /// checkout is on screen; the test watches for the result, saves, dismisses and reloads.
     /// Presses 1–8 are on the laptop checkout (expect the §6.3 Switch snippet; press 1 double-taps the save);
     /// presses 9–10 are on the store's social-feed page (expect the island's "No checkout total found").
     @MainActor
     func testAssistedPresses() throws {
         #if targetEnvironment(simulator)
-        throw XCTSkip("The Action Button exists only on a device.")
+        throw XCTSkip("Back Tap and the Action Button exist only on a device.")
         #else
         let app = Launch.app(["-skipOnboarding"])
         let before = purchaseCount(app)
@@ -100,7 +103,7 @@ final class DevicePressUITests: XCTestCase {
         for press in 1...10 {
             let feed = press > 8
             openStore(feed ? URL(string: "https://paywise-store.onrender.com/feed.html")! : Self.storeURL)
-            print("PAYWISE_PRESS \(press): READY — trigger Paywise: double-tap the back or hold the Action Button (\(feed ? "feed" : "checkout"))")
+            print("PAYWISE_PRESS \(press): READY — double-tap the back of the iPhone now, or press and hold the Action Button (\(feed ? "feed" : "checkout"))")
             if feed {
                 if waitForText("No checkout total found", timeout: 45) != nil {
                     feedAlerts += 1

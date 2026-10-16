@@ -1,5 +1,5 @@
 #!/bin/bash
-# Runs the live end-to-end UI tests (AppShellUITests) and the screenshot tour (ScreenshotTourUITests) on one simulator,
+# Runs the live end-to-end UI tests (AppShellUITests, BackTapPromptUITests) and the screenshot tour (ScreenshotTourUITests) on one simulator,
 # against the live backend (https://paywise-api-n0f9.onrender.com).
 #
 #   ios/tools/run_ui_tour.sh          # live tests, then the tour 4 times
@@ -99,7 +99,8 @@ if [ "$mode" = "all" ] || [ "$mode" = "live" ]; then
   xcrun simctl ui "$udid" appearance light
   xcrun simctl ui "$udid" content_size large
   run_xcodebuild "$results/live.log" "${common[@]}" -resultBundlePath "$results/live.xcresult" \
-    -only-testing:PaywiseUITests/AppShellUITests test-without-building || failed=1
+    -only-testing:PaywiseUITests/AppShellUITests -only-testing:PaywiseUITests/BackTapPromptUITests \
+    test-without-building || failed=1
 fi
 
 if [ "$mode" = "all" ] || [ "$mode" = "tour" ]; then

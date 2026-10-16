@@ -1,8 +1,10 @@
 import SwiftUI
 
 /// First-launch onboarding (SPEC §5.1, §10, §15.7 steps 11 and 14): consent → "Add my cards" → a real first result
-/// on the bundled $1,499 laptop checkout → "Make it one press" (skippable). Follows the system appearance, except the
-/// result card, a paying moment, which is light (docs/design.md §1). Can be run again from Settings.
+/// on the bundled $1,499 laptop checkout → the Back Tap prompt → [Set Up Back Tap] (skippable) or [Not Now], which
+/// ends onboarding. Once the prompt was declined or setup confirmed, Continue goes straight to the setup screen.
+/// Follows the system appearance, except the result card, a paying moment, which is light (docs/design.md §1). Can be
+/// run again from Settings.
 struct OnboardingView: View {
     enum Step: Hashable {
         case cards, firstResult, trigger
@@ -12,6 +14,9 @@ struct OnboardingView: View {
     let finish: () -> Void
     @State private var path: [Step] = []
     @State private var draft: WalletDraft
+    @State private var showingPrompt = false
+    /// What the prompt's button does, run once the sheet is gone.
+    @State private var afterPrompt: (() -> Void)?
 
     init(deps: AppDependencies, startingWallet: Wallet?, finish: @escaping () -> Void) {
         self.deps = deps
@@ -30,9 +35,33 @@ struct OnboardingView: View {
                             path.append(.firstResult)
                         }
                     case .firstResult:
-                        FirstResultStep(deps: deps) { path.append(.trigger) }
+                        FirstResultStep(deps: deps) {
+                            if BackTapPrompt.shouldOffer(.onboarding, settings: deps.settings) {
+                                showingPrompt = true
+                            } else {
+                                path.append(.trigger)
+                            }
+                        }
+                        .sheet(isPresented: $showingPrompt, onDismiss: {
+                            afterPrompt?()
+                            afterPrompt = nil
+                        }) {
+                            BackTapPromptSheet(
+                                setUp: {
+                                    afterPrompt = { path.append(.trigger) }
+                                    showingPrompt = false
+                                },
+                                notNow: {
+                                    BackTapPrompt.notNow(settings: deps.settings)
+                                    afterPrompt = finish
+                                    showingPrompt = false
+                                }
+                            )
+                        }
                     case .trigger:
-                        TriggerSetupView(mode: .onboarding, settings: deps.settings, finish: finish)
+                        TriggerSetupView(
+                            mode: .onboarding, settings: deps.settings, checkStore: deps.checkStore, finish: finish
+                        )
                     }
                 }
         }

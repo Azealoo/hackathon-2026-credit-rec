@@ -40,6 +40,12 @@ struct PaywiseSettings: Sendable {
         static let inAppCheckCount = "inAppCheckCount"
         /// The trigger setup screen (§15.7 step 14) was finished, not skipped.
         static let triggerSetupDone = "triggerSetupDone"
+        /// "Try it now" saw a press arrive: a new check was stored while the step was open, so the trigger works.
+        static let triggerSetupConfirmed = "triggerSetupConfirmed"
+        /// [Not Now] on the Back Tap prompt: the prompt never shows again.
+        static let backTapPromptDeclined = "backTapPromptDeclined"
+        /// The Back Tap prompt was offered again in the Check tab (after the 2nd in-app check); it is offered once.
+        static let backTapPromptReoffered = "backTapPromptReoffered"
         /// The check ID of the last press that stored a `CheckRecord` in a fallback mode (§6.6 "save later").
         static let lastPressCheckId = "lastPressCheckId"
     }
@@ -105,6 +111,21 @@ struct PaywiseSettings: Sendable {
     var triggerSetupDone: Bool {
         get { defaults.bool(forKey: Key.triggerSetupDone) }
         nonmutating set { defaults.set(newValue, forKey: Key.triggerSetupDone) }
+    }
+
+    var triggerSetupConfirmed: Bool {
+        get { defaults.bool(forKey: Key.triggerSetupConfirmed) }
+        nonmutating set { defaults.set(newValue, forKey: Key.triggerSetupConfirmed) }
+    }
+
+    var backTapPromptDeclined: Bool {
+        get { defaults.bool(forKey: Key.backTapPromptDeclined) }
+        nonmutating set { defaults.set(newValue, forKey: Key.backTapPromptDeclined) }
+    }
+
+    var backTapPromptReoffered: Bool {
+        get { defaults.bool(forKey: Key.backTapPromptReoffered) }
+        nonmutating set { defaults.set(newValue, forKey: Key.backTapPromptReoffered) }
     }
 
     /// The last press's check (`CheckCheckoutIntent`) in the island or confirm mode, which the Check tab offers to save

@@ -20,6 +20,7 @@
 		214CE4D0E0E0135BB369953D /* CoverageAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899502A671A3D827587CA31C /* CoverageAPI.swift */; };
 		21894FAF5A7AC67304CE9B94 /* ReadingOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D420A4365FDC50B7D315DF90 /* ReadingOrder.swift */; };
 		25B0BDF905E1EB6029EC0969 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18D57040442948A9C5418323 /* SwiftUI.framework */; };
+		29C764FC8A1A9F4F05D052C6 /* BackTapPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54D1A1923F87DA7321F96345 /* BackTapPrompt.swift */; };
 		2CFE5BDEAB41870A3EF3C79F /* DemoChecks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA224A03D872F6A0438FA5D4 /* DemoChecks.swift */; };
 		2EBA97154F4C3530AA62DD4F /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF8EE7181413AE75D7370F53 /* JSONValue.swift */; };
 		2EC9B4F6CA46AF6F1E771968 /* mug-checkout.png in Resources */ = {isa = PBXBuildFile; fileRef = A00973F6A13177A7B1C65860 /* mug-checkout.png */; };
@@ -38,6 +39,7 @@
 		4E1A72B9E3E2307EABE64CE9 /* laptop-confirmation.png in Resources */ = {isa = PBXBuildFile; fileRef = 9A3CF9DD2D04B045A1E17C0F /* laptop-confirmation.png */; };
 		4F93E1E02DD16644D6F4D002 /* CheckCheckoutIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A08E0D7F7E2D2A4F335382C9 /* CheckCheckoutIntentTests.swift */; };
 		50C3D96D03B97F83374C764E /* CheckRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BD62216517DE6451D0521D /* CheckRecord.swift */; };
+		525AC9F63BE8D2F65B2D1C50 /* SetupDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00AC33915AE3BF4C4CEDD9AE /* SetupDemo.swift */; };
 		573FFBC035593D70A7B29C9A /* blurry-unreadable.png in Resources */ = {isa = PBXBuildFile; fileRef = 05EF147A54A33C5224F5307B /* blurry-unreadable.png */; };
 		576CA143EBB2AF0C832E572B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B443F7DAD53D35D61F6F251 /* ContentView.swift */; };
 		57C444A7E25DA130705CDBF4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A6E2DA41419CA504003646 /* SettingsView.swift */; };
@@ -85,6 +87,7 @@
 		B32C7A6D829B55034CF36DA6 /* SpokenCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79099388ED84770D7CBEC5E3 /* SpokenCopy.swift */; };
 		B7BA9819B2AD0D79D84E499B /* Day.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B2BF01ABDDDD28CD49BB3 /* Day.swift */; };
 		B817844BDC5764DD9BBE916F /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9112E14F3221684F387C1045 /* LiveActivityController.swift */; };
+		BB206C7EF38709800DE7970D /* BackTapPromptUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B524AB7BEE2636B88BA6567D /* BackTapPromptUITests.swift */; };
 		BBE918BB690F434294B1D2CE /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83968CE77789F62D255851EB /* AppGroup.swift */; };
 		C3739CAC5D1A479B41D195E5 /* SettingsLinkUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D1A26937664884FD7F369B /* SettingsLinkUITests.swift */; };
 		C5ACA586BBFFA1B9E3D6783F /* AppShellUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */; };
@@ -99,6 +102,7 @@
 		CFBB67DB931BA8A41B1FD7DE /* PurchasesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91B2AAE945F79171E459A6B /* PurchasesView.swift */; };
 		D0001DEC17BA077EFE337CF9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D5191C3BC68341F63DF079EC /* Assets.xcassets */; };
 		D3AB13DA1FACCE62ADB56AE3 /* ScreenshotTourUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6832974306CEAB55784FF03 /* ScreenshotTourUITests.swift */; };
+		D478D4A74F48758025672657 /* BackTapSetupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 159396802B25D329BEEE3CDB /* BackTapSetupTests.swift */; };
 		D4DE8F33ED0F60647D344A91 /* PurchaseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94C95FE741F4B8C47FB3B742 /* PurchaseStore.swift */; };
 		D5404500E7FF2EA8F8E1AF79 /* RealReaderIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94CAC08D44A7C6D73A575738 /* RealReaderIntentTests.swift */; };
 		D60C2376234A1E57527ECCCE /* replay in Resources */ = {isa = PBXBuildFile; fileRef = F6E363A821F0A0724CD5A84B /* replay */; };
@@ -160,6 +164,7 @@
 
 /* Begin PBXFileReference section */
 		003EC7C638E7F1E8118C1AAC /* CheckCheckoutIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckCheckoutIntent.swift; sourceTree = "<group>"; };
+		00AC33915AE3BF4C4CEDD9AE /* SetupDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupDemo.swift; sourceTree = "<group>"; };
 		02652369E2ADF71FB3CBAD85 /* cards.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = cards.json; sourceTree = "<group>"; };
 		02D703FADD744BF5241877ED /* CheckResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckResultView.swift; sourceTree = "<group>"; };
 		05EF147A54A33C5224F5307B /* blurry-unreadable.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "blurry-unreadable.png"; sourceTree = "<group>"; };
@@ -168,6 +173,7 @@
 		0D6ECDF622C12553E8F34159 /* UITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestSupport.swift; sourceTree = "<group>"; };
 		10850739492621650CB19464 /* silent.caf */ = {isa = PBXFileReference; path = silent.caf; sourceTree = "<group>"; };
 		13793DF6A9E13E43E65E1616 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		159396802B25D329BEEE3CDB /* BackTapSetupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackTapSetupTests.swift; sourceTree = "<group>"; };
 		18D57040442948A9C5418323 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		1BA17B91592F4E08E0669394 /* CardArtView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardArtView.swift; sourceTree = "<group>"; };
 		1BCD01FEB276CB6C328DBEE3 /* feed-not-checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "feed-not-checkout.png"; sourceTree = "<group>"; };
@@ -189,6 +195,7 @@
 		4D90A4D613CC81690BE08292 /* ClaimInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaimInputView.swift; sourceTree = "<group>"; };
 		50FF3C511D502F21FF11CC73 /* SentListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentListView.swift; sourceTree = "<group>"; };
 		546DFF0CB96BB900A26C9CE5 /* ResultText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultText.swift; sourceTree = "<group>"; };
+		54D1A1923F87DA7321F96345 /* BackTapPrompt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackTapPrompt.swift; sourceTree = "<group>"; };
 		5B443F7DAD53D35D61F6F251 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5C0B46265DB4ABE9657BEDB4 /* CardCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardCatalog.swift; sourceTree = "<group>"; };
 		63B4DD1DEC272AEE06F1B8B1 /* ClaimModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaimModel.swift; sourceTree = "<group>"; };
@@ -232,6 +239,7 @@
 		B305061EB97C0746F86D9FE1 /* TriggerSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerSetupView.swift; sourceTree = "<group>"; };
 		B46C76289888872578D362E7 /* HomeIconUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeIconUITests.swift; sourceTree = "<group>"; };
 		B4D97271815B6D81882D8A2E /* PurchasesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesModel.swift; sourceTree = "<group>"; };
+		B524AB7BEE2636B88BA6567D /* BackTapPromptUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackTapPromptUITests.swift; sourceTree = "<group>"; };
 		BB39E3AA3EA7A576E0DCF94E /* StaleRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaleRenderTests.swift; sourceTree = "<group>"; };
 		BB95D2A7669DD2E50A192BB7 /* CheckTabDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckTabDemo.swift; sourceTree = "<group>"; };
 		BE009DEEFA108AD89DEF84E3 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
@@ -316,6 +324,7 @@
 				6D9D823247DBD9CE211A7EC4 /* AdversarialScreenTests.swift */,
 				2CA43C592B2BE741D02E28DC /* AppShellTests.swift */,
 				74163714B9A851DD18FBA97D /* AssetTests.swift */,
+				159396802B25D329BEEE3CDB /* BackTapSetupTests.swift */,
 				6D76C21DAC43A9E7AAB928AC /* CheckChainTests.swift */,
 				A08E0D7F7E2D2A4F335382C9 /* CheckCheckoutIntentTests.swift */,
 				D02CF820C6516F2225B273F3 /* CheckLifecycleTests.swift */,
@@ -531,6 +540,7 @@
 			isa = PBXGroup;
 			children = (
 				06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */,
+				B524AB7BEE2636B88BA6567D /* BackTapPromptUITests.swift */,
 				9ADD2196A4BB90DC50066BD0 /* DevicePressUITests.swift */,
 				B46C76289888872578D362E7 /* HomeIconUITests.swift */,
 				F6832974306CEAB55784FF03 /* ScreenshotTourUITests.swift */,
@@ -557,6 +567,7 @@
 		DE56DD4F85F8B91E22E757EA /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				54D1A1923F87DA7321F96345 /* BackTapPrompt.swift */,
 				A68E03AE9D901707EEEE04E9 /* OnboardingView.swift */,
 				B305061EB97C0746F86D9FE1 /* TriggerSetupView.swift */,
 				88C88CD1C239C6F5F38265E3 /* WalletEditor.swift */,
@@ -571,6 +582,7 @@
 				A89C73FE7205CC863A9D7451 /* DemoActivity.swift */,
 				DA224A03D872F6A0438FA5D4 /* DemoChecks.swift */,
 				7D0F1564AF10CC976A7D4BC7 /* Gallery.swift */,
+				00AC33915AE3BF4C4CEDD9AE /* SetupDemo.swift */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -780,6 +792,7 @@
 				819A62E3A82CF9B33EB0F845 /* AdversarialScreenTests.swift in Sources */,
 				EB5EE17242037FE124944A06 /* AppShellTests.swift in Sources */,
 				8EDB4661532E61457EA98352 /* AssetTests.swift in Sources */,
+				D478D4A74F48758025672657 /* BackTapSetupTests.swift in Sources */,
 				47627DB6F0189F59CCE51F2A /* CheckChainTests.swift in Sources */,
 				4F93E1E02DD16644D6F4D002 /* CheckCheckoutIntentTests.swift in Sources */,
 				02DF4324C7393BC54071E511 /* CheckLifecycleTests.swift in Sources */,
@@ -819,6 +832,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C5ACA586BBFFA1B9E3D6783F /* AppShellUITests.swift in Sources */,
+				BB206C7EF38709800DE7970D /* BackTapPromptUITests.swift in Sources */,
 				0CF8A8104C5E76FCEEF08C60 /* DevicePressUITests.swift in Sources */,
 				CACBC2667DC6D71521E8DAC8 /* HomeIconUITests.swift in Sources */,
 				D3AB13DA1FACCE62ADB56AE3 /* ScreenshotTourUITests.swift in Sources */,
@@ -833,6 +847,7 @@
 			files = (
 				1574CB6C0F919FA3193C6A5E /* AppGroup.swift in Sources */,
 				6A5FCAA7CC22E2646DF99BD6 /* AppModel.swift in Sources */,
+				29C764FC8A1A9F4F05D052C6 /* BackTapPrompt.swift in Sources */,
 				877AA30151B9738626D4C775 /* CardArtView.swift in Sources */,
 				107790AC3806AE68689B9F20 /* CardCatalog.swift in Sources */,
 				C8EBFB1FD68677F7765B52DE /* CheckAPIModels.swift in Sources */,
@@ -881,6 +896,7 @@
 				E94E3BBC2B64210820CE461C /* ScreenReader.swift in Sources */,
 				178CEBED0DF2ACFA26087316 /* SentListView.swift in Sources */,
 				57C444A7E25DA130705CDBF4 /* SettingsView.swift in Sources */,
+				525AC9F63BE8D2F65B2D1C50 /* SetupDemo.swift in Sources */,
 				2140DA350129D72BAF7DAF5D /* SnippetIntents.swift in Sources */,
 				B32C7A6D829B55034CF36DA6 /* SpokenCopy.swift in Sources */,
 				F41C4D11E8CBE2540F56D82D /* TopStripCrop.swift in Sources */,

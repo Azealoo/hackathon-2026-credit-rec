@@ -1,7 +1,8 @@
 # The "Paywise" Shortcut
 
-The Action Button runs this Shortcut. It takes a screenshot and hands it to Paywise's **Check Checkout** action.
-From the Share Sheet it checks the shared image instead (SPEC §9.1, §4.5, §6.6 G1).
+A double tap on the back of the iPhone (Back Tap) runs this Shortcut; the Action Button can run it too. It takes a
+screenshot and hands it to Paywise's **Check Checkout** action. From the Share Sheet it checks the shared image
+instead (SPEC §9.1, §4.5, §6.6 G1).
 
 ```
 Receive Images from Share Sheet        If there's no input: Continue
@@ -38,7 +39,7 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 3. Tap **ⓘ** (Details) and turn on **Show in Share Sheet**, then tap **Done**. A **Receive Any … from Share Sheet** row appears at the top.
    (u: on some iOS versions **Details** is in the menu under the name.)
 4. In that row, tap **Any** and then **Clear**. Tick **Images** only and tap **Done**. Make sure the row still says
-   **If there's no input: Continue**. If it says *Stop and Respond* or *Ask For*, the Action Button branch breaks.
+   **If there's no input: Continue**. If it says *Stop and Respond* or *Ask For*, the branch that Back Tap and the Action Button run breaks.
 5. In the action search at the bottom, type `if` and tap **If**. Its first token must read **Shortcut Input**. If it
    doesn't, tap the token and pick **Shortcut Input**.
 6. Tap **Condition** and pick **has any value**.
@@ -54,31 +55,35 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 
 ## B. Bind the trigger (≈0:15)
 
-Pick one direct trigger. All of them run the same **Paywise** Shortcut on the screen you're looking at, and none of
-them saves a screenshot to Photos: **Take Screenshot** hands the image to Check Checkout in memory.
+Back Tap first: it works on any iPhone that runs Paywise and leaves the Action Button alone. All the triggers run the same
+**Paywise** Shortcut on the screen you're looking at, and none of them saves a screenshot to Photos: **Take
+Screenshot** hands the image to Check Checkout in memory. iOS has no API for Back Tap, so the app can't turn it on,
+see whether it's on, or open its settings page; the app's **Set Up Back Tap** screen shows the path instead.
 
-13. **Action Button**, if you don't need it for Silent: **Settings › Action Button**, swipe to **Shortcut**, tap
-    **Choose a Shortcut…** (u: label) and pick **Paywise**. Then you press and hold it at checkout. (The iPhone's default
-    is Silent Mode, and many people keep it, so this is optional.)
-    **Back Tap**, if you keep the Action Button on Silent or have no Action Button: **Settings › Accessibility ›
-    Touch › Back Tap › Double Tap** and pick **Paywise** (in the Shortcuts section). Then you double-tap the back of the
-    phone at checkout. SPEC calls this the second binding.
+13. **Back Tap:** **Settings › Accessibility › Touch › Back Tap › Double Tap** and pick **Paywise** (in the Shortcuts
+    section). Then you double-tap the back of the phone at checkout. Back Tap 5/5 on the owner's iPhone, Oct 16
+    (`docs/spikes.md`).
+    **Action Button (optional):** if you don't use it for Silent, **Settings › Action Button**, swipe to **Shortcut**,
+    tap **Choose a Shortcut…** (u: label) and pick **Paywise**. Then you press and hold it at checkout. (The iPhone's
+    default is Silent Mode, and many people keep it.)
     **Control Center (u: not yet tested):** swipe down from the top right, tap **+ › Add a Control › Shortcut ›
     Choose › Paywise**. At checkout you open Control Center and tap it. Control Center must close before **Take
     Screenshot** runs, or the screenshot shows Control Center rather than the store; if it does, add **Wait 1 s** as the
     first action of the Paywise Shortcut and test again.
 
-## C. Practice press: clear the first-run prompts (≈0:25)
+## C. Try it: clear the first-run prompts (≈0:25)
 
-14. In Safari, open **https://paywise-store.onrender.com/checkout.html?item=laptop** (it answered HTTP 200 on Oct 15).
-    Press and hold the Action Button. Answer each prompt with **Always Allow**. Expect, once each (u: wording from the
-    macOS 27 Shortcuts strings; the Shortcut and the app share a name, so "Paywise" appears twice):
+14. In the app, **Set Up Back Tap › Try it now** shows a sample checkout: double-tap the back of the iPhone there, and
+    the screen turns to **Back Tap works ✓** when the check arrives. Or, in Safari, open
+    **https://paywise-store.onrender.com/checkout.html?item=laptop** (it answered HTTP 200 on Oct 15) and double-tap the
+    back (or press and hold the Action Button). Answer each prompt with **Always Allow**. Expect, once each (u: wording
+    from the macOS 27 Shortcuts strings; the Shortcut and the app share a name, so "Paywise" appears twice):
     - **Allow "Paywise" to take a screenshot?**
     - **Allow "Paywise" to share "Screenshot" with "Paywise"?** (the middle part may read "1 image")
 
-    *Checking* shows in the island, then the answer. Press again: there should be no prompts, then **stop the stopwatch**.
-    If the first press says "No checkout total found", the prompts covered the screen. Press once more.
-    Record the time in `docs/spikes.md` (S6 setup stopwatch, §15.7 step 14).
+    *Checking* shows in the island, then the answer. Double-tap again: there should be no prompts, then **stop the
+    stopwatch**. If the first double tap says "No checkout total found", the prompts covered the screen. Double-tap
+    once more. Record the time in `docs/spikes.md` (S6 setup stopwatch, §15.7 step 14).
 
 ## D. Test the Share Sheet branch (optional, outside the 2:00)
 
@@ -95,7 +100,7 @@ them saves a screenshot to Photos: **Take Screenshot** hands the image to Check 
 
 | You see | Do |
 |---|---|
-| Nothing happens on a press | Open **Shortcuts**, long-press **Paywise** and tap **Details** (or open it and tap **ⓘ**). Check: Share Sheet on, Images only. In **Privacy**, nothing should be blocked. Back in the editor, tap **▶**. You should get "No checkout total found" for the Shortcuts screen, which proves the chain works, or an error that names the broken action. Also check that **Settings › Action Button** still shows Shortcut › Paywise. |
+| Nothing happens on a double tap | Open **Shortcuts**, long-press **Paywise** and tap **Details** (or open it and tap **ⓘ**). Check: Share Sheet on, Images only. In **Privacy**, nothing should be blocked. Back in the editor, tap **▶**. You should get "No checkout total found" for the Shortcuts screen, which proves the chain works, or an error that names the broken action. Also check that **Settings › Accessibility › Touch › Back Tap › Double Tap** (or **Settings › Action Button**) still shows Paywise. |
 | The island works but the snippet never appears (§6.6 G2) | In the **Paywise** app, go to **Settings › Results › Switch results** and pick **Island alert, held 8 s**. Switch answers then come as an 8 s island alert. To save one, open the **Paywise** app: the **Check** tab shows your last check with **Paying with …**. |
 | "Use the Paywise shortcut" | Check Checkout ran without an image. Redo steps 8 and 10 so both fields hold a blue token. |
 | A prompt on every press | You tapped *Allow Once*. Go to **Details › Privacy › Reset Privacy**, press again and pick **Always Allow**. |
@@ -133,7 +138,7 @@ shortcuts sign --mode anyone --input out/Shortcut.wflow --output Paywise.shortcu
 - [ ] The Paywise app has been opened once and has cards
 - [ ] The Shortcut is named **Paywise** and matches the box: 6 actions, both fields hold blue tokens
 - [ ] **Show in Share Sheet** is on, with **Images** only and **If there's no input: Continue**
-- [ ] One direct trigger runs Paywise: **Action Button** (Shortcut › Paywise), **Back Tap › Double Tap › Paywise**, or the Control Center Shortcut control (u)
-- [ ] The practice press on the demo store answered both prompts with **Always Allow**, and a second press shows no prompt
+- [ ] One direct trigger runs Paywise: **Back Tap › Double Tap › Paywise** (first), the **Action Button** (Shortcut › Paywise), or the Control Center Shortcut control (u)
+- [ ] The first double tap (Try it now, or the demo store) answered both prompts with **Always Allow**, and a second one shows no prompt
 - [ ] The Share Sheet branch was tested from a screenshot
 - [ ] The time is recorded: ≤2:00 for steps 1–14

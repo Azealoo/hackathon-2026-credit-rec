@@ -3,17 +3,27 @@ import SwiftUI
 
 enum CheckRoute: Hashable {
     case sent
-    case triggerSetup
+}
+
+/// The Back Tap prompt, or the setup it leads to, as a sheet over the Check tab. Both follow the system appearance
+/// (R18), unlike the tab, which is pinned light.
+enum CheckSheet: String, Identifiable {
+    case prompt, setup
+    var id: String { rawValue }
 }
 
 /// The Check tab (SPEC §5.1, §9.1, §15.7 step 11): "Check a screenshot" from Photos through the same pipeline as a
 /// press, the answer in the app. A paying moment, so always light (docs/design.md §1).
 struct CheckTabView: View {
+    static let idleTitle = "Double-tap the back of your iPhone on any checkout"
+    static let idleLine = "Paywise tells you which of your cards covers it if it breaks or gets stolen, and what that costs in cash back. Or check a screenshot here."
+
     @State private var check: InAppCheck
     @State private var pickerItem: PhotosPickerItem?
     @State private var path: [CheckRoute] = []
     @State private var checkCount: Int
     @State private var triggerSetupDone: Bool
+    @State private var sheet: CheckSheet?
     @Environment(\.scenePhase) private var scenePhase
     private let settings: PaywiseSettings
     private let catalog: CardCatalog
@@ -44,10 +54,19 @@ struct CheckTabView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if check.phase == .idle {
-                        Text("Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back.")
-                            .font(.app(15))
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        // The trigger, Back Tap first (owner request, Oct 16), then what the answer tells you.
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(Self.idleTitle)
+                                .font(.app(17, .semibold))
+                                .tracking(-0.3)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .accessibilityIdentifier("check.idleTitle")
+                            Text(Self.idleLine)
+                                .font(.app(15))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
                     if check.showsLastPress {
                         // §6.6 "save later": the last press's answer, which had no [Paying with …] where it showed.
@@ -56,7 +75,7 @@ struct CheckTabView: View {
                             .foregroundStyle(.secondary)
                             .accessibilityIdentifier("check.lastPress")
                     }
-                    InAppResultCard(check: check, catalog: catalog)
+                    InAppResultCard(check: check, catalog: catalog, done: { check.reset() })
                     #if DEBUG
                     if CheckTabDemo.doubleSave {
                         // `-doubleSave`: what each save returned, read by the UI test (not drawn).
@@ -83,10 +102,11 @@ struct CheckTabView: View {
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("check.whatWeSent")
                         if checkCount >= 2 && !triggerSetupDone {
-                            // §5.1 step 3: the one-press setup is offered again after the 2nd in-app check.
+                            // §5.1 step 3: the setup is offered again after the 2nd in-app check, as this row and
+                            // (once) as the Back Tap prompt.
                             Divider().padding(.leading, 52)
-                            NavigationLink(value: CheckRoute.triggerSetup) {
-                                LinkRow(title: "Make it one press", systemImage: "hand.tap")
+                            Button { sheet = .setup } label: {
+                                LinkRow(title: TriggerSetupView.title, systemImage: "hand.tap")
                             }
                             .buttonStyle(.plain)
                             .accessibilityIdentifier("check.triggerSetup")
@@ -101,10 +121,6 @@ struct CheckTabView: View {
                 switch route {
                 case .sent:
                     SentListView(checkStore: check.deps.checkStore, catalog: catalog)
-                case .triggerSetup:
-                    TriggerSetupView(mode: .standalone, settings: settings) {
-                        triggerSetupDone = settings.triggerSetupDone
-                    }
                 }
             }
         }
@@ -114,11 +130,55 @@ struct CheckTabView: View {
         }
         .task {
             if offersLastPress { check.offerLastPress() }
+            #if DEBUG
+            if SetupDemo.showBackTapPrompt { sheet = .prompt }
+            #endif
         }
         .onChange(of: scenePhase) { _, phase in
             // A press runs while the app is in the background; its result is offered when the app comes back.
             if phase == .active, offersLastPress { check.offerLastPress() }
         }
+        // The Back Tap prompt's second showing: when the tab is back at its start (after [Done], or on a later
+        // launch), never over an answer the user is reading.
+        .task(id: promptMoment) { await offerPromptIfDue() }
+        .sheet(item: $sheet) { route in
+            Group {
+                switch route {
+                case .prompt:
+                    BackTapPromptSheet(
+                        setUp: { sheet = .setup },
+                        notNow: {
+                            BackTapPrompt.notNow(settings: settings)
+                            sheet = nil
+                        }
+                    )
+                case .setup:
+                    NavigationStack {
+                        TriggerSetupView(mode: .standalone, settings: settings, checkStore: check.deps.checkStore) {
+                            triggerSetupDone = settings.triggerSetupDone
+                        }
+                    }
+                }
+            }
+            .followsSystemAppearance()
+            .onDisappear { triggerSetupDone = settings.triggerSetupDone }
+        }
+    }
+
+    /// The tab at its start, nothing pushed, the app in front: when the prompt may show.
+    private var promptMoment: Bool {
+        check.phase == .idle && path.isEmpty && scenePhase == .active
+    }
+
+    private func offerPromptIfDue() async {
+        guard promptMoment, offersLastPress else { return }
+        // Let a tab switch or a pop settle first.
+        try? await Task.sleep(for: .milliseconds(700))
+        guard !Task.isCancelled, promptMoment, sheet == nil,
+              BackTapPrompt.shouldOffer(.checkTab, settings: settings)
+        else { return }
+        BackTapPrompt.didShow(.checkTab, settings: settings)
+        sheet = .prompt
     }
 
     private var showsSaveButton: Bool {
@@ -141,6 +201,8 @@ struct InAppResultCard: View {
     let catalog: CardCatalog
     /// Off for onboarding's sample check, so the sample never becomes a saved purchase.
     var showsSaveButton = true
+    /// The Saved and Sent views' [Done]; nil shows none.
+    var done: (@MainActor () -> Void)?
 
     var body: some View {
         Group {
@@ -163,7 +225,8 @@ struct InAppResultCard: View {
                                 if CheckTabDemo.doubleSave { Task { await check.save() } }
                                 #endif
                             },
-                            showSent: { Task { await check.showSent() } }
+                            showSent: { Task { await check.showSent() } },
+                            done: done
                         )
                     )
                 }

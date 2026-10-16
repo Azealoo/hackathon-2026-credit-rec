@@ -577,3 +577,13 @@ def test_store_js_pay_mode_default():
         capture_output=True, text=True, timeout=30, check=True,
     )
     assert json.loads(result.stdout) == [mode for _, _, mode in cases]
+
+
+def test_log_message_is_text_only():
+    from app.visa_acceptance import _message
+    assert _message({"message": "General system failure."}) == "General system failure."
+    assert _message({"errorInformation": {"message": "Declined - processor declined"}}) == "Declined - processor declined"
+    # Anything with a run of 4+ digits never reaches the log.
+    assert _message({"message": "Card 4111 failed"}) is None
+    assert _message({"message": "x" * 200}) is None
+    assert _message({}) is None

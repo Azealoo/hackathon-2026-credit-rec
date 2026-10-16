@@ -313,6 +313,19 @@ def _safe(value: object) -> str | None:
     return value if isinstance(value, str) and SAFE_REASON.match(value) else None
 
 
+SAFE_MESSAGE = re.compile(r"^[A-Za-z0-9 _.,:;'()/-]{1,160}$")
+
+
+def _message(payload: dict) -> str | None:
+    """Cybersource's human-readable message (e.g. "General system failure."), for the log only.
+    Text only: anything with a run of 4+ digits is dropped so no card data can reach the log."""
+    error_info = payload.get("errorInformation")
+    for value in (payload.get("message"), error_info.get("message") if isinstance(error_info, dict) else None):
+        if isinstance(value, str) and SAFE_MESSAGE.match(value) and not re.search(r"\d{4}", value):
+            return value
+    return None
+
+
 def _reason(payload: dict) -> str | None:
     error_info = payload.get("errorInformation")
     rmsg = payload.get("response")
@@ -408,8 +421,8 @@ def _outcome(http_response: httpx.Response, processor: str, card_id: str) -> Pay
     reason = _reason(payload)
     level = logging.INFO if status == "approved" else logging.WARNING
     log.log(
-        level, "store pay: Visa Acceptance HTTP %s -> %s (status=%s reason=%s txn=…%s)",
-        http_response.status_code, status, processor_status, reason, (txn or "")[-6:],
+        level, "store pay: Visa Acceptance HTTP %s -> %s (status=%s reason=%s message=%s txn=…%s)",
+        http_response.status_code, status, processor_status, reason, _message(payload), (txn or "")[-6:],
     )
     return PayOutcome(
         _response(status, processor, txn, card_id),

@@ -113,7 +113,7 @@ from `brand/08-monoline/app-icon.svg`.
 |---|---|---|
 | `card-<id>` (expanded, snippet) | `Shared/Assets.xcassets` (app + widget) | 156 × 98 px @3x, 104 × 65 @2x |
 | `card-<id>-compact` | `Shared/Assets.xcassets` | 157 × 110 px @3x (letterboxed), 104 × 73 @2x |
-| `glyph` | `Shared/Assets.xcassets` | template SVG, 24 × 24 grid; the Live Activity's shield (island, minimal, stale, Lock Screen) |
+| `glyph` | `Shared/Assets.xcassets` | the island mark, vector: `brand/08-monoline/mark-island.svg` (Any), `mark-island-dark.svg` (Dark); the Live Activity's glyph (island, minimal, stale, Lock Screen) |
 | `accent` | `Shared/Assets.xcassets` | #3f5bf6, dark #5b74ff |
 | `AppIcon` | `Paywise/Assets.xcassets` | 1024 × 1024: standard opaque; dark (paper + #5b74ff lines) and tinted (grayscale) on transparent |
 | `mark` | `Paywise/Assets.xcassets` (app only) | the logo, vector: `mark.svg` (Any), `mark-dark.svg` (Dark); onboarding, result header, Checking card |

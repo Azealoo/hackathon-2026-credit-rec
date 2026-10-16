@@ -23,8 +23,9 @@ extension Font {
 }
 
 /// The Paywise logo (brand/08-monoline, option 08 "Monoline"): the vector image set `mark`, mark.svg on light surfaces
-/// and mark-dark.svg on dark ones, picked by the environment's color scheme. App screens only: the Live Activity keeps
-/// the shield (`PaywiseGlyphMark`), because the logo's stacked lines blur together at the island's 22 pt.
+/// and mark-dark.svg on dark ones, picked by the environment's color scheme. App screens only: the Live Activity draws
+/// the island mark (`PaywiseGlyphMark`), the same idea with two cards behind instead of six, because these six stacked
+/// lines blur together at the island's 22 pt.
 struct PaywiseMark: View {
     var size: CGFloat
 

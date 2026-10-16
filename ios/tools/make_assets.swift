@@ -5,7 +5,8 @@
 //   xcrun swift ios/tools/make_assets.swift <repo-root> <silence.wav to write> [<standard app icon, 1024 PNG>]
 //
 // Writes (and overwrites):
-//   ios/Shared/Assets.xcassets   (app + widget): card-<id>, card-<id>-compact, glyph (the Live Activity's), accent
+//   ios/Shared/Assets.xcassets   (app + widget): card-<id>, card-<id>-compact, glyph (the Live Activity's: the island
+//                                                mark, Any + Dark), accent
 //   ios/Paywise/Assets.xcassets  (app only):     AppIcon (standard, dark, tinted), mark (the logo, Any + Dark)
 //
 // Card IDs and asset names come from data/cards.json; only the art (design.md §6 gradients) lives here.
@@ -13,7 +14,8 @@
 //
 // The app icon's standard image is the opaque 1024 PNG already in AppIcon.appiconset (copied there from the logo
 // options' app-icons/08-monoline.png); pass a PNG as the third argument to replace it. Dark and tinted are drawn here
-// from brand/08-monoline/app-icon.svg. The mark is brand/08-monoline/mark.svg and mark-dark.svg.
+// from brand/08-monoline/app-icon.svg. The mark is brand/08-monoline/mark.svg and mark-dark.svg; the glyph is
+// brand/08-monoline/mark-island.svg and mark-island-dark.svg.
 
 import AppKit
 import CoreGraphics
@@ -187,21 +189,6 @@ func cardImage(style: CardStyle, slot: CGSize, scale: Int) -> CGContext {
     return context
 }
 
-// MARK: - Glyph (docs/design.md §5)
-
-/// design.md §5 path, verbatim apart from spelling out the implicit commands. Strokes on each path (not inherited)
-/// so the asset compiler's SVG reader sees them. Only the Live Activity draws it now (island, minimal, stale, Lock
-/// Screen): the logo's stacked lines blur at the island's 22 pt, so the app shows `mark` and the island keeps this.
-let glyphSVG = """
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-  <path d="M12 2.6 L19.4 5.4 V11.3 C19.4 15.8 16.3 19.4 12 21.4 C7.7 19.4 4.6 15.8 4.6 11.3 V5.4 L12 2.6 Z" \
-fill="none" stroke="#000000" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M8.4 9.4 H15.6 M8.4 12.4 H15.6 M8.4 15.4 H12.3" \
-fill="none" stroke="#000000" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
-</svg>
-
-"""
-
 // MARK: - Brand: logo option 08 "Monoline" (brand/08-monoline)
 
 let brandFolder = root.appending(path: "brand/08-monoline", directoryHint: .isDirectory)
@@ -239,14 +226,15 @@ func rewrite(_ text: String, _ pattern: String, expected: Int, _ transform: (Int
     return result + text[cursor...]
 }
 
-/// generate.py's mark and icon SVGs are two stroked groups: the stack (the file of cards), then the drawn card.
+/// generate.py's mark and icon SVGs are two stroked groups: the stack (the file of cards), then the drawn card. The
+/// island mark adds a third, filled one: the chip.
 let strokeGroup = #"<g( [^>]*)>(.*?)</g>"#
 
-/// mark.svg / mark-dark.svg for the asset catalog: each group's stroke attributes moved onto its paths (as the glyph
-/// has them, so the asset compiler's SVG reader sees every stroke) and a 24-pt intrinsic size (it is always drawn
-/// resizable; the viewBox and the geometry are unchanged).
-func catalogMark(_ svg: String) -> String {
-    let flattened = rewrite(svg, strokeGroup, expected: 2) { _, groups in
+/// mark*.svg for the asset catalog: each group's attributes moved onto its paths (so the asset compiler's SVG reader
+/// sees every stroke) and a 24-pt intrinsic size (it is always drawn resizable; the viewBox and the geometry are
+/// unchanged).
+func catalogMark(_ svg: String, groups count: Int = 2) -> String {
+    let flattened = rewrite(svg, strokeGroup, expected: count) { _, groups in
         groups[2].replacingOccurrences(of: "<path ", with: "<path\(groups[1]) ")
     }
     return rewrite(flattened, #"(<svg [^>]*?) width="[^"]*" height="[^"]*""#, expected: 1) { _, groups in
@@ -407,19 +395,28 @@ for card in catalog.cards {
     print("card art: \(card.art.assetName), \(card.art.assetName)-compact")
 }
 
-// Glyph: one template vector.
+// Glyph: the Live Activity's Paywise glyph (island, minimal, stale, Lock Screen), the Monoline mark at the island's
+// optical size: mark-island.svg (Any; the Lock Screen in light) and mark-island-dark.svg (Dark; the island, which is
+// always drawn dark), one vector image set in its own colors.
 do {
     let folder = sharedCatalog.appending(path: "glyph.imageset", directoryHint: .isDirectory)
     resetFolder(folder)
-    try Data(glyphSVG.utf8).write(to: folder.appending(path: "glyph.svg"), options: .atomic)
+    for (source, name) in [("mark-island.svg", "glyph.svg"), ("mark-island-dark.svg", "glyph-dark.svg")] {
+        do {
+            try Data(catalogMark(readBrand(source), groups: 3).utf8).write(to: folder.appending(path: name), options: .atomic)
+        } catch {
+            fail("can't write \(name): \(error)")
+        }
+    }
     writeJSON([
-        "images": [["filename": "glyph.svg", "idiom": "universal"]],
+        "images": [
+            ["filename": "glyph.svg", "idiom": "universal"],
+            ["appearances": [["appearance": "luminosity", "value": "dark"]], "filename": "glyph-dark.svg", "idiom": "universal"],
+        ],
         "info": catalogInfo,
-        "properties": ["preserves-vector-representation": true, "template-rendering-intent": "template"],
+        "properties": ["preserves-vector-representation": true, "template-rendering-intent": "original"],
     ], to: folder.appending(path: "Contents.json"))
-    print("glyph: template SVG")
-} catch {
-    fail("can't write the glyph: \(error)")
+    print("glyph: mark-island.svg / dark mark-island-dark.svg, vector")
 }
 
 // accent: Any #3f5bf6, Dark #5b74ff (design.md §2).

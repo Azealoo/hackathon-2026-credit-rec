@@ -38,19 +38,18 @@ struct CardArtImage: View {
     }
 }
 
-/// The Live Activity's Paywise glyph (design.md §5's shield), the template vector asset `glyph`, in the accent color
-/// (`accentDark` wherever the environment is dark, e.g. the island). App screens show the logo instead (`PaywiseMark`);
-/// the island, minimal, stale and Lock Screen keep the shield, which stays legible at 22 pt.
+/// The Live Activity's Paywise glyph (design.md §5): the Monoline mark at the island's optical size
+/// (brand/08-monoline/mark-island*.svg), the vector asset `glyph` in its own colors: the drawn card in accentDark and
+/// the two cards behind it in paper at 62% wherever the environment is dark (the island), accent and ink on light.
+/// Island, minimal, stale and Lock Screen; app screens show the full logo (`PaywiseMark`).
 struct PaywiseGlyphMark: View {
     var size: CGFloat
 
     var body: some View {
         Image("glyph")
-            .renderingMode(.template)
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
-            .foregroundStyle(Color("accent"))
             .accessibilityLabel("Paywise")
     }
 }

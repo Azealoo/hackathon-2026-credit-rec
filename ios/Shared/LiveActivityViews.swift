@@ -11,7 +11,8 @@ import SwiftUI
 /// | no_checkout, error | glyph | ⚠ | ⚠ | lines 1–3 |
 /// | stale (any) | glyph | — | glyph | — (`IslandExpandedBottom`) |
 ///
-/// The island is always black, so its parts draw in the dark appearance (`accent` resolves to accentDark #5b74ff).
+/// The island is always black, so its parts draw in the dark appearance (`accent` resolves to accentDark #5b74ff, the
+/// glyph to the island mark's dark variant).
 typealias ActivityState = PaywiseActivityAttributes.ContentState
 
 enum IslandSlot {

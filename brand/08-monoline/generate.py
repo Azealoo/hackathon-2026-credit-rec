@@ -11,6 +11,9 @@ card has been drawn out of the file and tilted toward the viewer. Every line is
 the same stroke with round caps. Hidden edges are removed analytically and each
 line stops one stroke-width short of the edge that hides it, so line ends are
 true round caps rather than clipped ends.
+
+mark-island*.svg is the same idea at the Dynamic Island's optical size (22 pt): two cards of the file instead of six,
+strokes of at least 1.7 pt there, the chip filled.
 """
 import math
 import os
@@ -178,21 +181,26 @@ def path_d(segs, closed, k=1.0, ox=0.0, oy=0.0):
 
 # ------------------------------------------------------------------ design --
 
-def design(depth=6, recede=0.86, sw=2.4, gap=None):
+def design(depth=6, recede=0.86, sw=2.4, gap=None, vp=(90.0, -30.0), front=(50.0, 52.0, 58.0),
+           drawn=(40.0, 70.0, 60.0, -8.0), solid_chip=None):
     """Return {'stack': [runs], 'card': [runs]} in a ~100-unit design space.
 
-    depth  : cards left in the file behind the drawn card
-    recede : scale from one card to the next one back (perspective)
+    depth      : cards left in the file behind the drawn card
+    recede     : scale from one card to the next one back (perspective)
+    vp         : vanishing point, up and to the right
+    front      : first card of the file: cx, cy, width
+    drawn      : the drawn card: cx, cy, width, rotation (degrees)
+    solid_chip : None draws the chip as an outline in 'card'; a number puts it under 'chip' instead, scaled by
+                 that factor and moved in to clear the card's stroke by `gap`, for drawing filled (the island
+                 mark: at 22 pt an outlined chip closes up)
     """
     gap = sw * 0.9 if gap is None else gap
-    vp = (90.0, -30.0)                 # vanishing point, up and to the right
-    front = (50.0, 52.0, 58.0)         # first card of the file: cx, cy, width
     stack = []
     for k in range(depth):
         f = recede ** k
         stack.append(Card(vp[0] + (front[0] - vp[0]) * f,
                           vp[1] + (front[1] - vp[1]) * f, front[2] * f))
-    drawn = Card(40.0, 70.0, 60.0, rot=-8.0)
+    drawn = Card(drawn[0], drawn[1], drawn[2], rot=drawn[3])
     thr = sw + gap                     # cap radius + neighbour half-stroke + air
     out = {'stack': [], 'card': []}
     order = [drawn] + stack            # nearest first
@@ -201,7 +209,13 @@ def design(depth=6, recede=0.86, sw=2.4, gap=None):
         vis = lambda p, nearer=nearer: all(o.sd(p) > thr for o in nearer)
         runs = visible_runs(c.segs(), vis, minlen=sw * 0.8)
         out['card' if c is drawn else 'stack'].extend(runs)
-    out['card'].append((drawn.chip().segs(), True))
+    chip = drawn.chip()
+    if solid_chip is None:
+        out['card'].append((chip.segs(), True))
+    else:
+        w, h = chip.w * solid_chip, chip.h * solid_chip
+        cx, cy = drawn.world((-drawn.w / 2 + sw / 2 + gap + w / 2, -drawn.h * 0.06))
+        out['chip'] = [(Card(cx, cy, w, h, chip.r * solid_chip, math.degrees(drawn.rot)).segs(), True)]
     return out
 
 
@@ -267,6 +281,48 @@ def app_icon_svg():
             + '</svg>\n')
 
 
+ISLAND_SLOT_PT = 22             # the Dynamic Island's compact leading / minimal glyph
+ISLAND_MIN_STROKE_PT = 1.7
+ISLAND_MIN_CLEAR_PT = 1.2       # black between two strokes (or a stroke and the chip), edge to edge
+ISLAND_STACK_OPACITY = 0.62     # the app icon's stack opacity
+
+
+def min_clearance(geo, sw):
+    """Smallest edge-to-edge distance between two different lines, or between the filled chip and the card."""
+    def samples(segs):
+        return [seg_point(s, t / 100) for s in segs for t in range(101)]
+    lines = [samples(segs) for role in ('stack', 'card') for segs, _ in geo[role]]
+    pairs = [(a, b, sw) for i, a in enumerate(lines) for b in lines[i + 1:]]
+    pairs += [(samples(segs), line, sw / 2) for segs, _ in geo.get('chip', []) for line in lines]
+    return min(min(math.dist(p, q) for p in a for q in b) - inset for a, b, inset in pairs)
+
+
+def island_svg(stack_color, card_color, title):
+    # Optical size for the Dynamic Island (22 pt): the drawn card, its chip filled (an outlined chip closes up at
+    # this size) and only the two nearest cards of the file, spaced wider so 1.8-pt strokes stay apart. Laid out in
+    # points of the 22-pt slot; fit() scales it to the viewBox. Same rules as the mark: one-point perspective toward a
+    # vanishing point up and to the right, hidden edges removed, round caps.
+    sw = 1.9
+    geo = design(depth=2, recede=0.89, sw=sw, gap=1.4, vp=(30.0, -34.0), front=(12.5, 9.0, 14.0),
+                 drawn=(8.6, 15.3, 15.0, -8.0), solid_chip=1.6)
+    size = 512
+    k, ox, oy = fit(geo, sw, size, pad=6)
+    pt = k * ISLAND_SLOT_PT / size
+    stroke_pt, clear_pt = sw * pt, min_clearance(geo, sw) * pt
+    if stroke_pt < ISLAND_MIN_STROKE_PT or clear_pt < ISLAND_MIN_CLEAR_PT:
+        raise SystemExit(f'island mark at {ISLAND_SLOT_PT} pt: strokes {stroke_pt:.2f} pt (min {ISLAND_MIN_STROKE_PT}), '
+                         f'clearance {clear_pt:.2f} pt (min {ISLAND_MIN_CLEAR_PT})')
+    chip = ''.join(f'<path d="{d}"/>' for d in paths(geo['chip'], k, ox, oy))
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" '
+           f'height="{size}" role="img" aria-label="{title}"><title>{title}</title>'
+           + group(paths(geo['stack'], k, ox, oy), stack_color, sw * k,
+                   f' stroke-opacity="{fmt(ISLAND_STACK_OPACITY)}"')
+           + group(paths(geo['card'], k, ox, oy), card_color, sw * k)
+           + f'<g fill="{card_color}">{chip}</g>'
+           + '</svg>\n')
+    return svg, stroke_pt, clear_pt
+
+
 def lockup_svg(stack_color, card_color, ink, title):
     from ttf import Font, text_path
     font = Font('/System/Library/Fonts/SFNS.ttf')
@@ -295,9 +351,13 @@ def lockup_svg(stack_color, card_color, ink, title):
 
 
 def main():
+    island, island_stroke, island_clear = island_svg(INK, ACCENT, 'Paywise')
+    island_dark, _, _ = island_svg(PAPER, ACCENT_DARK, 'Paywise')
     files = {
         'mark.svg': mark_svg(INK, ACCENT, 'Paywise'),
         'mark-dark.svg': mark_svg(PAPER, ACCENT_DARK, 'Paywise'),
+        'mark-island.svg': island,
+        'mark-island-dark.svg': island_dark,
         'app-icon.svg': app_icon_svg(),
         'lockup.svg': lockup_svg(INK, ACCENT, INK, 'Paywise'),
         'lockup-dark.svg': lockup_svg(PAPER, ACCENT_DARK, PAPER, 'Paywise'),
@@ -306,6 +366,7 @@ def main():
         with open(os.path.join(HERE, name), 'w') as fh:
             fh.write(svg)
         print(f'wrote {name} ({len(svg)} bytes)')
+    print(f'mark-island at {ISLAND_SLOT_PT} pt: {island_stroke:.2f} pt strokes, {island_clear:.2f} pt clear between them')
 
 
 if __name__ == '__main__':

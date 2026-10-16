@@ -3,17 +3,19 @@ import Testing
 import UIKit
 @testable import Paywise
 
-/// SPEC §6.4: a stale Live Activity (`context.isStale`) is the bare Paywise glyph, whatever state it went stale in:
-/// no card art, no last 4, no lines, no Lock Screen text. Renders the Shared pieces `PaywiseLiveActivity` places, with
-/// `isStale = true`, through `ImageRenderer` at @3x on the island's black. When the source checkout is reachable (the
-/// simulator), also writes a labeled composite to docs/overnight-shots/live-activity/stale-rendered.png.
+/// SPEC §6.4: a stale Live Activity (`context.isStale`) is the bare Paywise glyph (the island mark), whatever state it
+/// went stale in: no card art, no last 4, no lines, no Lock Screen text. Renders the Shared pieces `PaywiseLiveActivity`
+/// places, with `isStale = true`, through `ImageRenderer` at @3x on the island's black. When the source checkout is
+/// reachable (the simulator), also writes a labeled composite to docs/overnight-shots/live-activity/stale-rendered.png.
 @MainActor
 struct StaleRenderTests {
     typealias State = PaywiseActivityAttributes.ContentState
 
     static let scale: CGFloat = 3
-    /// design.md §2 accentDark, the glyph's color in the island.
+    /// design.md §2 accentDark, the island mark's drawn card.
     static let accentDark: (r: Int, g: Int, b: Int) = (0x5b, 0x74, 0xff)
+    /// The island mark's two cards behind: paper #f5f5f7 at 62% over the island's black.
+    static let stack: (r: Int, g: Int, b: Int) = (152, 152, 153)
 
     /// States a press can leave in the island: *Checking* (what `-demoActivity stale` shows), Keep with card art, the
     /// switch fallback with art and last 4, and Couldn't check with its ⚠.
@@ -104,16 +106,16 @@ struct StaleRenderTests {
         stride(from: 0, to: bytes.count, by: 4).count { bytes[$0] > 8 || bytes[$0 + 1] > 8 || bytes[$0 + 2] > 8 }
     }
 
-    /// Pixels within `tolerance` of accentDark.
-    static func accentPixels(_ bytes: [UInt8], tolerance: Int = 10) -> Int {
+    /// Pixels within `tolerance` of `color`.
+    static func pixels(_ bytes: [UInt8], near color: (r: Int, g: Int, b: Int), tolerance: Int = 10) -> Int {
         stride(from: 0, to: bytes.count, by: 4).count {
-            abs(Int(bytes[$0]) - accentDark.r) <= tolerance && abs(Int(bytes[$0 + 1]) - accentDark.g) <= tolerance
-                && abs(Int(bytes[$0 + 2]) - accentDark.b) <= tolerance
+            abs(Int(bytes[$0]) - color.r) <= tolerance && abs(Int(bytes[$0 + 1]) - color.g) <= tolerance
+                && abs(Int(bytes[$0 + 2]) - color.b) <= tolerance
         }
     }
 
     /// Every part renders the same pixels whichever state went stale: nothing of the state shows. The leading,
-    /// minimal and Lock Screen parts draw the accentDark glyph, the rest draw nothing.
+    /// minimal and Lock Screen parts draw the island mark (accentDark card, paper stack at 62%), the rest draw nothing.
     @Test(arguments: Part.allCases)
     func staleIsTheBareGlyphInEveryState(_ part: Part) throws {
         let states = Self.states()
@@ -129,10 +131,15 @@ struct StaleRenderTests {
         if part.emptyWhenStale {
             #expect(Self.litPixels(reference) == 0, "\(part.rawValue) draws something when stale")
         } else {
-            // The glyph alone: lit pixels, the solid ones accentDark (text or card art would add other colors).
+            // The island mark alone: lit pixels, the solid ones the accentDark card or the paper stack at 62% (text
+            // or card art would add other colors). On macOS CoreSVG at 22 pt they are 39% and 33% of the lit pixels.
             let lit = Self.litPixels(reference)
             #expect(lit > 0, "\(part.rawValue) draws nothing when stale")
-            #expect(Self.accentPixels(reference) > lit / 4, "\(part.rawValue)'s stale mark isn't the accentDark glyph")
+            let card = Self.pixels(reference, near: Self.accentDark)
+            let stack = Self.pixels(reference, near: Self.stack)
+            #expect(card > lit / 4, "\(part.rawValue)'s stale mark has no accentDark card (\(card) of \(lit))")
+            #expect(stack > lit / 8, "\(part.rawValue)'s stale mark has no paper stack (\(stack) of \(lit))")
+            #expect(card + stack > lit / 2, "\(part.rawValue)'s stale mark has other colors (\(card + stack) of \(lit))")
         }
     }
 

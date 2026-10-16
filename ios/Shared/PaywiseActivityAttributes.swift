@@ -16,7 +16,7 @@ struct PaywiseActivityAttributes: ActivityAttributes {
             case switchFallback = "switch_fallback"
         }
 
-        /// Wire values come from the contract; `paywise` is the Paywise shield glyph.
+        /// Wire values come from the contract; `paywise` is the Paywise glyph (the island mark, `PaywiseGlyphMark`).
         enum Glyph: String, Codable, Hashable, Sendable {
             case paywise
             case check

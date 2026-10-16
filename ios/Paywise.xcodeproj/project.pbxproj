@@ -86,6 +86,7 @@
 		B7BA9819B2AD0D79D84E499B /* Day.swift in Sources */ = {isa = PBXBuildFile; fileRef = A15B2BF01ABDDDD28CD49BB3 /* Day.swift */; };
 		B817844BDC5764DD9BBE916F /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9112E14F3221684F387C1045 /* LiveActivityController.swift */; };
 		BBE918BB690F434294B1D2CE /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83968CE77789F62D255851EB /* AppGroup.swift */; };
+		C3739CAC5D1A479B41D195E5 /* SettingsLinkUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D1A26937664884FD7F369B /* SettingsLinkUITests.swift */; };
 		C5ACA586BBFFA1B9E3D6783F /* AppShellUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */; };
 		C60BB89CC0C69D3530A664C7 /* PrivacyGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E85F8DCCA82B41D11A509F7E /* PrivacyGuard.swift */; };
 		C638D0A76F00A69A87897ECE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68E03AE9D901707EEEE04E9 /* OnboardingView.swift */; };
@@ -201,6 +202,7 @@
 		7DFBC6EC2E1FCF2DBD103B8C /* earbuds-checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "earbuds-checkout.png"; sourceTree = "<group>"; };
 		7EA79D842971DC6717287603 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		83968CE77789F62D255851EB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
+		85D1A26937664884FD7F369B /* SettingsLinkUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLinkUITests.swift; sourceTree = "<group>"; };
 		88C88CD1C239C6F5F38265E3 /* WalletEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletEditor.swift; sourceTree = "<group>"; };
 		899502A671A3D827587CA31C /* CoverageAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverageAPI.swift; sourceTree = "<group>"; };
 		8CC85B1D5C3DA635957EA9EB /* ScreenshotReadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotReadingTests.swift; sourceTree = "<group>"; };
@@ -532,6 +534,7 @@
 				9ADD2196A4BB90DC50066BD0 /* DevicePressUITests.swift */,
 				B46C76289888872578D362E7 /* HomeIconUITests.swift */,
 				F6832974306CEAB55784FF03 /* ScreenshotTourUITests.swift */,
+				85D1A26937664884FD7F369B /* SettingsLinkUITests.swift */,
 				0D6ECDF622C12553E8F34159 /* UITestSupport.swift */,
 			);
 			path = PaywiseUITests;
@@ -819,6 +822,7 @@
 				0CF8A8104C5E76FCEEF08C60 /* DevicePressUITests.swift in Sources */,
 				CACBC2667DC6D71521E8DAC8 /* HomeIconUITests.swift in Sources */,
 				D3AB13DA1FACCE62ADB56AE3 /* ScreenshotTourUITests.swift in Sources */,
+				C3739CAC5D1A479B41D195E5 /* SettingsLinkUITests.swift in Sources */,
 				3CD81D8A57BF225E92DCDCDD /* UITestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

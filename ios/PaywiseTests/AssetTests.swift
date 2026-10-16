@@ -86,20 +86,36 @@ struct AssetTests {
         }
     }
 
-    /// design.md §5: one template vector, drawn by both bundles.
-    @Test func glyphIsATemplateVectorThatDraws() throws {
+    /// design.md §5: the glyph is the island mark, a vector in its own colors (not a template), in both bundles. Drawn
+    /// at the island's 22 pt @3x: the drawn card opaque in accentDark (#5b74ff) and the two cards behind it in paper
+    /// (#f5f5f7) at 62% when dark; accent (#3f5bf6) and ink (#1d1d1f) at 62% when light (the Lock Screen in light).
+    @Test func glyphIsTheIslandMarkInBothAppearances() throws {
         for (label, bundle) in Self.bundles {
-            let image = try #require(UIImage(named: "glyph", in: bundle, with: nil), "glyph missing from \(label)")
-            #expect(image.renderingMode == .alwaysTemplate)
-            #expect(image.size == CGSize(width: 24, height: 24))
-            // The SVG's strokes survived the asset compiler: drawn at 24 pt it covers part of the square, not none.
-            let format = UIGraphicsImageRendererFormat()
-            format.scale = 3
-            let drawn = UIGraphicsImageRenderer(size: image.size, format: format).image { _ in
-                image.withTintColor(.black).draw(in: CGRect(origin: .zero, size: image.size))
+            for (style, card, stack) in [
+                (UIUserInterfaceStyle.dark, [0x5b, 0x74, 0xff], [0xf5, 0xf5, 0xf7]),
+                (.light, [0x3f, 0x5b, 0xf6], [0x1d, 0x1d, 0x1f]),
+            ] {
+                let traits = UITraitCollection(userInterfaceStyle: style)
+                let image = try #require(
+                    UIImage(named: "glyph", in: bundle, compatibleWith: traits), "glyph missing from \(label)"
+                )
+                #expect(image.renderingMode != .alwaysTemplate, "\(label) glyph is a template")
+                #expect(image.size == CGSize(width: 24, height: 24))
+                let format = UIGraphicsImageRendererFormat()
+                format.scale = 3
+                format.preferredRange = .standard
+                let side: CGFloat = 22
+                let drawn = UIGraphicsImageRenderer(size: CGSize(width: side, height: side), format: format).image { _ in
+                    image.draw(in: CGRect(x: 0, y: 0, width: side, height: side))
+                }
+                let pixels = try Self.rgba(#require(drawn.cgImage))
+                func near(_ pixel: Pixel, _ rgb: [Int], alpha: ClosedRange<Int>) -> Bool {
+                    alpha.contains(pixel.alpha) && zip([pixel.red, pixel.green, pixel.blue], rgb).allSatisfy { abs($0 - $1) <= 4 }
+                }
+                // About 685 and 590 of the 66 × 66 pixels (CoreSVG on macOS); the rest are edges and empty.
+                #expect(pixels.count { near($0, card, alpha: 255...255) } > 400, "\(label) \(style.rawValue): no drawn card")
+                #expect(pixels.count { near($0, stack, alpha: 150...165) } > 300, "\(label) \(style.rawValue): no stack at 62%")
             }
-            let coverage = try Self.opaqueFraction(#require(drawn.cgImage))
-            #expect(coverage > 0.15 && coverage < 0.6, "\(label) glyph covers \(coverage)")
         }
     }
 
@@ -195,10 +211,12 @@ struct AssetTests {
         #expect(dark.count { $0.alpha == 255 && [$0.red, $0.green, $0.blue] == [0xf5, 0xf5, 0xf7] } > 10_000)
     }
 
-    /// The logo for app screens: one vector image set, mark.svg for Any and mark-dark.svg for Dark.
-    @Test(.enabled(if: sourceReachable))
-    func markImageSetHasAnyAndDark() throws {
-        let folder = Self.iosFolder.appending(path: "Paywise/Assets.xcassets/mark.imageset")
+    /// The logo for app screens (`mark`: mark.svg, mark-dark.svg) and the Live Activity's glyph (`glyph`: the island
+    /// mark, glyph.svg, glyph-dark.svg): each one vector image set in its own colors, an SVG for Any and one for Dark.
+    @Test(.enabled(if: sourceReachable), arguments: ["Paywise/Assets.xcassets/mark", "Shared/Assets.xcassets/glyph"])
+    func vectorImageSetHasAnyAndDark(_ path: String) throws {
+        let name = URL(filePath: path).lastPathComponent
+        let folder = Self.iosFolder.appending(path: "\(path).imageset")
         let contents = try Self.json(folder.appending(path: "Contents.json"))
         let images = try #require(contents["images"] as? [[String: Any]])
         #expect(images.count == 2)
@@ -206,12 +224,13 @@ struct AssetTests {
         let dark = images.filter {
             ($0["appearances"] as? [[String: String]]) == [["appearance": "luminosity", "value": "dark"]]
         }
-        #expect(any.map { $0["filename"] as? String } == ["mark.svg"])
-        #expect(dark.map { $0["filename"] as? String } == ["mark-dark.svg"])
+        #expect(any.map { $0["filename"] as? String } == ["\(name).svg"])
+        #expect(dark.map { $0["filename"] as? String } == ["\(name)-dark.svg"])
         let properties = try #require(contents["properties"] as? [String: Any])
         #expect(properties["preserves-vector-representation"] as? Bool == true)
-        for name in ["mark.svg", "mark-dark.svg"] {
-            #expect(FileManager.default.fileExists(atPath: folder.appending(path: name).path), "\(name) missing")
+        #expect(properties["template-rendering-intent"] as? String == "original")
+        for file in ["\(name).svg", "\(name)-dark.svg"] {
+            #expect(FileManager.default.fileExists(atPath: folder.appending(path: file).path), "\(file) missing")
         }
     }
 
@@ -306,23 +325,6 @@ struct AssetTests {
             try #require(properties[kCGImagePropertyPixelWidth] as? Int),
             try #require(properties[kCGImagePropertyPixelHeight] as? Int)
         )
-    }
-
-    static func opaqueFraction(_ image: CGImage) throws -> Double {
-        let width = image.width
-        let height = image.height
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ) else { return false }
-            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-            return true
-        }
-        try #require(drawn)
-        let opaque = stride(from: 3, to: pixels.count, by: 4).filter { pixels[$0] > 128 }.count
-        return Double(opaque) / Double(width * height)
     }
 
     static func bytes(_ color: UIColor) -> [Int] {

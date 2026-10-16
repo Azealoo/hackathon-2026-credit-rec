@@ -1,6 +1,6 @@
 #!/bin/bash
-# Rebuilds Paywise's visual assets: card art, the Live Activity glyph and the accent color (docs/design.md §5–§7), the
-# app icon and the in-app logo `mark` (logo option 08 "Monoline", brand/08-monoline), and silent.caf.
+# Rebuilds Paywise's visual assets: card art and the accent color (docs/design.md §2, §6–§7); the app icon, the in-app logo
+# `mark` and the Live Activity glyph (the island mark), all logo option 08 "Monoline" (brand/08-monoline); and silent.caf.
 # Run from anywhere:
 #
 #   ios/tools/make_assets.sh                      # keeps the standard app icon already in AppIcon.appiconset

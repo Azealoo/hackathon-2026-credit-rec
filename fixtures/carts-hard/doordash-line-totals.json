@@ -1,0 +1,48 @@
+{
+  "screenType": "checkout",
+  "merchant": {
+    "name": "DoorDash",
+    "merchantId": "doordash"
+  },
+  "items": [
+    {
+      "name": "Chicken Tikka Masala",
+      "priceUsd": 16.5,
+      "quantity": 1,
+      "category": "dining",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    },
+    {
+      "name": "Garlic Naan",
+      "priceUsd": 3.5,
+      "quantity": 2,
+      "category": "dining",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 37.14,
+  "currency": "USD",
+  "paymentOptionsVisible": [
+    "saved_card",
+    "apple_pay"
+  ],
+  "selectedPayment": {
+    "kind": "saved_card",
+    "network": "amex"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": false,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

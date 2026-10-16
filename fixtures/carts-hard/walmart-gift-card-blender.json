@@ -1,0 +1,47 @@
+{
+  "screenType": "checkout",
+  "merchant": {
+    "name": "Walmart",
+    "merchantId": "walmart"
+  },
+  "items": [
+    {
+      "name": "Walmart eGift Card",
+      "priceUsd": 50.0,
+      "quantity": 1,
+      "category": "gift_card",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": true,
+      "isServicePlan": false
+    },
+    {
+      "name": "6-Speed Countertop Blender",
+      "priceUsd": 39.88,
+      "quantity": 1,
+      "category": "appliances",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 93.07,
+  "currency": "USD",
+  "paymentOptionsVisible": [
+    "saved_card"
+  ],
+  "selectedPayment": {
+    "kind": "saved_card",
+    "network": "discover"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": false,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

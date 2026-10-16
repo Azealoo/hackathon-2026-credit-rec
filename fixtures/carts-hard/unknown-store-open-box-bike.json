@@ -1,0 +1,39 @@
+{
+  "screenType": "checkout",
+  "merchant": {
+    "name": "Ridgeline Cycle Co.",
+    "merchantId": null
+  },
+  "items": [
+    {
+      "name": "Trail 29er Mountain Bike, Medium",
+      "priceUsd": 1150.0,
+      "quantity": 1,
+      "category": "bikes",
+      "condition": "used",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 1298.5,
+  "currency": "USD",
+  "paymentOptionsVisible": [
+    "paypal",
+    "bnpl",
+    "card_form"
+  ],
+  "selectedPayment": {
+    "kind": "card_form",
+    "network": "unknown"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": true,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

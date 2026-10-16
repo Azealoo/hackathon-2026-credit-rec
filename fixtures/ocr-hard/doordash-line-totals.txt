@@ -1,0 +1,17 @@
+DoorDash
+Checkout
+Spice Route Kitchen
+Chicken Tikka Masala  $16.50
+1x
+Garlic Naan  $7.00
+2x
+Subtotal  $23.50
+Delivery Fee  $2.99
+Service Fee  $3.53
+Estimated Tax  $2.12
+Dasher Tip  $5.00
+Total  $37.14
+Payment
+Amex [CARD]
+Apple Pay
+Place Order

@@ -1,0 +1,18 @@
+Target
+Checkout
+Order summary
+Stoneware Dinner Plates, Set of 4  $24.00
+Qty 1
+Cotton Bath Towel  $8.00
+Qty 3
+Subtotal (4 items)  $48.00
+Estimated tax  $4.32
+Total  $52.32
+Payment
+Apple Pay
+Credit or debit card
+Card number  [CARD]
+Expiration  [CARD]
+CVV  [CARD]
+Name on card  [NAME]
+Place your order

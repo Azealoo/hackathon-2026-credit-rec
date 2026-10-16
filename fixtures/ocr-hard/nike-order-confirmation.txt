@@ -1,0 +1,11 @@
+Nike
+Thanks for your order
+Order number  C00198765
+Pegasus Running Shoes, Men's Size 10  $140.00
+Qty 1
+Subtotal  $140.00
+Shipping  Free
+Tax  $12.25
+Total  $152.25
+Paid with Apple Pay
+Shipping to [ADDRESS]

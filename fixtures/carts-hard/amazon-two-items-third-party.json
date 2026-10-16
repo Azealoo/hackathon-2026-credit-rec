@@ -1,0 +1,47 @@
+{
+  "screenType": "checkout",
+  "merchant": {
+    "name": "Amazon",
+    "merchantId": "amazon"
+  },
+  "items": [
+    {
+      "name": "USB-C Charging Cable, 6 ft",
+      "priceUsd": 12.99,
+      "quantity": 2,
+      "category": "electronics",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    },
+    {
+      "name": "SoundBox Mini Bluetooth Speaker",
+      "priceUsd": 94.99,
+      "quantity": 1,
+      "category": "audio",
+      "condition": "renewed",
+      "seller": "third_party",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 133.07,
+  "currency": "USD",
+  "paymentOptionsVisible": [
+    "saved_card"
+  ],
+  "selectedPayment": {
+    "kind": "saved_card",
+    "network": "visa"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": false,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

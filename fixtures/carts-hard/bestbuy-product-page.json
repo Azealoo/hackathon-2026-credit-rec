@@ -1,0 +1,24 @@
+{
+  "screenType": "not_checkout",
+  "merchant": {
+    "name": null,
+    "merchantId": null
+  },
+  "items": [],
+  "totalUsd": null,
+  "currency": "USD",
+  "paymentOptionsVisible": [],
+  "selectedPayment": {
+    "kind": "unknown",
+    "network": "unknown"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": false,
+  "confidence": {
+    "merchant": 0.0,
+    "total": 0.0,
+    "items": 0.0
+  }
+}

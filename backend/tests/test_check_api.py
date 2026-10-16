@@ -411,6 +411,40 @@ def test_rate_limit_answers_429(monkeypatch):
     assert post(check_body(), headers={"x-forwarded-for": "198.51.100.4"}).status_code == 200
 
 
+def test_a_spoofed_forwarded_for_does_not_reset_the_limit(monkeypatch):
+    """BSEC-2: Cloudflare (in front of Render) appends to X-Forwarded-For and overwrites CF-Connecting-IP, so
+    a caller who sends a new first hop each time is still the same client."""
+    monkeypatch.setattr(middleware.LIMITER, "per_minute", 3)
+    spoofed = [f"192.0.2.{n}" for n in range(1, 6)]  # TEST-NET-1 documentation addresses
+    behind_render = [{"x-forwarded-for": f"{fake}, 203.0.113.9", "cf-connecting-ip": "203.0.113.9"}
+                     for fake in spoofed]
+    assert [post(check_body(), headers=h).status_code for h in behind_render] == [200, 200, 200, 429, 429]
+    middleware.LIMITER.reset()
+    # Without CF-Connecting-IP, the last hop (the one the nearest proxy appended) is the client.
+    appended = [{"x-forwarded-for": f"{fake}, 203.0.113.9"} for fake in spoofed]
+    assert [post(check_body(), headers=h).status_code for h in appended] == [200, 200, 200, 429, 429]
+    # A different real client still has its own window.
+    other = {"x-forwarded-for": "203.0.113.9, 198.51.100.4", "cf-connecting-ip": "198.51.100.4"}
+    assert post(check_body(), headers=other).status_code == 200
+
+
+@pytest.mark.parametrize(
+    "headers, client",
+    [
+        ({"cf-connecting-ip": "203.0.113.9", "x-forwarded-for": "192.0.2.1, 198.51.100.4"}, "203.0.113.9"),
+        ({"x-forwarded-for": "192.0.2.1, 192.0.2.2,198.51.100.4"}, "198.51.100.4"),
+        ({"x-forwarded-for": "198.51.100.4"}, "198.51.100.4"),
+        ({"cf-connecting-ip": " ", "x-forwarded-for": "192.0.2.1, 198.51.100.4"}, "198.51.100.4"),
+        ({"x-forwarded-for": "192.0.2.1, "}, "testclient"),
+        ({}, "testclient"),
+    ],
+    ids=["cf-connecting-ip", "last-hop", "one-hop", "blank-cf", "blank-last-hop", "socket-peer"],
+)
+def test_client_key_never_uses_a_hop_the_caller_wrote(headers, client):
+    scope = {"headers": [(k.encode(), v.encode()) for k, v in headers.items()], "client": ("testclient", 50000)}
+    assert middleware.client_key(scope) == client
+
+
 def coverage_case_13() -> dict:
     case = next(c for c in json.loads((FIXTURES / "coverage_cases.json").read_text(encoding="utf-8"))["cases"]
                 if c["id"] == 13)

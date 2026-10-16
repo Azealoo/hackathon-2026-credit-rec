@@ -3,6 +3,8 @@
 The model only reads. It copies amounts as printed ("$1,499.00"), picks enum values, and gives
 confidences. Everything else happens here, in code:
 - amounts are parsed to Decimal (the model never adds, converts or rounds);
+- the total and every item price must be printed in the OCR text sent to the model (printed_amounts):
+  a reading with an amount the screen doesn't show raises LLMInvalidOutput, so the rules parser answers;
 - merchantId comes from catalog.find_merchant on the store name/domain the model read;
 - isGiftCard / isServicePlan come from the category, currency from the price symbol;
 - Σ(item price × qty) is checked against the printed subtotal/total, and confidence.items is
@@ -235,6 +237,23 @@ def money(text: str | None) -> Decimal | None:
     return value.quantize(CENT, rounding=ROUND_HALF_UP)
 
 
+# A number as the screen prints it, with or without "$", thousands commas and cents. It doesn't start inside
+# another number ("12,34" gives no 34) and doesn't stop inside one ("$1,499.00" is 1499.00, not 1 or 499).
+_PRINTED = re.compile(r"(?P<dollar>\$\s*)?(?<![\d.,])(?P<num>\d{1,3}(?:,\d{3})+|\d+)(?P<cents>\.\d{2})?(?!\d)")
+_FREE_WORD = re.compile(r"\b(?:free|none|included)\b", re.IGNORECASE)
+
+
+def printed_amounts(ocr_text: str) -> set[Decimal]:
+    """Every amount printed on the screen, in dollars and cents, after dropping "$" and thousands commas
+    ("$1,499.00", "1,499.00 USD" and "$1499" are all 1499.00), plus 0.00 when it prints Free, None or Included
+    (BSEC-4). A number is an amount when it has a "$" or cents: "Qty 2", "14-inch" and "2–4 days" aren't."""
+    amounts = {Decimal(m["num"].replace(",", "") + (m["cents"] or "")).quantize(CENT)
+               for m in _PRINTED.finditer(ocr_text) if m["dollar"] or m["cents"]}
+    if _FREE_WORD.search(ocr_text):
+        amounts.add(Decimal("0.00"))
+    return amounts
+
+
 def currency_of(ocr_text: str) -> str:
     """v1 carts are USD (§7.2 rule 9: no FX); flag the obvious non-USD symbols."""
     if "€" in ocr_text:
@@ -257,8 +276,10 @@ def resolve_merchant(store: str | None) -> tuple[str | None, str | None]:
     return (found.names[0], found.id) if found else (name, None)
 
 
-def build_cart(raw: RawScreen, ocr_text: str = "") -> Cart:
-    """Turn the model's reading into a validated Cart. Raises LLMInvalidOutput if it can't."""
+def build_cart(raw: RawScreen, ocr_text: str) -> Cart:
+    """Turn the model's reading into a validated Cart. Raises LLMInvalidOutput if it can't, or if the total or
+    an item price it would use isn't printed in ocr_text (the model made it up or misread it)."""
+    on_screen = printed_amounts(ocr_text)
     name, merchant_id = resolve_merchant(raw.store)
     conf_store, conf_total, conf_items = _clamp(raw.conf.store), _clamp(raw.conf.total), _clamp(raw.conf.items)
     categories = set(_category_ids())
@@ -274,11 +295,15 @@ def build_cart(raw: RawScreen, ocr_text: str = "") -> Cart:
         if price is None or price < 0:
             items_ok = False
             continue
+        if price not in on_screen:
+            raise llm.LLMInvalidOutput("an item price isn't printed on the screen")
         lines.append((item, price, qty))
 
     total = money(raw.total)
     if total is not None and total < 0:
         total = None
+    if total is not None and total not in on_screen:
+        raise llm.LLMInvalidOutput("the total isn't printed on the screen")
     if total is None:
         conf_total = min(conf_total, LOW_CONFIDENCE)
     extras = [(e.kind, money(e.amount)) for e in raw.extras]
@@ -368,7 +393,7 @@ def sum_agrees(
     return subtotal is None
 
 
-def build(data: dict, ocr_text: str = "") -> ParsedScreen:
+def build(data: dict, ocr_text: str) -> ParsedScreen:
     """The model's JSON -> ParsedScreen. Raises LLMInvalidOutput when the JSON is unusable."""
     try:
         raw = RawScreen.model_validate(data)

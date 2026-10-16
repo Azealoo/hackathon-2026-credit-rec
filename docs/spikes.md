@@ -147,16 +147,16 @@ Also found on Oct 16: no new screenshot in Photos after the presses, so Take Scr
 
 | Item | Target | Result | When |
 |---|---|---|---|
-| S6 setup time | ≤2:00 | | |
+| S6 setup time | ≤2:00 | Not timed. On Carol (fresh phone) the owner went through onboarding, the Back Tap prompt (Set Up Back Tap, not Not Now) and the in-app setup without help (App Group flags: `onboarded`, `triggerSetupDone`). | Carol, Oct 16 ~15:40 |
 | Signed Shortcut file imports | Y | **Y** (AirDropped `ios/Shortcut/Paywise.shortcut`, Add Shortcut, runs) | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
-| G1 store presses | ≥9/10 | **5/5 so far with Back Tap** (4 in `testAssistedPresses` + 1 manual): each captured the store page and showed the exact Switch copy. 5 more needed for the gate. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
+| G1 store presses | ≥9/10 | **5/5 so far with Back Tap** (4 in `testAssistedPresses` + 1 manual): each captured the store page and showed the exact Switch copy. 5 more needed for the gate. **Carol (second iPhone 16 Pro Max, iOS 27.0.1), Oct 16 ~15:45:** the owner ran the flow by hand and reports it works; no per-press tally was recorded, so the gate is still 5/5 counted. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests; Carol (UDID …E68801C), owner |
 | G1 real app 1 / app 2 | ≥9/10 overall | | |
 | Back Tap | tally | **5/5**. In the assisted run each double tap made **two** `/v1/check` calls a few seconds apart; the second one read the snippet over the page and returned *items unreadable*. The manual press made one call. Watch for double fires. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
 | Press → *Checking* p50 | ≤1.0 s | | |
 | Press → answer p50 / p90 | ≤3.5 s / ≤5 s | | |
 | G2 snippet appears (Safari) | ≥9/10 | **5/5** over Safari (in SpringBoard's tree; lines 2–3 exact) | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
 | G2 snippet appears (third-party app) | ≥1 | | |
-| G2 button saves + reloads | ≥9/10 | **Manual 1/1**: a planned Purchase row in the phone's store (Aero 14, Freedom, $1,499, check a9d3b20a), and the card reloaded to Saved. XCUITest's synthetic taps on the snippet button saved **0/4**: they don't reach a system-presented snippet, so this gate needs human taps. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
+| G2 button saves + reloads | ≥9/10 | **Manual 1/1**: a planned Purchase row in the phone's store (Aero 14, Freedom, $1,499, check a9d3b20a), and the card reloaded to Saved. XCUITest's synthetic taps on the snippet button saved **0/4**: they don't reach a system-presented snippet, so this gate needs human taps. **Carol: 1 planned row** (Aero 14 Laptop, 14-inch, Northbay, Freedom, $1,499), read from the phone's `Purchases.store` after the owner's test. That's the store page's item name, not Try it now's sample. | Oct 16, 09:56–10:03, iPhone (UDID …0801C); Carol, ~15:50, devicectl + sqlite3 |
 | Double tap → one purchase | Y | not yet on the phone (simulator: 2 racing saves → 1 row) | |
 | Island empty 5 min after Done | Y | | |
 | Silent alert: no sound, expands | Y | | |

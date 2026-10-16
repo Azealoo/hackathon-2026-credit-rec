@@ -52,8 +52,61 @@ actor PurchaseStore {
         return outcome
     }
 
+    /// Every purchase, newest purchase date first.
     func all() throws -> [PurchaseSnapshot] {
         try modelContext.fetch(FetchDescriptor<Purchase>()).map(PurchaseSnapshot.init)
+            .sorted { ($0.purchaseDate, $0.id) > ($1.purchaseDate, $1.id) }
+    }
+
+    func purchase(id: String) throws -> PurchaseSnapshot? {
+        try find(id).map(PurchaseSnapshot.init)
+    }
+
+    /// "I bought this", or [Yes] in the claim input (§5.4, §5.5): planned → confirmed.
+    @discardableResult
+    func confirm(id: String) throws -> PurchaseSnapshot? {
+        guard let purchase = try find(id) else { return nil }
+        purchase.status = .confirmed
+        try modelContext.save()
+        return PurchaseSnapshot(purchase)
+    }
+
+    /// [No, another card] in the claim input: the purchase was paid with `cardId`, so it is confirmed with that card.
+    /// The saved coverage dates belonged to the old card's terms, so they are cleared; the coverage check works the
+    /// dates out again for the new card.
+    @discardableResult
+    func confirm(id: String, paidWith cardId: String) throws -> PurchaseSnapshot? {
+        guard let purchase = try find(id) else { return nil }
+        if purchase.cardId != cardId {
+            purchase.cardId = cardId
+            purchase.coverage = []
+        }
+        purchase.status = .confirmed
+        try modelContext.save()
+        return PurchaseSnapshot(purchase)
+    }
+
+    /// The maker's warranty the user picked (nil for "Don't know").
+    func setManufacturerWarranty(id: String, months: Int?) throws {
+        guard let purchase = try find(id) else { return }
+        purchase.manufacturerWarrantyMonths = months
+        try modelContext.save()
+    }
+
+    func delete(id: String) throws {
+        guard let purchase = try find(id) else { return }
+        modelContext.delete(purchase)
+        try modelContext.save()
+    }
+
+    func deleteAll() throws {
+        try modelContext.delete(model: Purchase.self)
+        try modelContext.save()
+    }
+
+    private func find(_ id: String) throws -> Purchase? {
+        let id = id
+        return try modelContext.fetch(FetchDescriptor<Purchase>(predicate: #Predicate { $0.id == id })).first
     }
 
     private func purchases(checkId: String) throws -> [Purchase] {

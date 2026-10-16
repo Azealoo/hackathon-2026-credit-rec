@@ -42,6 +42,11 @@ final class CheckStore: Sendable {
         lock.withLock { _ in allRecords() }
     }
 
+    /// Every stored record, the newest first ("What we sent").
+    func newestFirst() -> [CheckRecord] {
+        all().sorted { ($0.createdDate ?? .distantPast, $0.checkId) > ($1.createdDate ?? .distantPast, $1.checkId) }
+    }
+
     // MARK: Writing
 
     func write(_ record: CheckRecord, now: Date = .now) throws {
@@ -62,6 +67,15 @@ final class CheckStore: Sendable {
             try body(&record)
             try Self.save(record, to: url, directory: directory)
             return record
+        }
+    }
+
+    /// Deletes every record (the debug `-resetState` launch argument).
+    func removeAll() {
+        lock.withLock { _ in
+            for url in recordFiles() {
+                try? FileManager.default.removeItem(at: url)
+            }
         }
     }
 

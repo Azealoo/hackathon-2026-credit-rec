@@ -5,9 +5,17 @@ import SwiftUI
 /// Type follows docs/design.md §3 (sizes scale with Dynamic Type); secondary lines drop first at large sizes (§6.4).
 /// Also renders island-only results (Keep, No checkout, Couldn't check) when no Live Activity can show them (§6.6).
 struct CheckResultView: View {
+    /// In the app (not the system snippet) the buttons run these instead of `Button(intent:)`, so the app's own view
+    /// can reload after the same save path (`SavePurchaseIntent`) runs.
+    struct InAppActions {
+        var save: @MainActor () -> Void
+        var showSent: @MainActor () -> Void
+    }
+
     let record: CheckRecord
     var catalog: CardCatalog
     var showsSaveButton: Bool
+    var actions: InAppActions?
 
     @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .title2) private var line1Size: CGFloat = 23
@@ -16,10 +24,14 @@ struct CheckResultView: View {
     @ScaledMetric(relativeTo: .footnote) private var instructionSize: CGFloat = 14
     @ScaledMetric(relativeTo: .footnote) private var footnoteSize: CGFloat = 13
 
-    init(record: CheckRecord, catalog: CardCatalog = Dependencies.current.catalog, showsSaveButton: Bool = true) {
+    init(
+        record: CheckRecord, catalog: CardCatalog = Dependencies.current.catalog, showsSaveButton: Bool = true,
+        actions: InAppActions? = nil
+    ) {
         self.record = record
         self.catalog = catalog
         self.showsSaveButton = showsSaveButton
+        self.actions = actions
     }
 
     private var response: CheckResponse { record.parsedResponse }
@@ -41,9 +53,19 @@ struct CheckResultView: View {
     // MARK: Result
 
     /// Switch and Keep-protected carry [Paying with …] (§6.3); island-only results never do.
-    private var isActionable: Bool {
+    private var isActionable: Bool { Self.isActionable(response) }
+
+    static func isActionable(_ response: CheckResponse) -> Bool {
+        let decision = response.decision
         let savable = decision?.kind == .switch || (decision?.kind == .keep && decision?.reason == .alreadyProtected)
         return savable && response.purchaseDraft != nil
+    }
+
+    /// Whether this record's view shows [Paying with …], the one primary button (the app keeps its own secondary).
+    static func showsSaveButton(_ record: CheckRecord, catalog: CardCatalog) -> Bool {
+        let response = record.parsedResponse
+        return record.view == .result && isActionable(response)
+            && ResultText.primaryButtonTitle(decision: response.decision, catalog: catalog) != nil
     }
 
     /// Lines 1–3 with eligibility notes standing in for an empty line 3 (Switch, cash).
@@ -76,36 +98,47 @@ struct CheckResultView: View {
                     // Shrink only to fit the width: the row can be offered less height than the line needs, which
                     // otherwise squeezes 23 pt down to the 70% floor (seen when rendering the snippet).
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("result.line1")
             }
             if let line2 = copy.line2 {
                 Text(line2)
                     .font(.system(size: lineSize, weight: .medium))
                     .tracking(-0.2)
+                    .accessibilityIdentifier("result.line2")
             }
             if showsLine3, let line3 = copy.line3 {
                 Text(line3)
                     .font(.system(size: lineSize))
                     .tracking(-0.2)
                     .foregroundStyle(.secondary)
+                    .accessibilityIdentifier("result.line3")
             }
         }
         .monospacedDigit()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(SpokenCopy.label(copy))
+        // The system snippet reads as one spoken phrase (§6.4); in the app each line stays its own element, read as
+        // shown, so UI tests can check the exact §6.3 copy.
+        .modifier(SpokenLines(label: actions == nil ? SpokenCopy.label(copy) : nil))
 
         if showsInstruction, let instruction = copy.instruction {
             Text("↳ \(instruction)")
                 .font(.system(size: instructionSize))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-                .accessibilityLabel(SpokenCopy.spoken(instruction))
+                // Spoken in the snippet (§6.4); in the app read as shown without the arrow, like lines 1–3 above.
+                .accessibilityLabel(actions == nil ? SpokenCopy.spoken(instruction) : instruction)
+                .accessibilityIdentifier("result.instruction")
         }
 
         if showsSaveButton, isActionable, let title = ResultText.primaryButtonTitle(decision: decision, catalog: catalog) {
-            Button(intent: SavePurchaseIntent(checkId: record.checkId)) {
-                Text(title)
+            Group {
+                if let actions {
+                    Button(action: actions.save) { Text(title) }
+                } else {
+                    Button(intent: SavePurchaseIntent(checkId: record.checkId)) { Text(title) }
+                }
             }
             .buttonStyle(SnippetButtonStyle(prominent: true))
+            .accessibilityIdentifier("result.save")
         }
     }
 
@@ -124,11 +157,14 @@ struct CheckResultView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             ForEach([saved.line2, showsLine3 ? saved.line3 : nil].compactMap { $0 }, id: \.self) { line in
+                // One line at the default sizes (shrinking a little); from XL a line wraps rather than cut off a
+                // coverage date ("…to Feb 14, 2027").
                 Text(line)
                     .font(.system(size: savedSize, weight: .medium))
                     .tracking(-0.3)
-                    .lineLimit(oneLine ? 1 : nil)
-                    .minimumScaleFactor(0.85)
+                    .lineLimit(savedLinesWrap ? nil : 1)
+                    .minimumScaleFactor(savedLinesWrap ? 1 : 0.85)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if showsFootnote {
                 Text(saved.footnote)
@@ -139,11 +175,17 @@ struct CheckResultView: View {
         }
         .monospacedDigit()
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("result.saved")
 
-        Button(intent: ShowSentIntent(checkId: record.checkId)) {
-            Text("What we sent")
+        Group {
+            if let actions {
+                Button(action: actions.showSent) { Text("What we sent") }
+            } else {
+                Button(intent: ShowSentIntent(checkId: record.checkId)) { Text("What we sent") }
+            }
         }
         .buttonStyle(SnippetButtonStyle(prominent: false))
+        .accessibilityIdentifier("result.whatWeSent")
     }
 
     // MARK: Sent
@@ -152,6 +194,7 @@ struct CheckResultView: View {
         Text("What left your iPhone")
             .font(.system(size: line1Size, weight: .bold))
             .tracking(-0.5)
+            .accessibilityIdentifier("result.sentTitle")
         // The whole text when it fits; scrolls only when it doesn't (scrolling in a snippet is unverified).
         ViewThatFits(in: .vertical) {
             sentText
@@ -167,6 +210,7 @@ struct CheckResultView: View {
     private var sentText: some View {
         Text(record.sentText)
             .font(.system(size: footnoteSize, design: .monospaced))
+            .accessibilityIdentifier("result.sentText")
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
@@ -174,8 +218,10 @@ struct CheckResultView: View {
 
     // MARK: Parts
 
-    /// Verdict and Saved lines stay on one line (shrinking a little) until accessibility sizes.
+    /// Verdict and Saved line 1 stay on one line (shrinking a little) until accessibility sizes.
     private var oneLine: Bool { !typeSize.isAccessibilitySize }
+    /// Saved lines 2–3 wrap from XL: at XXL one line can't hold "…up to $500 to Feb 14, 2027" even at 85%.
+    private var savedLinesWrap: Bool { typeSize >= .xLarge }
 
     /// The same expanded art as the island (SPEC §6.4), `art.assetName` from cards.json.
     private func cardArt(_ cardId: String?) -> some View {
@@ -249,6 +295,21 @@ struct MessageSnippetView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// One spoken label for the result lines (the snippet), or the lines as separate elements (the app).
+private struct SpokenLines: ViewModifier {
+    let label: String?
+
+    func body(content: Content) -> some View {
+        if let label {
+            content
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(label)
+        } else {
+            content.accessibilityElement(children: .contain)
+        }
     }
 }
 

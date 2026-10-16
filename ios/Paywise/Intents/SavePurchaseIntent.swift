@@ -20,9 +20,14 @@ struct SavePurchaseIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        let deps = Dependencies.current
-        _ = try await deps.purchases.store().savePlanned(checkId: checkId, checkStore: deps.checkStore)
+        _ = try await Self.save(checkId: checkId, deps: Dependencies.current)
         return .result()
+    }
+
+    /// The save itself: the snippet's button (`perform()`) and the app's own [Paying with …] (`InAppCheck`) both run
+    /// it, so they share one idempotent path.
+    static func save(checkId: String, deps: AppDependencies) async throws -> PurchaseStore.SaveOutcome {
+        try await deps.purchases.store().savePlanned(checkId: checkId, checkStore: deps.checkStore)
     }
 }
 

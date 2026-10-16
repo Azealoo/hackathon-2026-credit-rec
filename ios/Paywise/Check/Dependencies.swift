@@ -11,6 +11,8 @@ struct AppDependencies: Sendable {
     var replay: ReplayStore
     var purchases: PurchaseStoreProvider
     var island: any IslandPresenting
+    /// `POST /v1/coverage` for the claim screens (§5.5).
+    var coverage: CoverageAPI = .live()
     var now: @Sendable () -> Date = { .now }
     var timeZone: TimeZone = .current
     /// How long an island alert is held before `.immediate` end (§6.3: 4 s).
@@ -22,7 +24,7 @@ struct AppDependencies: Sendable {
 
     var walletStore: WalletStore { WalletStore(settings: settings) }
 
-    /// Production. Screen reading is a placeholder that throws until the OCR work is merged.
+    /// Production: on-device Vision reading, the deployed backend, App Group storage and ActivityKit.
     static let live = AppDependencies(
         screenReader: VisionScreenReader(),
         api: .live(),

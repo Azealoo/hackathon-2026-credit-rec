@@ -107,7 +107,8 @@ struct CheckFlow: Sendable {
         return CheckRequest(
             requestId: checkId,
             client: .init(app: "paywise-ios", version: Self.appVersion),
-            clientDate: Self.clientDate(deps.now(), timeZone: deps.timeZone),
+            // "Pretend today is…" (Settings) moves the purchase date, and so the coverage dates, with it.
+            clientDate: deps.settings.dateOverrideDay ?? Self.clientDate(deps.now(), timeZone: deps.timeZone),
             screen: .init(
                 ocrText: screen.text, redactions: screen.redactions,
                 ocrConfidence: Self.wireConfidence(reading.ocrConfidence)
@@ -145,10 +146,16 @@ struct CheckFlow: Sendable {
         do {
             let reply = try await deps.api.postCheck(body)
             let json = try? JSONValue(data: reply.body)
-            let decision = json.flatMap { try? $0.decode(CheckResponse.self) }?.decision
-            if let json, let kind = decision?.kind, kind != .unrecognized,
-               (200..<300).contains(reply.status) || kind == .error {
-                // A result, or the server's own error answer (e.g. 400 privacy_rejected): shown as is, never replayed.
+            let parsed = json.flatMap { try? $0.decode(CheckResponse.self) }
+            let kind = parsed?.decision?.kind
+            if (400..<500).contains(reply.status) || kind == .error {
+                // R16: the server refused the request (bad_request, privacy_rejected, 429) or answered with its error
+                // shape. The phone shows its own §6.3 *Couldn't check* copy, never the server's, and doesn't replay:
+                // the server did answer, so this isn't a connection failure.
+                Self.log.error("The server refused the check: HTTP \(reply.status, privacy: .public)")
+                return (Self.rejectedResponse(checkId: checkId, code: parsed?.error?.code), false)
+            }
+            if let json, let kind, kind != .unrecognized, (200..<300).contains(reply.status) {
                 return (json, false)
             }
             failure = .server(status: reply.status)
@@ -169,19 +176,41 @@ struct CheckFlow: Sendable {
     /// The phone's own error-shape response for *Couldn't check* (§6.3), so the record stays schema-valid.
     static func couldntCheckResponse(checkId: String, failure: PaywiseAPI.Failure) -> JSONValue {
         let timedOut = failure == .timeout
+        return errorResponse(
+            checkId: checkId,
+            line2: timedOut ? Self.tookTooLong : Self.noConnection,
+            code: timedOut ? .timeout : .serverError,
+            message: timedOut ? "No answer within 6 seconds." : "The request didn't reach the server or failed there."
+        )
+    }
+
+    /// R16: a 4xx (or the server's error shape) shows *Couldn't check* with "Something went wrong · press again".
+    /// The stored error code is the server's when it is one the contract knows, else bad_request.
+    static func rejectedResponse(checkId: String, code: APIErrorCode?) -> JSONValue {
+        let known: APIErrorCode = switch code {
+        case .some(.unrecognized), .none: .badRequest
+        case .some(let code): code
+        }
+        return errorResponse(
+            checkId: checkId, line2: Self.somethingWentWrong, code: known,
+            message: "The server refused the request."
+        )
+    }
+
+    static let couldntCheck = "Couldn't check this time"
+    static let noConnection = "No connection · press again"
+    static let tookTooLong = "Took too long · press again"
+    /// R16, new copy (not in §6.3): the server refused the request.
+    static let somethingWentWrong = "Something went wrong · press again"
+
+    private static func errorResponse(checkId: String, line2: String, code: APIErrorCode, message: String) -> JSONValue {
         let response = CheckResponse(
             requestId: checkId,
             decision: .init(
                 kind: .error, reason: .error, presentation: .island,
-                copy: .init(
-                    line1: "Couldn't check this time",
-                    line2: timedOut ? "Took too long · press again" : "No connection · press again"
-                )
+                copy: .init(line1: couldntCheck, line2: line2)
             ),
-            error: .init(
-                code: timedOut ? .timeout : .serverError,
-                message: timedOut ? "No answer within 6 seconds." : "The request didn't reach the server or failed there."
-            )
+            error: .init(code: code, message: message)
         )
         return (try? JSONValue(data: JSONCoding.encoder.encode(response))) ?? .null
     }

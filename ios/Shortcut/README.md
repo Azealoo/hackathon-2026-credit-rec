@@ -86,7 +86,7 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 | You see | Do |
 |---|---|
 | Nothing happens on a press | Open **Shortcuts**, long-press **Paywise** and tap **Details** (or open it and tap **ⓘ**). Check: Share Sheet on, Images only. In **Privacy**, nothing should be blocked. Back in the editor, tap **▶**. You should get "No checkout total found" for the Shortcuts screen, which proves the chain works, or an error that names the broken action. Also check that **Settings › Action Button** still shows Shortcut › Paywise. |
-| The island works but the snippet never appears (§6.6 G2) | In the **Paywise** app, go to the **Check** section, then **Results**, and pick **Island**. Switch answers then come as an 8 s island alert, and you save them later with "I bought this". (The picker is labelled "Results" in `ContentView.swift` today, not "Answer style".) |
+| The island works but the snippet never appears (§6.6 G2) | In the **Paywise** app, go to **Settings › Results › Switch results** and pick **Island alert, held 8 s**. Switch answers then come as an 8 s island alert, and you save them later with "I bought this" in **Purchases**. |
 | "Use the Paywise shortcut" | Check Checkout ran without an image. Redo steps 8 and 10 so both fields hold a blue token. |
 | A prompt on every press | You tapped *Allow Once*. Go to **Details › Privacy › Reset Privacy**, press again and pick **Always Allow**. |
 | **Check Checkout** isn't in the action search | Open the Paywise app once, then search `Paywise`. |
@@ -94,6 +94,9 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 | The screenshot shows Shortcuts or Paywise, not the store (G1 fails) | Follow §6.6: first try the iOS 27 **When a screenshot is saved** automation running Paywise (u: whether it passes the screenshot as input). Otherwise use section D plus the in-app check. |
 
 ## Share it (for the setup screen's "Shortcut link", §5.1 step 3)
+
+Until the link exists, the app's setup screen offers **Show the steps**: a short, user-facing copy of steps 1–15 above
+(`ShortcutSteps` in `ios/Paywise/Onboarding/TriggerSetupView.swift`, same numbers). Change both together.
 
 In **Shortcuts**, long-press **Paywise** and tap **Share › Copy iCloud Link** (u). Anyone who opens the link needs the
 Paywise app installed first, because the Check Checkout steps belong to the app.

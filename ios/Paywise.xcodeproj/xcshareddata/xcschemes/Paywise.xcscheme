@@ -50,6 +50,17 @@
                ReferencedContainer = "container:Paywise.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E1813C6F3723F732FD7BFA29"
+               BuildableName = "PaywiseUITests.xctest"
+               BlueprintName = "PaywiseUITests"
+               ReferencedContainer = "container:Paywise.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

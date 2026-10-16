@@ -1,6 +1,7 @@
 # Paywise iOS
 
-Xcode 27, iOS 27.0+, iPhone only. Targets: **Paywise** (app), **PaywiseWidgets** (Live Activity extension), **PaywiseTests**.
+Xcode 27, iOS 27.0+, iPhone only. Targets: **Paywise** (app), **PaywiseWidgets** (Live Activity extension), **PaywiseTests**
+(offline unit tests), **PaywiseUITests** (UI tests against the live backend, and the screenshot tour).
 `Shared/` is compiled into both the app and the extension. `data/cards.json` is bundled as a file reference (no copy).
 
 `project.yml` is the source of truth. After editing it, run `xcodegen` in this folder and commit the regenerated `Paywise.xcodeproj`.
@@ -16,8 +17,8 @@ so the commands below run without prompts.
 Run from `ios/`. `$DD` is any DerivedData folder, for example `/tmp/paywise-dd`.
 
 ```bash
-# Unit tests (simulator)
-xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath "$DD" test
+# Unit tests (simulator, offline). The Paywise scheme also holds the live UI tests, so name the suite.
+xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath "$DD" -only-testing:PaywiseTests test
 
 # Device build (signs, refreshes profiles, registers the phone if needed)
 xcodebuild -project Paywise.xcodeproj -scheme Paywise -configuration Debug -destination 'id=00008140-001858591EE0801C' -derivedDataPath "$DD" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
@@ -46,6 +47,7 @@ iOS Simulator tool's screenshot (`xcrun simctl io … screenshot` omits the isla
 | `-demoActivity <state>` | Starts that Live Activity with the §6.3 copy for the demo wallet and leaves it running (never stale): `checking`, `keep`, `keepMethod`, `noCheckout`, `couldntCheck`, `switchFallback`, `stale` (staleDate in the past). Result states alert, so the island expands. |
 | `-demoActivity end` | Ends every Paywise activity. |
 | `-gallery <state>` | Opens on the result snippet in that state, full screen: `result`, `resultCashBest`, `resultCash`, `keepProtected`, `saved`, `sent`, `notSetUp`. |
+| `-checkState <state>` | Opens the Check tab on an answer the island shows after a press, as "Check a screenshot" shows it: `keepDefault`, `keepMethod`, `keepItemsUnreadable`, `noCheckoutOnDevice`, `noCheckoutFromBackend`, `alreadyPaid`, `couldntCheck`, `tookTooLong` (use with `-skipOnboarding -tab check`). |
 
 ```bash
 xcrun simctl launch <device> com.azealoo.paywise -demoActivity keep
@@ -53,7 +55,46 @@ xcrun simctl launch --terminate-running-process <device> com.azealoo.paywise -de
 xcrun simctl spawn <device> log show --last 2m --predicate 'subsystem == "com.azealoo.paywise" AND category == "demo"'
 ```
 
-The Debug section also has *Start demo state*. The states are built by the same code a press uses
+### Test hooks (Debug builds only)
+
+| Launch argument | Does |
+|---|---|
+| `-resetState` | Clears the wallet, purchases, check records, onboarding and the date override before any screen loads. |
+| `-skipOnboarding` | Seeds the demo wallet (`demo-3card`) and opens the tabs. |
+| `-dateOverride YYYY-MM-DD` | Turns on Settings › "Pretend today is…" with that day (the check's `clientDate` and the claim's `asOf`). |
+| `-tab check\|purchases\|settings` | Opens on that tab. |
+| `-doubleSave` | The in-app [Paying with …] starts two saves at once and reports what each returned (`debug.saveOutcomes`), so a UI test can show two racing saves make one purchase. A synthesized double tap reaches a SwiftUI button as one action. |
+
+### UI tests against the live backend, and the screenshot tour
+
+`PaywiseUITests` runs against https://paywise-api-n0f9.onrender.com. It is in the `Paywise` scheme's test action, so a
+plain `test` runs it too (about 6 minutes, network needed): pick a suite with `-only-testing:PaywiseTests` or
+`-only-testing:PaywiseUITests`.
+
+| Test | Checks |
+|---|---|
+| `AppShellUITests/testCheckAScreenshotLive` | "Check a screenshot" → newest photo → the exact §6.3 *Switch* lines and instruction within 6 s of the pick (time printed as `PAYWISE_UI`). |
+| `AppShellUITests/testSaveIsIdempotent` | [Paying with Freedom] with `-doubleSave` → two saves race on one check, one returns "saved" and one "alreadySaved" → *Saved* → Purchases has one row, the §15.7 step 12a line word for word (also after a relaunch). A double tap on the system snippet stays the on-device check in §15.7 step 12a. |
+| `AppShellUITests/testClaimCases1and2` | The purchase checked and saved on Oct 17, 2026, then claims on Dec 18, 2027: case 1 → "May be eligible" + "Extended warranty"; case 2 → "Not covered" (read from the web view). |
+| `ScreenshotTourUITests/testScreenshotTour` | Every screen and state (including the `-checkState` answers, [No, another card], [Don't know] → "Assumed", the delete confirmation and the "Make it one press" offer after the 2nd check), plus the `-gallery` snippet states, as `docs/overnight-shots/<appearance>-<size>/NN-<screen>.png`. |
+
+They pick the newest photo in the PhotosPicker, so add the demo laptop checkout to the simulator's Photos first:
+
+```bash
+xcrun simctl addmedia <device> ../fixtures/screenshots/laptop-checkout.png
+xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'platform=iOS Simulator,id=<device>' -derivedDataPath "$DD" -only-testing:PaywiseUITests/AppShellUITests test
+```
+
+`tools/run_ui_tour.sh` does all of it on the simulator "Paywise Dev 18" (created if missing; `PAYWISE_SIM` picks
+another): warms Render, adds a copy of the photo dated now (addmedia dates a PNG by its file's modification time, and
+the picker sorts by date), sets the status bar to 9:41, builds once, runs the live tests, then the tour
+four times (light, dark, light at Dynamic Type extra-large and extra-extra-large → `light-default`, `dark-default`,
+`light-xl`, `light-xxl`), and
+puts the appearance, text size and status bar back. `tools/run_ui_tour.sh live` or `… tour` runs one part. The tour's
+folder comes from `TEST_RUNNER_PAYWISE_SHOTS=<name>` on the xcodebuild command line. xcodebuild 27 can hang after the
+last test; the script stops it after 60 s and reads the result from the log.
+
+Settings › Debug also has *Start demo state*. The states are built by the same code a press uses
 (`Paywise/Debug/DemoChecks.swift` → `CopyFill` → `CheckFlow.islandState`); `LiveActivityStateTests` pins their copy to §6.3.
 
 ## Live Activity and assets
@@ -90,10 +131,12 @@ the wallet's own last 4 beside a card word into `[CARD]`, rounds `ocrConfidence`
 encoded body against the backend's privacy rule. A body that fails is never sent; the press ends on §6.3 *No checkout,
 on device*, as a reading failure does.
 
-The app's **Check** section switches, without a rebuild (App Group `UserDefaults`):
+**Settings › Results** switches, without a rebuild (App Group `UserDefaults`; the picker reads "Snippet with a
+Paying with button" / "System confirm prompt" / "Island alert, held 8 s"):
 
 | Key | Values | Default |
 |---|---|---|
 | `snippetMode` | `snippet` (Pattern A) · `confirm` (Pattern B) · `island` (§6.6 G2 fallback, 8 s `.default` alert) | `snippet` |
 | `silentAlerts` | `true` → `.named("silent.caf")` · `false` → `.default` | `true` |
-| `replayEnabled` | replay `fixtures/replay/<merchantId>_<totalCents>.json` when the request fails | `true` |
+| `replayEnabled` | replay `fixtures/replay/<merchantId>_<totalCents>.json` when the request fails or times out (not on a 4xx) | `true` |
+| `dateOverrideEnabled` + `dateOverride` | Settings › Demo › "Pretend today is…": the check's `clientDate` and the claim's `asOf` / incident date | off, `2027-12-18` |

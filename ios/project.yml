@@ -32,6 +32,9 @@ targets:
       - path: ../fixtures/replay
         type: folder
         buildPhase: resources
+      # Onboarding's first result (§5.1 step 2) runs the real check on the sample $1,499 laptop checkout (fake data).
+      - path: ../fixtures/screenshots/laptop-checkout.png
+        buildPhase: resources
     info:
       path: Paywise/Info.plist
       properties:
@@ -56,6 +59,8 @@ targets:
         # Paywise/Assets.xcassets (standard, dark, tinted). Card art, the glyph and `accent` are in
         # Shared/Assets.xcassets, compiled into the app and the widget. Both made by tools/make_assets.sh.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # design.md §2: system controls (tab bar, back buttons, toggles) take the `accent` asset, never system blue.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: accent
     dependencies:
       - target: PaywiseWidgets
 
@@ -110,6 +115,23 @@ targets:
     dependencies:
       - target: Paywise
 
+  # End-to-end UI tests against the LIVE backend and the screenshot tour (needs the network and the laptop screenshot in
+  # Photos; tools/run_ui_tour.sh). In the Paywise scheme's test action, so pick a suite with -only-testing:
+  # PaywiseTests for the offline unit suite, PaywiseUITests for the live UI tests.
+  PaywiseUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PaywiseUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"
+        TEST_TARGET_NAME: Paywise
+    dependencies:
+      - target: Paywise
+
 schemes:
   Paywise:
     build:
@@ -121,5 +143,6 @@ schemes:
       config: Debug
       targets:
         - PaywiseTests
+        - PaywiseUITests
     archive:
       config: Release

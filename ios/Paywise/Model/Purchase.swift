@@ -72,21 +72,57 @@ final class Purchase {
     var shortItemName: String { ItemName.short(item) }
 }
 
-/// A copy of a `Purchase` that can cross actors.
-struct PurchaseSnapshot: Sendable, Equatable {
+/// A copy of a `Purchase` that can cross actors (the app's screens read these, never the model itself).
+struct PurchaseSnapshot: Sendable, Equatable, Identifiable, Hashable {
     var id: String
     var checkId: String?
     var status: Purchase.Status
+    var merchant: String
     var item: String
+    var category: String
+    var condition: String
+    var priceUsd: Double
+    /// yyyy-MM-dd
+    var purchaseDate: String
     var cardId: String
+    var coverage: [CoverageEntry]
+    var manufacturerWarrantyMonths: Int?
 
     init(_ purchase: Purchase) {
         id = purchase.id
         checkId = purchase.checkId
         status = purchase.status
+        merchant = purchase.merchant
         item = purchase.item
+        category = purchase.category
+        condition = purchase.condition
+        priceUsd = purchase.priceUsd
+        purchaseDate = purchase.purchaseDate
         cardId = purchase.cardId
+        coverage = purchase.coverage
+        manufacturerWarrantyMonths = purchase.manufacturerWarrantyMonths
     }
+
+    init(
+        id: String, checkId: String?, status: Purchase.Status, merchant: String, item: String, category: String,
+        condition: String, priceUsd: Double, purchaseDate: String, cardId: String, coverage: [CoverageEntry],
+        manufacturerWarrantyMonths: Int? = nil
+    ) {
+        self.id = id
+        self.checkId = checkId
+        self.status = status
+        self.merchant = merchant
+        self.item = item
+        self.category = category
+        self.condition = condition
+        self.priceUsd = priceUsd
+        self.purchaseDate = purchaseDate
+        self.cardId = cardId
+        self.coverage = coverage
+        self.manufacturerWarrantyMonths = manufacturerWarrantyMonths
+    }
+
+    var shortItemName: String { ItemName.short(item) }
 }
 
 enum ItemName {

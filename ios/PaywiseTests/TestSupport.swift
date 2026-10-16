@@ -197,6 +197,10 @@ struct TestEnvironment {
             replay: ReplayStore(bundle: .main),
             purchases: .inMemory(),
             island: island,
+            coverage: CoverageAPI(
+                baseURL: URL(string: "https://\(host)")!,
+                session: PaywiseAPI.makeSession(timeout: CoverageAPI.defaultTimeout, protocolClasses: [StubURLProtocol.self])
+            ),
             now: { Fixtures.demoNow },
             timeZone: Fixtures.seattle,
             islandHold: .zero,

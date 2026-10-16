@@ -22,8 +22,9 @@ before parsing or logging. Rulings:
 RateLimit: a small in-memory sliding window per client (60 requests a minute by default; RATE_LIMIT_PER_MIN,
 0 turns it off) for every request that can carry a body (any method but GET, HEAD and OPTIONS). /v1/check,
 /v1/coverage and /v1/store/pay each have their own window; every other path shares one, so the privacy scan
-can't be run unthrottled on /health or a 404. The client is the first X-Forwarded-For hop (Render's proxy
-sets it), else the socket peer. Answers 429 with the §15.5 error shape. It runs before PrivacyGuard.
+can't be run unthrottled on /health or a 404. The client is CF-Connecting-IP (Cloudflare, in front of Render,
+overwrites it), else the last X-Forwarded-For hop, else the socket peer: never a value the caller chose
+(client_key). Answers 429 with the §15.5 error shape. It runs before PrivacyGuard.
 
 PrivacyGuard reads at most MAX_BODY_BYTES (32 KiB: a /v1/check body is a few KB; parser_llm sends at most
 6,000 characters of OCR text), answers a body on GET, HEAD or OPTIONS with 400 bad_request without scanning
@@ -264,11 +265,21 @@ OTHER_PATHS = "other"
 
 
 def client_key(scope) -> str:
+    """The client a request is counted against, from headers the caller can't set (BSEC-2).
+
+    Render puts Cloudflare in front of every web service. Cloudflare overwrites CF-Connecting-IP with the
+    address that connected to it, but only appends to X-Forwarded-For, so its first hop is whatever the caller
+    sent. Order: CF-Connecting-IP, else the last X-Forwarded-For hop (the one the nearest proxy appended), else
+    the socket peer."""
+    forwarded = ""
     for name, value in scope.get("headers") or []:
-        if name == b"x-forwarded-for":
-            first = value.decode("latin-1").split(",")[0].strip()
-            if first:
-                return first
+        if name == b"cf-connecting-ip":
+            if ip := value.decode("latin-1").strip():
+                return ip
+        elif name == b"x-forwarded-for":
+            forwarded = value.decode("latin-1")  # if repeated, the last header is the one appended last
+    if last := forwarded.split(",")[-1].strip():
+        return last
     client = scope.get("client")
     return client[0] if client else "unknown"
 

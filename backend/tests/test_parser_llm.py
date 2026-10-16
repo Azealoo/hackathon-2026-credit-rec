@@ -96,10 +96,26 @@ def model(monkeypatch):
         return fake.reply
 
     monkeypatch.setattr(llm, "complete_json", complete_json)
+    monkeypatch.setitem(ACTIVE, "model", fake)
     return fake
 
 
-def parse(text: str = "Northbay Electronics\nCheckout\nTotal $1,499.00") -> ParsedScreen:
+ACTIVE: dict = {}  # the test's fake model, so parse() can print what its reading copies
+AMOUNT_KEYS = ("price", "subtotal", "amount", "total", "planOffer")
+
+
+def screen_printing(reply) -> str:
+    """Checkout text that prints every amount the reading copies, as the screen it was read from would."""
+    amounts = [value for node in walk(reply) for key, value in node.items()
+               if key in AMOUNT_KEYS and isinstance(value, str)]
+    return "\n".join(["Northbay Electronics", "Checkout", *amounts])
+
+
+def parse(text: str | None = None) -> ParsedScreen:
+    """parser_llm.parse on text. With no text, the screen prints every amount the fake model's reading copies,
+    so the amounts check (BSEC-4) passes; the tests of that check pass their own text."""
+    if text is None:
+        text = screen_printing(ACTIVE["model"].reply) if "model" in ACTIVE else "Northbay Electronics\nCheckout"
     return asyncio.run(parser_llm.parse(text))
 
 
@@ -192,6 +208,100 @@ def test_fixture_reading_builds_the_expected_cart(model, stem):
 
 def test_parse_returns_the_shared_parsed_screen_type(model):
     assert isinstance(parse(), ParsedScreen)
+
+
+# --- Amounts must be printed on the screen (BSEC-4) ---------------------------------------------
+
+CART_SCREENSHOTS = [s for s in SCREENSHOTS if expected(s)["screenType"] in ("checkout", "order_confirmation")]
+# A made-up shop (not in the catalog): two widgets, a quantity, and a total the model could "correct".
+MADE_UP_SCREEN = """Corner Sample Shop
+Checkout
+Sample Widget  $25.00
+Qty 2
+Sample Gadget  $4.50
+Shipping  Free
+Total  $54.50
+Pay now"""
+
+
+def made_up_reading(**overrides) -> dict:
+    return reading(store="Corner Sample Shop",
+                   items=[item(name="Sample Widget", price="$25.00", qty=2), item(name="Sample Gadget", price="$4.50")],
+                   total="$54.50") | overrides
+
+
+@pytest.mark.parametrize("stem", CART_SCREENSHOTS)
+def test_every_amount_a_correct_fixture_reading_uses_is_printed_on_its_screen(stem):
+    raw = reading_for(stem)
+    used = [parser_llm.money(raw["total"]), *(parser_llm.money(i["price"]) for i in raw["items"])]
+    assert used and set(used) <= parser_llm.printed_amounts(ocr(stem))
+
+
+@pytest.mark.parametrize("stem", CART_SCREENSHOTS)
+def test_a_total_the_fixture_screen_does_not_print_is_rejected(model, stem):
+    model.reply = reading_for(stem) | {"total": "$1,399.00"}
+    with pytest.raises(llm.LLMInvalidOutput, match="total"):
+        parse(ocr(stem))
+
+
+@pytest.mark.parametrize("stem", CART_SCREENSHOTS)
+def test_an_item_price_the_fixture_screen_does_not_print_is_rejected(model, stem):
+    reply = reading_for(stem)
+    reply["items"][0]["price"] = "$14.00"  # the laptop is "14-inch": a bare number isn't an amount
+    model.reply = reply
+    with pytest.raises(llm.LLMInvalidOutput, match="item price"):
+        parse(ocr(stem))
+
+
+def test_a_made_up_screen_read_correctly_is_accepted(model):
+    model.reply = made_up_reading()
+    cart = parse(MADE_UP_SCREEN).cart
+    assert ([i.price_usd for i in cart.items], cart.total_usd, cart.confidence.items) == ([25.0, 4.5], 54.5, 0.92)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"total": "$545.00"},  # an extra digit
+        {"total": "$50.00"},  # the model added it up itself (2 × $25.00), ignoring the printed $54.50
+        {"items": [item(name="Sample Widget", price="$2.00", qty=2)]},  # "Qty 2" is printed, $2 isn't
+        {"items": [item(name="Sample Widget", price="$25.00", qty=2), item(name="Sample Gadget", price="$450.00")]},
+    ],
+    ids=["total-extra-digit", "total-computed", "price-from-quantity", "price-misplaced-point"],
+)
+def test_an_amount_the_llm_invents_is_rejected(model, overrides):
+    model.reply = made_up_reading(**overrides)
+    with pytest.raises(llm.LLMInvalidOutput):
+        parse(MADE_UP_SCREEN)
+
+
+@pytest.mark.parametrize(
+    "printed, copied",
+    [("Total  $1,499.00", "$1,499.00"), ("Total  1,499.00 USD", "$1,499.00"), ("Total  $1499", "$1,499.00"),
+     ("Total  $ 1,499.00", "1,499.00"), ("Total  US$1,499.00", "$1,499.00")],
+)
+def test_amounts_match_after_dropping_dollar_signs_and_commas(model, printed, copied):
+    model.reply = reading(items=[item(price=copied)], extras=[], total=copied)
+    assert parse(f"Northbay Electronics\nCheckout\n{printed}").cart.total_usd == 1499.0
+
+
+def test_a_free_item_needs_free_on_the_screen(model):
+    model.reply = reading(items=[item(price="Free"), item(price="$5.00")], extras=[], total="$5.00")
+    assert [i.price_usd for i in parse("Corner Sample Shop\nSample sticker  Free\nTotal  $5.00").cart.items] == [0, 5]
+    with pytest.raises(llm.LLMInvalidOutput):
+        parse("Corner Sample Shop\nSample sticker\nTotal  $5.00")
+
+
+@pytest.mark.parametrize(
+    "text, amounts",
+    [
+        ("Total $1,499.00", {"1499.00"}), ("1,499.00 USD", {"1499.00"}), ("$1499", {"1499.00"}),
+        ("$ 18", {"18.00"}), ("-$10.00", {"10.00"}), ("€18.00", {"18.00"}), ("Shipping  Free", {"0.00"}),
+        ("Qty 2 · 14-inch · 2–4 days · Order #NB-100234", set()), ("12,34", set()), ("", set()),
+    ],
+)
+def test_printed_amounts(text, amounts):
+    assert parser_llm.printed_amounts(text) == {Decimal(a) for a in amounts}
 
 
 # --- merchantId is resolved in code --------------------------------------------------------------
@@ -339,7 +449,8 @@ def test_protection_plan_offer_and_bnpl(model):
     assert cart.payment_options_visible == ["saved_card", "bnpl"]
 
 
-@pytest.mark.parametrize("text, code", [("Total $10.00", "USD"), ("Total €10.00", "EUR"), ("Total £10.00", "GBP")])
+@pytest.mark.parametrize("text, code",
+                         [("Total $1,499.00", "USD"), ("Total €1,499.00", "EUR"), ("Total £1,499.00", "GBP")])
 def test_currency_comes_from_the_symbol(model, text, code):
     assert parse(text).cart.currency == code
 
@@ -442,6 +553,19 @@ def test_parse_screen_falls_back_to_rules(model, monkeypatch, rules_parser, repl
     parsed, which = asyncio.run(parsing.parse_screen(text))
     assert which == "rules_fallback"
     assert parsed == rules_parser.parse(text)
+
+
+@pytest.mark.parametrize("stem", CART_SCREENSHOTS)
+def test_parse_screen_answers_with_the_rules_parser_when_the_llm_invents_the_total(model, monkeypatch, rules_parser,
+                                                                                 stem):
+    from app import parsing
+
+    monkeypatch.setenv("PARSER_MODE", "llm")
+    model.reply = reading_for(stem) | {"total": "$1,399.00"}
+    text = ocr(stem)
+    parsed, which = asyncio.run(parsing.parse_screen(text))
+    assert which == "rules_fallback"
+    assert parsed == rules_parser.parse(text) and parsed.cart.total_usd == expected(stem)["totalUsd"]
 
 
 def test_parse_screen_uses_the_llm_when_it_answers(model, monkeypatch, rules_parser):

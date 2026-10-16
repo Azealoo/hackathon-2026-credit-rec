@@ -1,9 +1,12 @@
 # Paywise — Product Spec
 
-**Version:** 2.1 (Oct 15, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
+**Version:** 2.2 (Oct 16, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
 **Status:** Product-form decision after a 7-reviewer product-form review (product manager, interaction designer, form-factor designer, student user, competitive analyst, hackathon/Visa judge, iOS engineering lead), a PM decision and a challenge round. Items marked **(u)** are unverified and must be tested before we rely on them.
 
 ## Changelog
+
+**v2.2 (Oct 16, 2026): Back Tap is the main trigger (owner ruling)**
+- **Trigger:** double-tap the back of the iPhone (Back Tap). The Action Button is an optional "Prefer a button?" alternative, because people keep it on Silent. Onboarding shows a Back Tap prompt, then Set Up Back Tap with an in-app "Try it now" (§5.1). §0, §3, §4.1, §4.5, §5.1, §5.2, §6.6, §9.1, §12.1–12.4, §13, §14.2, §14.4, §15.7 and §16 now match. §6.3 copy is unchanged.
 
 **v2.1 (Oct 15, 2026): decisions from the pre-build research docs**
 - **Name:** Fine Print → **Paywise** (#12). The lowercase phrase "fine print" stays where it means card terms. App identifiers: bundle ID `com.azealoo.paywise`, App Group `group.com.azealoo.paywise` (§9.1, §15.2).
@@ -16,7 +19,7 @@
 
 **v2.0 (Oct 15, 2026): product-form review**
 - **Centre:** per-purchase protection (pick → proof → claim). Picking a card is the way in, not the product.
-- **Trigger:** press and hold the **Action Button**. Back Tap is a second binding of the same Shortcut. "Check a screenshot" in the app needs no setup.
+- **Trigger:** press and hold the **Action Button**. Back Tap is a second binding of the same Shortcut. "Check a screenshot" in the app needs no setup. *(Superseded in v2.2: Back Tap is the main trigger.)*
 - **Surface:** an interactive **snippet** for answers you act on (Switch; Keep when your default already covers the item). A short, silent **Dynamic Island** alert for everything else. The island never lingers.
 - **Copy:** protections are shown as facts with their caps ("$500 theft cover"). Expected-value math is removed.
 - **Engine:** a protection-loss guard; cash thresholds of $3 (Apple Pay) and $5 (other paths); protection switches only for items of $100 or more in a relevant category; unreadable items → keep.
@@ -32,10 +35,10 @@
 
 ## 0. TL;DR
 
-**One line:** Press one button at checkout and Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. When it does break, it tells you whether you can claim.
+**One line:** Double-tap the back of your iPhone at checkout and Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. When it does break, it tells you whether you can claim.
 
 **Pitch (3 sentences):**
-Your cards come with theft cover and extra warranty years buried in the fine print, but you never see them when you pay and almost never claim them afterwards. Press the Action Button on any checkout and Paywise reads the cart on your iPhone, then tells you, before you tap Pay, which card covers this item and what that costs in cash back. It keeps the purchase and its coverage dates, and if the item breaks or is stolen it tells you honestly whether you're covered, cites the clause, and lists what to send.
+Your cards come with theft cover and extra warranty years buried in the fine print, but you never see them when you pay and almost never claim them afterwards. Double-tap the back of your iPhone on any checkout and Paywise reads the cart on your iPhone, then tells you, before you tap Pay, which card covers this item and what that costs in cash back. It keeps the purchase and its coverage dates, and if the item breaks or is stolen it tells you honestly whether you're covered, cites the clause, and lists what to send.
 
 **Tagline:** *The perks buried in your card's fine print — at the moment you pay.*
 
@@ -45,7 +48,7 @@ Your cards come with theft cover and extra warranty years buried in the fine pri
 |---|---|
 | **What it is** | A per-purchase protection checker. At checkout it names the card whose fine print covers *this* item (theft/damage cover with its cap, an extra warranty year) and what that costs in cash back. It saves the purchase with its coverage dates. Later, "Can I claim?" answers *may be eligible* / *not covered* / *need more info*, citing the clause. |
 | **Where it lives** | A native iOS 27 app plus one App Intent (`CheckCheckoutIntent`), run by a "Paywise" Shortcut that takes a screenshot of the current screen. Answers appear over whatever app or site you're in. Purchases and claims live in the app. A small backend reads the cart. |
-| **How it's triggered** | On the checkout screen, press and hold the **Action Button** (iPhone 15 Pro and later). Back Tap runs the same Shortcut on other iPhones. "Check a screenshot" in the app needs no setup. |
+| **How it's triggered** | On the checkout screen, double-tap the back of the iPhone (**Back Tap**). Prefer a button? The Action Button (iPhone 15 Pro and later) can run the same Shortcut instead. "Check a screenshot" in the app needs no setup. |
 | **What you see when you pay** | **Switch:** a snippet at the top of the screen: "Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash", plus [Paying with Freedom] to save the purchase. **Keep:** "✓ Keep Apple Card ••5678" flashes silently in the Dynamic Island and clears itself. Then you pay in the store's own flow. |
 
 ---
@@ -95,7 +98,7 @@ Nobody we found joins **this purchase → its coverage window → an incident ch
 
 ## 3. Product principles
 
-1. **One press, not zero steps.** One press-and-hold, a ~3 s wait, at most one card change. Never claim "zero steps".
+1. **One press, not zero steps.** One double tap on the back of the iPhone, a ~3 s wait, at most one card change. Never claim "zero steps".
 2. **Always answer visibly; vary loudness by sound and persistence, not visibility.** Answers you act on stay in a snippet. Everything else flashes silently in the island and clears.
 3. **Show the trade as facts on separate lines.** Gain (with its cap) on one line, cash cost on another. Never one blended number; no expected-value math.
 4. **Private by design.** We look only when you press. The screenshot is cropped, read and redacted on the phone. Only redacted order-summary text and card product names leave it. Your last 4 never leaves.
@@ -126,7 +129,7 @@ Budget: ≈20–40 person-hours (ph) before Sat 12:30 PM plus ≈50–60 ph at t
 | P0-12 | Coverage: backend rules [B 2]; LLM cause classification [A 1]; HTML verdict template [D 2]; SwiftUI input + web view [A 1.5] | B, A, D | 6.5 | 1.5 h |
 | P0-13 | Demo store, fictional "Northbay Electronics": static, deployed to HTTPS on Thursday [D 3.5]; also served by the backend with `/v1/store/pay` [B 0.5] | D, B | 4 | no |
 | P0-14 | Visa Acceptance sandbox authorization on Place order; transaction ID on the confirmation page (gate G4) | B | 3 | no |
-| P0-15 | Trigger setup screen (Shortcut link, Action Button first, Back Tap, practice press) | D | 1.5 | yes |
+| P0-15 | Back Tap prompt + Set Up Back Tap screen (Shortcut link, Back Tap first, Try it now, optional Action Button card) | D | 1.5 | yes |
 | P0-16 | 10–12 student interviews: card *products* held, mapped by us to protections; aggregate counts only | D | 2.5 | no |
 | P0-17 | Metrics harness + runs + 10 clean runs | A 2.5, B 1, C 1, D 1 | 5.5 | partly |
 | P0-18 | Devpost write-up + ≤2:00 video | D 4, C 1, B 0.5, A 0.5 | 6 | no |
@@ -139,7 +142,7 @@ Budget: ≈20–40 person-hours (ph) before Sat 12:30 PM plus ≈50–60 ph at t
 - P0-12 LLM cause classification → user-picked chips.
 - P0-14 only if G4 passed before the event.
 - P0-17 → 5 ph.
-- Back Tap → Q&A mention only.
+- Action Button card → Q&A mention only.
 
 ### 4.2 P1 (in this order; start only when the never-cut arc has run 5/5 clean)
 
@@ -177,7 +180,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 
 | Alternative | Verdict | Why |
 |---|---|---|
-| Back Tap as primary / demo trigger | Second binding only | Buried in Accessibility settings; misfire and case-damping reports (anecdotal); no haptic feedback. The Action Button runs the same Shortcut. |
+| Action Button as primary / demo trigger | Optional ("Prefer a button?") | People keep the Action Button on Silent and won't give that up (owner, Oct 16). It runs the same Shortcut. Back Tap's costs, accepted: buried in Accessibility settings (Set Up Back Tap shows the path); misfire and case-damping reports (anecdotal); no haptic feedback. |
 | Action Button bound to an App Shortcut or Control that runs the intent directly | Rejected | Controls and App Shortcuts run an intent with no screen input, so the bare intent gets no screenshot. We do **not** register `CheckCheckoutIntent` in `AppShortcutsProvider`. |
 | Screenshot → share sheet as primary | P1 option | 4–5 steps per checkout. Needs the Shortcut's input branch (§9.1). |
 | iOS 27 screenshot automation as primary | First fallback if G1 fails; P1 option | Exists in iOS 27 ("runs when a screenshot is saved"). Unknown: runs without a prompt? which image? privacy of processing every screenshot. |
@@ -204,8 +207,8 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 ### 5.1 Onboarding (target ≤2:00 including the trigger; first result ≤60 s)
 1. **Add my cards:** pick your cards from tiles and set your default. Last 4 is optional and stays on the phone. (P1: Settings-screenshot onboarding.)
 2. **First result:** run the sample check on a built-in $1,499 laptop checkout → a real result with your own cards.
-3. **"Make it one press"** (skippable): install the Shortcut from a link, then set the Action Button (Settings › Action Button › Shortcut › Paywise). Back Tap (Settings › Accessibility › Touch › Back Tap) is shown on iPhones without an Action Button. Offered again after the 2nd in-app check.
-4. **Practice press** on the sample checkout; this also clears Shortcuts' first-run prompts.
+3. **Back Tap prompt** (skippable): a sheet, "Check any checkout with a double tap" / "Double-tap the back of your iPhone on any checkout, and Paywise tells you which card covers it.", with [Set Up Back Tap] / [Not Now]. **Set Up Back Tap:** get the Paywise Shortcut, then turn on Back Tap (Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise). iOS has no link to that page, so the screen shows the path. A "Prefer a button?" card offers the Action Button instead (Settings › Action Button › Shortcut › Paywise) for people who don't use it for Silent. If setup was skipped, the prompt is offered once more after the 2nd in-app check; [Not Now] ends it.
+4. **Try it now:** double-tap the back of the iPhone on a sample checkout inside Paywise. The first new check, whatever its answer, shows "Back Tap works ✓" and confirms setup; this also clears Shortcuts' first-run prompts. The store page in Safari is the fallback.
 
 ### 5.2 Payment moment (targets; unmeasured until spike S1)
 
@@ -213,7 +216,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 
 | t (s) | Hand and eyes | Surface | What shows |
 |---|---|---|---|
-| 0.0 | Press and hold the Action Button (~0.5 s) | — | — |
+| 0.0 | Double-tap the back of the iPhone | — | — |
 | ≤1.0 | Eyes at top | Island compact | Paywise glyph + progress ring (*Checking*, no alert) |
 | 1.0–3.0 | — | On device | Crop the top strip, OCR, checkout gate, redaction (~0.4 s); upload, LLM parse, engine (~1.5–2 s); write `CheckRecord`; **end the Live Activity** |
 | ≈3.0–3.5 | Eyes at top | **Snippet** (result) | §6.3 *Switch* |
@@ -326,11 +329,11 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 "Apple made switching cards one swipe and shows rewards and balances for eligible cards. It doesn't tell you which card covers this purchase, or help when it breaks."
 
 ### 6.6 Fallbacks decided in advance (applied when a gate in §14.2 fails)
-- **G1 fails** (Take Screenshot from the Action Button / Back Tap doesn't capture the app underneath in ≥9/10 runs):
+- **G1 fails** (Take Screenshot from Back Tap / the Action Button doesn't capture the app underneath in ≥9/10 runs):
   1. That evening, try the iOS 27 screenshot automation.
   2. If that fails, use the branched Shortcut in the Share Sheet plus the in-app check; the demo opens on "screenshot → share → answer".
   3. Only if both fail: Visual Intelligence moves from P2 to P1.
-- **G2 fails on appearance** (the snippet doesn't appear over Safari and ≥1 third-party app in ≥9/10 Action Button runs): Switch and Keep-protected become alerting island updates with the `.default` sound, held 8 s. Users save later with "I bought this".
+- **G2 fails on appearance** (the snippet doesn't appear over Safari and ≥1 third-party app in ≥9/10 Back Tap runs): Switch and Keep-protected become alerting island updates with the `.default` sound, held 8 s. Users save later with "I bought this".
 - **G2 fails on the button** ([Paying with …] doesn't save and reload in ≥9/10): try Pattern B (`requestConfirmation` with a custom verb, §15.5). If that fails too, show a static snippet and save via "I bought this".
 - **G2 fails on sound** (`.named("silent.caf")` makes a sound or doesn't expand): use `.default` for every alert.
 - **The Live Activity can't start from the intent** (`visibility` or `unsupportedTarget` error): every state uses snippets; *Checking* is skipped, and the Shortcut's own running indicator is the only progress cue.
@@ -417,7 +420,7 @@ Everything lives in **one data file**, `data/cards.json`: cards, earn rules, pro
 
 ### 9.1 iOS app (SwiftUI, iOS 27 only)
 - **Identifiers (decided Oct 15, 2026):** app name **Paywise**; bundle ID `com.azealoo.paywise`; App Group `group.com.azealoo.paywise`. Extension bundle IDs go under the app's ID (for example `com.azealoo.paywise.widgets`).
-- **The "Paywise" Shortcut:** if it has input (shared from the Share Sheet) → Check Checkout(input); otherwise → Take Screenshot → Check Checkout. Bound to the Action Button (and Back Tap).
+- **The "Paywise" Shortcut:** if it has input (shared from the Share Sheet) → Check Checkout(input); otherwise → Take Screenshot → Check Checkout. Bound to Back Tap (Double Tap), and optionally to the Action Button.
 - **`CheckCheckoutIntent`** (`AppIntent` + `LiveActivityIntent`, `supportedModes = [.background]`, `IntentFile` image parameter):
   1. End any Paywise activity.
   2. Start *Checking*.
@@ -511,7 +514,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | Time | Beat | On screen | Real / simulated |
 |---|---|---|---|
 | 0:00–0:15 | Hook: "This $1,499 laptop: cash back says Active Cash. The fine print says something else." Hand the judge the phone. | Northbay Electronics checkout, "Pay with Mastercard ••5678 [Change]" | Store is ours (fictional) |
-| 0:15–0:30 | Coach: "Press and hold the button above the volume buttons." **Judge presses.** | *Checking* → snippet: Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash | Real: screenshot, on-device OCR + redaction, cloud parse, engine |
+| 0:15–0:30 | Coach: "Double-tap the back of the phone." **Judge double-taps.** | *Checking* → snippet: Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash | Real: screenshot, on-device OCR + redaction, cloud parse, engine |
 | 0:30–0:45 | Judge taps **[Paying with Freedom]** → Saved. Presenter taps **[What we sent]**: "That's all that left the phone." Done. | Saved: dates + "up to $500". Sent: the redacted summary | Real |
 | 0:45–1:05 | Presenter: Change → Visa ••1234 → Place order | "Approved · Visa Acceptance sandbox · txn {id}" | Real sandbox call; test card; no money moves |
 | 1:05–1:35 | "14 months later" (said aloud as staged): Purchases → Aero 14 (Planned) → Something happened → paid with Freedom? Yes → maker's warranty 1 year → "Lines across the screen. Never dropped." | **May be eligible: Extended warranty** + clause + version date + checklist + notify-by | Date override simulated; verdict is real engine output |
@@ -525,7 +528,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 1. Renewed flip (if not shown).
 2. Keep with Apple Pay ("✓ Apple Card: use Apple Pay").
 3. No checkout found ("Nothing left your phone").
-4. Back Tap on any iPhone.
+4. Prefer a button? The Action Button runs the same Shortcut.
 5. iOS 27 Apple Pay sheet and CardPointers 8 comparison.
 6. How the catalog generalizes: per-card protection fields + cited sources; a non-Chase protection card is the next to verify.
 7. Read-only real-app footage (P1).
@@ -537,7 +540,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | Time | Beat |
 |---|---|
 | 0:00 | Hook |
-| 0:08 | Action Button press (hand in picture-in-picture, timer on screen) → snippet |
+| 0:08 | Back Tap double tap (hand in picture-in-picture, timer on screen) → snippet |
 | 0:20 | [Paying with Freedom] → Saved → [What we sent] |
 | 0:32 | Change card → Place order → Visa Acceptance sandbox approval |
 | 0:45 | "14 months later" → may be eligible + clause |
@@ -549,12 +552,12 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 
 ### 12.3 Real vs simulated (say it on Devpost and in the video)
-- **Real:** the Action Button press and Shortcut screenshot; on-device crop, OCR and redaction; the cloud cart parse and engine; the snippet and island; the saved (planned) purchase; the coverage verdict from stored clause data; the Visa Acceptance **sandbox** authorization of the demo merchant's payment.
+- **Real:** the Back Tap double tap and Shortcut screenshot; on-device crop, OCR and redaction; the cloud cart parse and engine; the snippet and island; the saved (planned) purchase; the coverage verdict from stored clause data; the Visa Acceptance **sandbox** authorization of the demo merchant's payment.
 - **Simulated or staged:** the store (a fictional merchant we built); the cards (fake saved cards with fake last 4; the processor's test card numbers live only on the server); no money moves; "14 months later" is a date override; no claim is ever submitted; replay mode, if used, is labeled "replayed" in What we sent.
 - **Where the disclosure goes:** Devpost, the video and the live demo say what is real and what is simulated. The app's own screens, including the HTML verdict page, don't call themselves a concept. `docs/design.md` §8 says the verdict page "states it is a concept"; that applies to the demo and video only.
 
 ### 12.4 Table kit
-- Demo iPhone and a spare, both with the build, the seeded wallet, Shortcut first-run prompts cleared, and the Action Button bound.
+- Demo iPhone and a spare, both with the build, the seeded wallet, Shortcut first-run prompts cleared, and Back Tap set to Paywise (Try it now passed).
 - Cable + laptop mirroring, or an external camera if G3 fails.
 - Two hotspots. Replay on-when-offline.
 - No other Live Activities running (music and timers off). Do Not Disturb on.
@@ -568,7 +571,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | Metric | Kind | Target | How measured (owner) |
 |---|---|---|---|
 | Card **products** held by interviewed students, mapped by us to purchase protection / extended warranty | Demand | Report counts per product family (n = 10–12). The pitch uses "X of N hold a card with protection" only if X ≥ 4 | Pre-event interviews; aggregates only (D) |
-| Awareness: knows their card's protections; ≥$100 online purchases in the last 12 months; ever filed a benefit claim; would bind the Action Button | Demand | Report counts | Same interviews (D) |
+| Awareness: knows their card's protections; ≥$100 online purchases in the last 12 months; ever filed a benefit claim; would turn on Back Tap | Demand | Report counts | Same interviews (D) |
 | 3-second comprehension | UX | ≥8/10 non-teammates name the card after a 3 s view of the Switch snippet; ≥6/10 name one reason; ≤2/10 say "it earns less than my card" | Sat 8–9 PM at the venue (D) |
 | Stranger trigger | UX | ≥9/10 first-time presses by non-teammates start a check | Same session (D) |
 | Right card used | UX | ≥9/10 trials end with the recommended card selected on the demo store | Same session (D) |
@@ -613,7 +616,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | **Sat 8:30–10:30 AM** | Smoke test (0.5) | Smoke test (0.25) | Wire `/v1/check` into the proven chain (0.5) | Table-kit check (0.25) |
 
 **Gates (pass rule → on fail):**
-- **G1 chain** (C, Fri 12 PM): Action Button presses capture the right underlying screen and show the island in ≥9/10 runs, over the deployed store in Safari and over 2 real apps (read-only). On fail → §6.6.
+- **G1 chain** (C, Fri 12 PM): Back Tap double taps capture the right underlying screen and show the island in ≥9/10 runs, over the deployed store in Safari and over 2 real apps (read-only). On fail → §6.6.
 - **G2 surface** (C, Fri 6 PM). All four must pass, otherwise → §6.6:
   - the snippet appears in ≥9/10 runs over Safari and ≥1 third-party app;
   - [Paying with …] creates a planned Purchase and reloads to Saved in ≥9/10;
@@ -661,7 +664,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 1. Anything P2.
 2. P1 items in reverse order (P1-16 first … P1-1 last).
 3. Visa Acceptance live call → mocked confirmation; remove every Visa-API claim.
-4. Back Tap instructions.
+4. The "Prefer a button?" Action Button card.
 5. The [What we sent] snippet button (keep the in-app screen and redaction).
 6. Claim checklist and deadline styling (keep the verdict and the clause).
 7. Snippet → island alerts for every state (§6.6).
@@ -1089,7 +1092,7 @@ Implement §7.2 exactly (rules 0–9, thresholds in `policy.py`). The copy templ
 | 3 | Fixtures (§15.4): 7 wallets, 22 scenarios, 13 cases, demo OCR text + carts, replay files | D | 4 | any | Committed **before** step 4 merges; each expectation hand-computed; `test_privacy.py` finds no real names, addresses or ≥12-digit runs, and no file matching the real-app pattern (`realapp-*`, `*-private*`) |
 | 4 | `engine.py` (§7.2) + `copy.py` (§6.3) + `parser_rules.py` + `POST /v1/check` | B | 5 | any | `test_scenarios.py` ≥20/22 with **0 false switches and 0 protection drops** (5, 21, 22 pass); S1 returns the exact §6.3 copy; ≥12-digit bodies → 400 privacy_rejected; p50 < 50 ms locally |
 | 5 | Demo store: `checkout.html?item=` laptop / laptop-renewed / earbuds / mug, saved-card selector (Mastercard ••5678 default, Visa ••4321, Visa ••1234), `confirm.html`; static deploy Thu; served by the backend at `/store/` on Fri | D | 3.5 (+B 0.5) | any | Loads over HTTPS on cellular by Thu 11 PM; Change card works; the 7 screenshots captured; page header starts below 80 pt |
-| 6 | iOS **S1 chain**: app + widget extension + App Group; `CheckCheckoutIntent` as in §15.5 with a fake result; Shortcut "Paywise" with the input branch, bound to the Action Button and Back Tap; os_signpost per link | C | 4 | Mac | **G1:** ≥9/10 Action Button presses over the deployed store and 2 real apps show the correct underlying screenshot in a debug list and show the island; Back Tap tallied; timings in `docs/spikes.md` |
+| 6 | iOS **S1 chain**: app + widget extension + App Group; `CheckCheckoutIntent` as in §15.5 with a fake result; Shortcut "Paywise" with the input branch, bound to the Action Button and Back Tap; os_signpost per link | C | 4 | Mac | **G1:** ≥9/10 Back Tap double taps over the deployed store and 2 real apps show the correct underlying screenshot in a debug list and show the island; Action Button tallied; timings in `docs/spikes.md` |
 | 7 | **S2/S3/S6**: Pattern A (`ShowsSnippetIntent` + `CheckResultSnippetIntent` + `SavePurchaseIntent` button + reload) and Pattern B; `.named("silent.caf")` alert; `.transient` probe; island state 5 min after Done; Shortcuts indicator during the 4-s Keep hold; capture via wired QuickTime / AirPlay; Share Sheet branch | C | 3.5 | Mac | `docs/spikes.md` records Y/N + counts for each item; G2/G3 decided per §6.6 |
 | 8 | On-device top-strip crop (`TOP_CROP_PT = 62` × scale, tuned here) + OCR (Vision `RecognizeDocumentsRequest` or `VNRecognizeTextRequest`) + checkout gate (money total + a checkout keyword) + redaction (Luhn-valid runs, any ≥12-digit run, "ending in dddd" → `[CARD]`, emails, phones, lines after "Ship to" / "Deliver to" / "Name") | A | 5 | Mac (regexes: any) | On the 7 demo screenshots: merchant + total kept 7/7; no status-bar text in the output; 0 digit runs ≥12, 0 emails, 0 phones, 0 "Alex Doe" or address lines; p50 ≤400 ms inside the background intent; the feed is rejected on device |
 | 9 | `parser_llm.py`: schema-constrained Cart JSON; reads numbers, never computes; Σ items vs total checked in code | A | 3 | any | On `fixtures/ocr/*`: merchant + total 100%, items + condition ≥85%; latency logged; `PARSER_MODE` switch works |
@@ -1100,7 +1103,7 @@ Implement §7.2 exactly (rules 0–9, thresholds in `policy.py`). The copy templ
 | 12c | `templates/verdict.html` + `?format=html` (the §5.5 copy) | D | 2 | any | Cases 1, 2, 7 and 13 render correctly in a phone-width browser |
 | 12d | SwiftUI claim input (confirm card + date → `confirmed`; maker's warranty 1 yr / 2 yr / don't know; text + cause chips) + `WKWebView` showing the HTML verdict | A | 1.5 | Mac | Cases 1 and 2 work end to end on the device with a date override |
 | 13 | `visa_acceptance.py` + `/v1/store/pay`; `confirm.html` shows the transaction ID | B | 3 | any | **G4:** the sandbox approves the demo Visa ••1234 order with a transaction ID; `PAY_MODE=mock` works offline |
-| 14 | Trigger setup screen (Shortcut link, Action Button first, Back Tap, practice press) | D | 1.5 | Mac | On a clean phone: install → bind → practice press with no surprise prompt, in ≤2:00 |
+| 14 | Back Tap prompt + Set Up Back Tap screen (Shortcut link, Back Tap first, Try it now, optional Action Button card) | D | 1.5 | Mac | On a clean phone: install → turn on Back Tap → Try it now with no surprise prompt, in ≤2:00 |
 | 15 | Metrics harness + rehearsal script (latency, accuracy on 30 screenshots with aggregates only, scenario/coverage runs, 10 clean arcs) | A + all | 5.5 | scripts any; runs on device | Numbers in `docs/metrics.md`; the harness prints aggregates only |
 
 ### 15.8 Stubs and mocks allowed in v1
@@ -1118,7 +1121,7 @@ Settings-screenshot onboarding · receipt press on the confirmation · Why sheet
 |---|---|
 | **Pre-event code vs the rules.** The '26 Devpost rules (read Oct 14, 2026) say "Any projects submitted must be started and completed during the duration of DubHacks '26". The rules page has no 30% allowance; the '26 Hacker Guide, which we couldn't read, may still have one **(u)**. The required public repo's commit history shows pre-event commits. | Decided: the team builds before the event, with no disclosure. The owner confirmed this on Oct 14, 2026 after reading the '26 rule. |
 | Take Screenshot from a hardware trigger on iOS 27 captures the app underneath (u) | Gate G1 + §6.6 |
-| Snippet appearance and buttons from an Action Button-run Shortcut (u) | Gate G2 + Pattern B + §6.6 |
+| Snippet appearance and buttons from a Back Tap-run Shortcut (u) | Gate G2 + Pattern B + §6.6 |
 | Silent alert sound (u) | G2; fall back to `.default` |
 | Island / snippet capture for the video (u) | G3; external camera |
 | Visa Acceptance sandbox activation | Sign up Thursday night; G4 |

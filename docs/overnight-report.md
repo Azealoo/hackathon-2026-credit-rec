@@ -1,6 +1,6 @@
 # Paywise v1: overnight report
 
-**Run:** Thu Oct 15, 12:13 PDT → Fri Oct 16, ~02:00 PDT (finish line reached; polish continued after) · **Branch:** `overnight/v1` · **Spec:** SPEC.md v2.1 (unchanged)
+**Run:** Thu Oct 15, 12:13 PDT → Fri Oct 16, ~05:30 PDT (finish line reached ~02:00; a post-finish code review and two fix rounds followed) · **Final commit:** see the PR (code at bab3303) · **Branch:** `overnight/v1` · **Spec:** SPEC.md v2.1 (unchanged)
 
 Every number below comes from a command I ran or a screenshot I took during the run, quoted as it printed. Subagent claims were re-run before they went in. Logs referenced as `scratchpad/…` sit in the session scratchpad and are not in the repo.
 
@@ -8,16 +8,16 @@ Every number below comes from a command I ran or a screenshot I took during the 
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| F1 | Backend `uv run pytest` green with counts | **Met** | `cd backend && uv run pytest -q` → `1312 passed` (791732f, 01:31). `test_scenarios`: `SCENARIOS pass=22/22 false_switches=0 protection_drops=0` (5, 21, 22 pass; 0 xfail; no fixture value changed). `test_coverage`: `COVERAGE pass=13/13 not_covered_right=7/7`; cases 3 and 13 `payoutCapUsd 500`; 13/13 cite section + version date. `test_privacy` + `test_privacy_guard`: `255 passed`. `test_catalog`: `38 passed`. |
-| F2 | `/v1/check` S1 copy exact; ≥12-digit body → 400; local p50 < 50 ms | **Met** | Live and local response copy: `"line1": "Use Freedom ••{last4:chase-freedom-unlimited}"`, `"line2": "Adds a warranty year + $500 theft cover"`, `"line3": "$7.49 less cash back than Active Cash"`, `"instruction": "Change card to Visa ••{last4:chase-freedom-unlimited}, then place order"`, `"primaryButton": "Paying with Freedom"`; cash 14.99 / 29.98 / 22.49. A 16-digit body → `HTTP 400` `privacy_rejected`. `scripts/metrics.py`: `CHECK_LOCAL runs=200 ok=200/200 p50_ms=0.62 p90_ms=0.67 s1_copy=200/200 parser=rulesx200`. |
+| F1 | Backend `uv run pytest` green with counts | **Met** | `cd backend && uv run pytest -q` → `1405 passed` (bab3303, 05:00). `test_scenarios`: `SCENARIOS pass=22/22 false_switches=0 protection_drops=0` (5, 21, 22 pass; 0 xfail; no fixture value changed). `test_coverage`: `COVERAGE pass=13/13 not_covered_right=7/7`; cases 3 and 13 `payoutCapUsd 500`; 13/13 cite section + version date. `test_privacy` + `test_privacy_guard`: `290 passed`. `test_catalog`: `38 passed`. |
+| F2 | `/v1/check` S1 copy exact; ≥12-digit body → 400; local p50 < 50 ms | **Met** | Live and local response copy: `"line1": "Use Freedom ••{last4:chase-freedom-unlimited}"`, `"line2": "Adds a warranty year + $500 theft cover"`, `"line3": "$7.49 less cash back than Active Cash"`, `"instruction": "Change card to Visa ••{last4:chase-freedom-unlimited}, then place order"`, `"primaryButton": "Paying with Freedom"`; cash 14.99 / 29.98 / 22.49. A 16-digit body → `HTTP 400` `privacy_rejected`. `scripts/metrics.py`: `CHECK_LOCAL runs=200 ok=200/200 p50_ms=0.57 p90_ms=0.61 s1_copy=200/200 parser=rulesx200` (bab3303). |
 | F3 | LLM parser (live Haiku 5.5) on `fixtures/ocr/*`; rules still works | **Met** | `scripts/metrics.py --live` (01:31): `MERCHANT=21/21 TOTAL=21/21 ITEMS=21/21 CONDITION=15/15 SCREEN=21/21 P50_MS=1165 P90_MS=1874 … MODEL=claude-haiku-5-5`. Earlier runs: p50 1095–1704 ms, p90 1848–2030 ms (varies with API load). Cause classification: `CAUSE=39/39 P50_MS=939`. Rules mode: the same script's local run uses `parser=rulesx200`, and the whole pytest suite runs in rules mode. |
-| F4 | Live on Render (`paywise-api`, branch `overnight/v1`) | **Partly met** | Render deploy `dep-db8rt63bc2fs738qp3fg live c68913c`; later pushes only changed iOS/docs. `/health` → `{"ok":true} HTTP 200`. `LIVE_CHECK runs=10 ok=10/10 p50_ms=1197 p90_ms=1430 s1_copy=10/10` (cold first call 2.4 s). `/store/checkout.html?item=laptop` → `HTTP 200`. `/v1/store/pay` mock → `{"status":"approved","processor":"mock","transactionId":"MOCK-SW3U4TZO","cardLabel":"Visa ••1234"}`. **G4 not met:** `DEMO_TEST_CARD_MAP` is empty in `.env` and missing on Render, so there's no card to authorize. The signed sandbox POST is accepted: `scripts/visa_smoke.py` → `HTTP=400 … REASON=MISSING_FIELD FIELDS=paymentAccountInformation.card.number`, while a wrong secret gives 401. Render stays `PAY_MODE=mock` (ruling R15; morning step 1). |
-| F5 | `xcodebuild test` on iPhone 18 Pro (iOS 27.0) | **Met** | Final run 01:31–01:49 on 791732f (`scratchpad/fulltest-0131.log`): `✔ Test run with 180 tests in 31 suites passed` + `Executed 5 tests, with 0 failures` (UI) + `** TEST SUCCEEDED **`. Redaction on the 7 screenshots: `readsAndRedacts(_:) with 7 test cases passed` (0 runs of 12+ digits, 0 emails, 0 phones, no "Alex Doe", no address lines; merchant + total kept on all 4 checkouts and the confirmation; the feed and blurry shots have no total to keep). Gate: `feedFails() passed`, `PAYWISE_OCR feed-not-checkout checkout=false`. Intent: `laptopScreenshotThroughTheRealReaderGivesTheSwitchCopy() passed` (real Vision OCR on the laptop PNG → `CheckCheckoutIntent.perform()` → Switch copy). |
-| F6 | E2E UI test against the live Render backend | **Met** | Same run: `PAYWISE_UI testCheckAScreenshotLive: Switch copy on screen 4.22 s after the pick` (after `simctl addmedia` of `laptop-checkout.png`). `testSaveIsIdempotent`: `the two saves returned saved,alreadySaved` and `1 row after relaunch: "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028"` (the §15.7 12a line, word for word). `testClaimCases1and2` (date override Dec 18, 2027): case 1 → "May be eligible: Extended warranty (Freedom Unlimited)." and case 2 → "Not covered." in the web view. A double tap on the *system snippet* button can only be tested on a device (G2). |
+| F4 | Live on Render (`paywise-api`, branch `overnight/v1`) | **Partly met** | Render `live bab3303` (05:03). `/health` → `{"ok":true} HTTP 200`. S1 copy exact; warm `/v1/check` 1.13–1.26 s, 2.5–4.0 s in the first minute after a deploy. Earlier `LIVE_CHECK runs=10 ok=10/10 p50_ms=1197 p90_ms=1430 s1_copy=10/10` (791732f). `/store/checkout.html?item=laptop` → `HTTP 200`. `/v1/store/pay` mock → `{"status":"approved","processor":"mock","transactionId":"MOCK-SW3U4TZO","cardLabel":"Visa ••1234"}`. **G4 not met:** `DEMO_TEST_CARD_MAP` is empty in `.env` and missing on Render, so there's no card to authorize. The signed sandbox POST is accepted: `scripts/visa_smoke.py` → `HTTP=400 … REASON=MISSING_FIELD FIELDS=paymentAccountInformation.card.number`, while a wrong secret gives 401. Render stays `PAY_MODE=mock` (ruling R15; morning step 1). |
+| F5 | `xcodebuild test` on iPhone 18 Pro (iOS 27.0) | **Met** | Final run 04:53–05:01 on the bab3303 code (`scratchpad/fulltest-0453.log`): `✔ Test run with 245 tests in 43 suites passed` + `Executed 5 tests, with 0 failures` (UI) + `** TEST SUCCEEDED **`. Redaction on the 7 screenshots: `readsAndRedacts(_:) with 7 test cases passed` (0 runs of 12+ digits, 0 emails, 0 phones, no "Alex Doe", no address lines; merchant + total kept on all 4 checkouts and the confirmation; the feed and blurry shots have no total to keep). Gate: `feedFails() passed`, `PAYWISE_OCR feed-not-checkout checkout=false`. Intent: `laptopScreenshotThroughTheRealReaderGivesTheSwitchCopy() passed` (real Vision OCR on the laptop PNG → `CheckCheckoutIntent.perform()` → Switch copy). |
+| F6 | E2E UI test against the live Render backend | **Met** | Same run: `PAYWISE_UI testCheckAScreenshotLive: Switch copy on screen 4.21 s after the pick` (after `simctl addmedia` of `laptop-checkout.png`). `testSaveIsIdempotent`: `the two saves returned saved,alreadySaved` and `1 row after relaunch: "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028"` (the §15.7 12a line, word for word). `testClaimCases1and2` (date override Dec 18, 2027): case 1 → "May be eligible: Extended warranty (Freedom Unlimited)." and case 2 → "Not covered." in the web view. A double tap on the *system snippet* button can only be tested on a device (G2). |
 | F7 | Live Activity states on the simulator | **Met** (stale: rendered) | iOS Simulator tool screenshots in `docs/overnight-shots/live-activity/`: Checking, Keep, Couldn't check, switch fallback and No checkout, each compact + expanded (01–10); Keep method expanded (11); Lock Screen "Paywise checked this screen" (12). The simulator never redrew the island at `staleDate` (R21): the log shows `1 s after the stale update, state stale`, but the island kept the Checking view. The stale look is shown by `stale-rendered.jpg` from `StaleRenderTests` (every slot: bare glyph, no text). The minimal view needs a second app's Live Activity, so it's only covered by the render test. Switch is a snippet, not an island state: see the gallery shots. |
-| F8 | Final build installed on the iPhone | **Met** | 01:50: `** BUILD SUCCEEDED **` then `devicectl … install` → `bundleID: com.azealoo.paywise`, `installationURL: …/Paywise.app/`. Not launched (phone locked, as agreed). Earlier installs at 12:20 and 18:20. |
+| F8 | Final build installed on the iPhone | **Met** | 05:02 (bab3303): `** BUILD SUCCEEDED **` then `devicectl … install` → `bundleID: com.azealoo.paywise`, `installationURL: …/Paywise.app/`. Not launched (phone locked, as agreed). Earlier installs at 12:20, 18:20 and 01:50. |
 | F9 | `ios/Shortcut/README.md` (+ signed `.shortcut`) | **Met** (stretch done) | Tap-by-tap build + Action Button binding, under 2:00. `ios/Shortcut/Paywise.shortcut` from `shortcuts sign --mode anyone` (exit 0; I checked the file starts `AEA1`, SHA-256 `ec706caf…4c81`; the Shortcut agent unpacked the payload to the unsigned plist and verified the chain to Apple Root CA G3). On-phone screen labels are marked (u). |
-| F10 | Every screen in light, dark, XL (+XXL); adversarial UI review with no blockers | **Met** | `docs/overnight-shots/{light-default,dark-default,light-xl,light-xxl}/` (58 shots each) plus `brand/`, `verdict-web/`, `live-activity/`. Review: 3 polish rounds confirmed 5, 1 and 1 blockers, all fixed. The final workflow's round 1 confirmed 2 (Saved line 1 cut the price on long names; an eligibility note showed as line 3 on non-cash switches), fixed. **Round 2: 0 findings across all 7 lenses** (copy, appearance, color, type, assets, a11y, placeholder). Release build: no debug UI (`LaunchOptions.current` ignores launch arguments outside DEBUG; `strings` on the Release binary finds no `demoActivity`/`doubleSave`/`checkState`, only one `-resetState` log string). |
+| F10 | Every screen in light, dark, XL (+XXL); adversarial UI review with no blockers | **Met** | `docs/overnight-shots/{light-default,dark-default,light-xl,light-xxl}/` (58 shots each) plus `brand/`, `verdict-web/`, `live-activity/`. Review: 3 polish rounds confirmed 5, 1 and 1 blockers, all fixed. The final workflow's round 1 confirmed 2 (Saved line 1 cut the price on long names; an eligibility note showed as line 3 on non-cash switches), fixed. **Round 2: 0 findings across all 7 lenses** (copy, appearance, color, type, assets, a11y, placeholder). After the post-finish fixes changed the Sent and What we sent screens and added the "replayed" tag and the last-check offer, a focused re-check of those screens (3 lenses + judge, on bab3303's shots) was also clean. Release build: no debug UI (`LaunchOptions.current` ignores launch arguments outside DEBUG; `strings` on the Release binary finds no `demoActivity`/`doubleSave`/`checkState`, only one `-resetState` log string). |
 | F11 | Draft PR + this report | **Met** | Draft PR "Paywise v1 (overnight)" from `overnight/v1` into `main`, body links this file. |
 | Owner | Monoline logo (relayed request) | **Met** | App icon standard/dark/tinted (`brand/home-icon-{light,dark,tinted}.jpg`), the in-app mark (`brand/in-app-*.jpg`), source in `brand/08-monoline/`. The island keeps the shield (R19, `brand/island-legibility-*.jpg`). |
 
@@ -35,6 +35,9 @@ Every number below comes from a command I ran or a screenshot I took during the 
 | c68913c | Monoline logo; UI-review fixes |
 | 791732f | os_signpost per link (§15.7 step 6); stale demo + render test; last UI-review fixes |
 | 50cbe79 | Screenshots (JPEG; the tour script writes full-size PNGs) |
+| ac5b244 | This report |
+| 58c8a0d | Post-finish review fixes, round 1 (store-name parsing, saved item, Qty, privacy guard, overflow/date guards) |
+| bab3303 | Post-finish review fixes, round 2 (redaction, island ownership, What we sent, island-mode save, §8.2) + refreshed screenshots |
 
 ## Rulings
 
@@ -64,6 +67,45 @@ Format: decision — why — cost if wrong. All are also in TASKS.md (gitignored
 - **R22** Screenshots are committed as JPEG (tour sets at half size), 30 MB instead of 138 MB — keeps the public repo light — re-run `ios/tools/run_ui_tour.sh all` for full-size PNGs.
 - Subagent rulings I accepted (details in commit messages and `docs/`): earn precedence merchant > category > payment-method-only > base; `PARSER_MODE` unset means rules; the privacy guard checks every byte, including `requestId` (the phone redraws IDs with 12-digit runs); `PAY_MODE` unset or unknown means mock; only `AUTHORIZED` counts as approved; the "120 days (90 in NY)" wording on every purchase-protection line (§5.5 NY note); headlines end with a period, as §5.5 has them.
 
+## Post-finish code review (after the finish line)
+
+A 5-lens review of the whole diff ran after the finish line: backend correctness, backend security/privacy, iOS correctness, iOS privacy, and spec conformance. A skeptic re-ran each finding before it counted. Of 26 findings, 25 were confirmed real and 3 would block a merge. 23 are fixed with regression tests, in 58c8a0d and bab3303:
+
+- **Blocking, fixed:**
+  - The rules parser took a brand in an item name ("Apple MacBook Air" at another store) as the store, which produced a false cash switch.
+  - Card-entry forms sent the expiry and CVC, and an OCR letter-for-digit slip let a card number through.
+  - Street addresses with uncommon suffixes, and names not directly above an address, were sent.
+- **Also fixed:**
+  - Backend:
+    - The saved draft now uses the item the card actually covers.
+    - Qty above 1 is read correctly as unit price or line total.
+    - card_partial without an amount no longer claims a cap.
+    - The privacy guard catches numbers split across lines or Unicode spaces.
+    - Bodies are capped at 32 KiB, every body route is rate-limited, and deep JSON or dates near year 9999 get a 400.
+    - Medium confidence drops the cap and unverified cash figures (§8.2).
+  - iOS:
+    - The replay key can't overflow.
+    - Claim dates stay in order.
+    - Each press owns its own Live Activity.
+    - Records are pruned on launch.
+    - What we sent lists every sent field.
+    - "Replayed" shows wherever a replayed result shows.
+    - In island mode the last unsaved result can still be saved.
+    - Pattern B is bounded under 30 s.
+    - The claim description is redacted.
+- **Not fixed (follow-ups):**
+  - BSEC-2: the rate limiter trusts the first `X-Forwarded-For` hop. Which hop Render puts the real client in needs checking on Render first.
+  - BSEC-4: the LLM's amounts aren't checked against the OCR text. That needs a test rework and a fresh live eval.
+  - Free-text names in claim descriptions are only caught next to labels or greetings.
+
+Round-2 rulings:
+
+- **R23** The newest press owns the island. An older press's late verdict is left off the island and stays in What we sent and the Check tab — the user is waiting on the latest press — the older verdict isn't shown as a snippet.
+- **R24** Expiry and CVC reuse the `[CARD]` token and the `card_number` kind — the `redactions` list is free strings — the backend can't tell an expiry from a number.
+- **R25** Card *product* names (Chase Freedom Unlimited, Active Cash, Apple Card, Discover it) stay in "Pay with" blocks; holder names and last 4 still go — the engine needs the product — a holder named like a product would be kept.
+- **R26** The claim description uses a new free-text redaction mode that replaces only the matched span — line mode would blank the cause words — unlabeled names pass.
+- **R27** "Replayed" is shown as a small tag beside the §6.3 lines; the lines themselves are unchanged — §10 requires replay to be labeled — new copy for D.
+
 ## Morning checklist (about 10 minutes)
 
 1. **Visa sandbox (G4), 2 min.** Pick a Visa test card from Cybersource's published list (`docs/visa-sandbox.md` §5). In Render › paywise-api › Environment, add `DEMO_TEST_CARD_MAP` = `{"demo-visa-1234":{"number":"<test card>","expMonth":"12","expYear":"2031","cvv":"123"}}` (no outer quotes), set `PAY_MODE=visa_acceptance` and save; it redeploys in about a minute. Optional proof: put the same value in `.env`, run `cd backend && uv run python scripts/visa_smoke.py` and expect `STATUS=approved`. On the phone, the laptop order at `https://paywise-api-n0f9.onrender.com/store/checkout.html?item=laptop` with Visa ••1234 should show the sandbox transaction ID.
@@ -85,14 +127,14 @@ Format: decision — why — cost if wrong. All are also in TASKS.md (gitignored
 
 ## Changed
 
-- **Backend:** engine, copy, rules + LLM parsers, privacy guard, rate limit, `/v1/check`, `/v1/coverage` (JSON + HTML), Visa Acceptance client, `/v1/store/pay`, `/store`; 1312 tests; metrics harness.
+- **Backend:** engine, copy, rules + LLM parsers, privacy guard, rate limit, `/v1/check`, `/v1/coverage` (JSON + HTML), Visa Acceptance client, `/v1/store/pay`, `/store`; 1405 tests; metrics harness.
 - **Data/fixtures/contracts:** verified `data/cards.json`; 7 wallets, 22 scenarios, 13 coverage cases, OCR text, carts, replay, 7 screenshots. Contract changes: R2, R3, R4, R14, R17.
 - **iOS:**
   - Intents and the check chain, snippet patterns, Live Activity views.
   - OCR and redaction.
   - App shell, Purchases and claim flow, settings, os_signpost.
   - Monoline icon and mark.
-  - Tests: 180 unit + 5 UI (3 live).
+  - Tests: 245 unit + 5 UI (3 live).
   - `ios/tools/run_ui_tour.sh`.
 - **Docs:** this report, `docs/spikes.md`, `docs/metrics.md`, README, `.env.example`, `ios/README.md`, `ios/Shortcut/README.md`, `brand/08-monoline/`, `docs/overnight-shots/`.
 - **Render:** `PARSER_MODE=llm`, `COVERAGE_MODE=llm` (set via the API, ~13:40); one API-triggered deploy; otherwise auto-deploys from pushes. `PAY_MODE` is still `mock`.
@@ -118,4 +160,7 @@ Format: decision — why — cost if wrong. All are also in TASKS.md (gitignored
   - On the simulator, Vision OCR is ~413 ms p50; on-device time is unmeasured.
 - **Not built:** the S2 `.transient` probe (device spike).
 - **Accessibility:** in the in-app result, VoiceOver reads each line separately. The snippet and island use the exact §6.4 sentence. The judge ruled this non-blocking; it's a small follow-up.
+- **Design note for D:** What we sent (and the Sent box in the snippet) now lists every sent field as `path: value` lines under the redacted text, for example `clientDate: "2026-10-17"`. This follows §10's "exact payload". It's honest but technical; plain labels would be friendlier. In the snippet the box is 180 pt and scrolls, and whether it scrolls inside a system snippet is unverified (G2).
+- **Review follow-ups:** BSEC-2 (rate-limit key), BSEC-4 (LLM amounts vs OCR text), free-text names in claim descriptions (see Post-finish code review).
+- **Demo latency risk:** one live UI run showed the Switch copy at 6.20 s, over the 6.0 s phone timeout (the rerun showed 4.21 s), and the first `/v1/check` after a deploy or idle takes 2.5–4.0 s. Before a demo, open `/health` once and run one check to warm it. Don't push to `overnight/v1` during judging, because each push redeploys.
 - **Tooling:** the PR #16 notes (`.bottom` region, signed extension, `devicectl` args after `--`) all held. Xcode stayed at 27.0 (27A266a) all night.

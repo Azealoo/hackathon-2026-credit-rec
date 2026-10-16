@@ -54,9 +54,19 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 
 ## B. Bind the trigger (≈0:15)
 
-13. Go to **Settings › Action Button**, swipe to **Shortcut**, tap **Choose a Shortcut…** (u: label) and pick **Paywise**.
-    **No Action Button?** Go to **Settings › Accessibility › Touch › Back Tap › Double Tap** and pick **Paywise**
-    (in the Shortcuts section). You can also set Back Tap on a phone that has the button; SPEC calls it a second binding.
+Pick one direct trigger. All of them run the same **Paywise** Shortcut on the screen you're looking at, and none of
+them saves a screenshot to Photos: **Take Screenshot** hands the image to Check Checkout in memory.
+
+13. **Action Button**, if you don't need it for Silent: **Settings › Action Button**, swipe to **Shortcut**, tap
+    **Choose a Shortcut…** (u: label) and pick **Paywise**. Then you press and hold it at checkout. (The iPhone's default
+    is Silent Mode, and many people keep it, so this is optional.)
+    **Back Tap**, if you keep the Action Button on Silent or have no Action Button: **Settings › Accessibility ›
+    Touch › Back Tap › Double Tap** and pick **Paywise** (in the Shortcuts section). Then you double-tap the back of the
+    phone at checkout. SPEC calls this the second binding.
+    **Control Center (u: not yet tested):** swipe down from the top right, tap **+ › Add a Control › Shortcut ›
+    Choose › Paywise**. At checkout you open Control Center and tap it. Control Center must close before **Take
+    Screenshot** runs, or the screenshot shows Control Center rather than the store; if it does, add **Wait 1 s** as the
+    first action of the Paywise Shortcut and test again.
 
 ## C. Practice press: clear the first-run prompts (≈0:25)
 
@@ -91,7 +101,7 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 | A prompt on every press | You tapped *Allow Once*. Go to **Details › Privacy › Reset Privacy**, press again and pick **Always Allow**. |
 | **Check Checkout** isn't in the action search | Open the Paywise app once, then search `Paywise`. |
 | "Couldn't check this time" | The backend didn't answer within 6 s. Press again. If it keeps happening, check `/health` (see `docs/hosting.md`). |
-| The screenshot shows Shortcuts or Paywise, not the store (G1 fails) | Follow §6.6: first try the iOS 27 **When a screenshot is saved** automation running Paywise (u: whether it passes the screenshot as input). Otherwise use section D plus the in-app check. |
+| The screenshot shows Shortcuts, Control Center or Paywise, not the store (G1 fails) | Report it with the What we sent text (it shows what was read). Try **Wait 0.5–1 s** before **Take Screenshot**, and Take Screenshot's **Ignore Contextual Assistance Layers** option (u). Until it's fixed, use the in-app **Check a screenshot**. Don't use a "When a screenshot is saved" automation: the owner ruled it out (Oct 16) because it fills Photos with checkout screenshots and runs on every screenshot. |
 
 ## Share it (for the setup screen's "Shortcut link", §5.1 step 3)
 
@@ -123,7 +133,7 @@ shortcuts sign --mode anyone --input out/Shortcut.wflow --output Paywise.shortcu
 - [ ] The Paywise app has been opened once and has cards
 - [ ] The Shortcut is named **Paywise** and matches the box: 6 actions, both fields hold blue tokens
 - [ ] **Show in Share Sheet** is on, with **Images** only and **If there's no input: Continue**
-- [ ] **Settings › Action Button** is set to Shortcut › Paywise, or **Back Tap › Double Tap** is set to Paywise
+- [ ] One direct trigger runs Paywise: **Action Button** (Shortcut › Paywise), **Back Tap › Double Tap › Paywise**, or the Control Center Shortcut control (u)
 - [ ] The practice press on the demo store answered both prompts with **Always Allow**, and a second press shows no prompt
 - [ ] The Share Sheet branch was tested from a screenshot
 - [ ] The time is recorded: ≤2:00 for steps 1–14

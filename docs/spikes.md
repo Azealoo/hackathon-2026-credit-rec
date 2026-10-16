@@ -93,7 +93,7 @@ Follow `ios/Shortcut/README.md` sections A–C with a stopwatch: AirDrop `Paywis
 7. Back Tap: **Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise**. Do 10 double taps on the store page and count.
 8. From the video, for each press note the time from the press to *Checking* and to the answer. Targets: press → *Checking* p50 ≤1.0 s; press → answer p50 ≤3.5 s, p90 ≤5 s. Record the signposts during the presses too ([Timing a press](#timing-a-press-os_signpost)): they split each time into the app's links, and the rest is press → intent start.
 
-Fail (<9/10) → SPEC §6.6 G1: try the iOS 27 screenshot automation, then the Share Sheet path.
+Fail (<9/10) → report it with What we sent as evidence; try a Wait before Take Screenshot; fall back to the in-app check. Not the iOS 27 screenshot automation in SPEC §6.6 G1 step 1: the owner ruled it out on Oct 16 (it saves checkout screenshots to Photos and runs on every screenshot).
 
 ### 2. G2 surface (S2), ≈10 min
 

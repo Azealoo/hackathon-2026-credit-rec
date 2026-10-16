@@ -100,7 +100,7 @@ final class DevicePressUITests: XCTestCase {
         for press in 1...10 {
             let feed = press > 8
             openStore(feed ? URL(string: "https://paywise-store.onrender.com/feed.html")! : Self.storeURL)
-            print("PAYWISE_PRESS \(press): READY — press and hold the Action Button (\(feed ? "feed" : "checkout"))")
+            print("PAYWISE_PRESS \(press): READY — trigger Paywise: double-tap the back or hold the Action Button (\(feed ? "feed" : "checkout"))")
             if feed {
                 if waitForText("No checkout total found", timeout: 45) != nil {
                     feedAlerts += 1

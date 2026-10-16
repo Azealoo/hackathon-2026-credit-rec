@@ -64,13 +64,13 @@ struct TriggerSetupView: View {
                         .stepPath()
                         .accessibilityIdentifier("trigger.actionButton")
                 }
-                StepCard(number: 3, title: "No Action Button? Use Back Tap") {
+                StepCard(number: 3, title: "Keeping Silent on it, or no Action Button? Use Back Tap") {
                     Text("Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise")
                         .stepPath()
                         .accessibilityIdentifier("trigger.backTap")
                 }
                 StepCard(number: 4, title: "Practice press") {
-                    Text("Open the sample checkout in Safari, then press and hold the Action Button. Answer each prompt with Always Allow, and press once more: no prompts this time.")
+                    Text("Open the sample checkout in Safari, then press and hold the Action Button (or double-tap the back). Answer each prompt with Always Allow, and press once more: no prompts this time.")
                         .stepBody()
                     Link("Open the sample checkout", destination: Self.practiceURL)
                         .buttonStyle(AppButtonStyle(prominent: false))
@@ -306,10 +306,10 @@ enum ShortcutSteps {
             Step(number: 12, text: "Tap **Done**."),
         ]),
         Section(title: "Set the Action Button", steps: [
-            Step(number: 13, text: "Go to **Settings › Action Button**, swipe to **Shortcut**, tap **Choose a Shortcut** and pick **Paywise**. No Action Button? Go to **Settings › Accessibility › Touch › Back Tap › Double Tap** and pick **Paywise**."),
+            Step(number: 13, text: "Go to **Settings › Action Button**, swipe to **Shortcut**, tap **Choose a Shortcut** and pick **Paywise**. Keeping Silent on the Action Button, or no Action Button? Go to **Settings › Accessibility › Touch › Back Tap › Double Tap** and pick **Paywise** instead."),
         ]),
         Section(title: "Practice press", steps: [
-            Step(number: 14, text: "Open the sample checkout in Safari, then press and hold the Action Button. Answer each prompt with **Always Allow**. Press again: no prompts this time, just the answer."),
+            Step(number: 14, text: "Open the sample checkout in Safari, then press and hold the Action Button (or double-tap the back). Answer each prompt with **Always Allow**. Press again: no prompts this time, just the answer."),
         ], showsPracticeLink: true),
         Section(title: "Check a screenshot you already took", steps: [
             Step(number: 15, text: "Open it in **Photos**, tap **Share** and pick **Paywise**. If it isn't in the list, tap **Edit Actions…** to add it."),
@@ -319,7 +319,7 @@ enum ShortcutSteps {
     static let troubleTitle = "If it doesn't work"
 
     static let trouble: [Trouble] = [
-        Trouble(symptom: "Nothing happens when you press", fix: "Check that **Settings › Action Button** still shows Shortcut › Paywise, and that **Show in Share Sheet** is on with **Images** only."),
+        Trouble(symptom: "Nothing happens when you press", fix: "Check that **Settings › Action Button** (or **Back Tap › Double Tap**) still shows Paywise, and that **Show in Share Sheet** is on with **Images** only."),
         Trouble(symptom: "\"No checkout total found\" on the first press", fix: "The prompts covered the store's page. Press once more."),
         Trouble(symptom: "\"Use the Paywise shortcut\"", fix: "Check Checkout ran without a screenshot. Redo steps 8 and 10 so both fields hold a blue token."),
         Trouble(symptom: "A prompt on every press", fix: "You tapped **Allow Once**. In the Shortcut's **Details › Privacy**, tap **Reset Privacy**, press again and pick **Always Allow**."),

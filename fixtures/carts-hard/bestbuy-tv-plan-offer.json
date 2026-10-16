@@ -1,0 +1,39 @@
+{
+  "screenType": "checkout",
+  "merchant": {
+    "name": "Best Buy",
+    "merchantId": "best-buy"
+  },
+  "items": [
+    {
+      "name": "Lumina 65-inch 4K Smart TV",
+      "priceUsd": 899.99,
+      "quantity": 1,
+      "category": "electronics",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 991.79,
+  "currency": "USD",
+  "paymentOptionsVisible": [
+    "saved_card",
+    "apple_pay",
+    "bnpl"
+  ],
+  "selectedPayment": {
+    "kind": "saved_card",
+    "network": "visa"
+  },
+  "upsells": {
+    "protectionPlanUsd": 149.99
+  },
+  "bnplVisible": true,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

@@ -1,0 +1,808 @@
+{
+ "label": "LLM(claude-haiku-5-5)",
+ "summary": {
+  "all": {
+   "screen": [
+    45,
+    45
+   ],
+   "merchant": [
+    42,
+    45
+   ],
+   "total": [
+    45,
+    45
+   ],
+   "items": [
+    45,
+    45
+   ],
+   "condition": [
+    35,
+    36
+   ],
+   "payment": [
+    41,
+    45
+   ],
+   "conf": [
+    30,
+    30
+   ],
+   "p50_ms": 1416,
+   "p90_ms": 2054,
+   "max_ms": 2099,
+   "errors": 0,
+   "calls": 45
+  },
+  "base": {
+   "screen": [
+    21,
+    21
+   ],
+   "merchant": [
+    21,
+    21
+   ],
+   "total": [
+    21,
+    21
+   ],
+   "items": [
+    21,
+    21
+   ],
+   "condition": [
+    15,
+    15
+   ],
+   "payment": [
+    21,
+    21
+   ],
+   "conf": [
+    12,
+    12
+   ],
+   "p50_ms": 1222,
+   "p90_ms": 2008,
+   "max_ms": 2051,
+   "errors": 0,
+   "calls": 21
+  },
+  "hard": {
+   "screen": [
+    24,
+    24
+   ],
+   "merchant": [
+    21,
+    24
+   ],
+   "total": [
+    24,
+    24
+   ],
+   "items": [
+    24,
+    24
+   ],
+   "condition": [
+    20,
+    21
+   ],
+   "payment": [
+    20,
+    24
+   ],
+   "conf": [
+    18,
+    18
+   ],
+   "p50_ms": 1473,
+   "p90_ms": 2068,
+   "max_ms": 2099,
+   "errors": 0,
+   "calls": 24
+  }
+ },
+ "rows": [
+  {
+   "set": "base",
+   "fixture": "blurry-unreadable",
+   "round": 1,
+   "ms": 1792.8212499973597,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "earbuds-checkout",
+   "round": 1,
+   "ms": 1874.1635420010425,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "feed-not-checkout",
+   "round": 1,
+   "ms": 1767.8883749904344,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-checkout",
+   "round": 1,
+   "ms": 1386.9505829934496,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-confirmation",
+   "round": 1,
+   "ms": 1039.9776670092251,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-renewed-checkout",
+   "round": 1,
+   "ms": 1153.2764999865321,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "mug-checkout",
+   "round": 1,
+   "ms": 2008.031416000449,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "amazon-two-items-third-party",
+   "round": 1,
+   "ms": 1312.9407499945955,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "bestbuy-product-page",
+   "round": 1,
+   "ms": 800.0396669958718,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "bestbuy-tv-plan-offer",
+   "round": 1,
+   "ms": 2062.497666993295,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": false,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "doordash-line-totals",
+   "round": 1,
+   "ms": 2099.3995829921914,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": false,
+    "total": true,
+    "items": true,
+    "payment": false,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "nike-order-confirmation",
+   "round": 1,
+   "ms": 1405.512124998495,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "target-card-form-applepay",
+   "round": 1,
+   "ms": 1440.9467499936,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "unknown-store-open-box-bike",
+   "round": 1,
+   "ms": 2067.7846670005238,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "walmart-gift-card-blender",
+   "round": 1,
+   "ms": 1458.7172910105437,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "blurry-unreadable",
+   "round": 2,
+   "ms": 982.2369999892544,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "earbuds-checkout",
+   "round": 2,
+   "ms": 1222.1599589975085,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "feed-not-checkout",
+   "round": 2,
+   "ms": 1808.2202910009073,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-checkout",
+   "round": 2,
+   "ms": 1175.884791999124,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-confirmation",
+   "round": 2,
+   "ms": 1013.7693750002654,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-renewed-checkout",
+   "round": 2,
+   "ms": 1092.9884999932256,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "mug-checkout",
+   "round": 2,
+   "ms": 2050.9361250005895,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "amazon-two-items-third-party",
+   "round": 2,
+   "ms": 1416.216749988962,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "bestbuy-product-page",
+   "round": 2,
+   "ms": 918.511583993677,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "bestbuy-tv-plan-offer",
+   "round": 2,
+   "ms": 2054.2423329898156,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "doordash-line-totals",
+   "round": 2,
+   "ms": 2097.3048339947127,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": false,
+    "total": true,
+    "items": true,
+    "payment": false,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "nike-order-confirmation",
+   "round": 2,
+   "ms": 1379.4675829994958,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "target-card-form-applepay",
+   "round": 2,
+   "ms": 1392.6979169918923,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "unknown-store-open-box-bike",
+   "round": 2,
+   "ms": 2029.8965419933666,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "walmart-gift-card-blender",
+   "round": 2,
+   "ms": 1488.2269170047948,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "blurry-unreadable",
+   "round": 3,
+   "ms": 949.7447920002742,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "earbuds-checkout",
+   "round": 3,
+   "ms": 1376.0997089993907,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "feed-not-checkout",
+   "round": 3,
+   "ms": 1932.7041250071488,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-checkout",
+   "round": 3,
+   "ms": 1040.366917004576,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-confirmation",
+   "round": 3,
+   "ms": 1031.5402499982156,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "laptop-renewed-checkout",
+   "round": 3,
+   "ms": 1086.32737500011,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "base",
+   "fixture": "mug-checkout",
+   "round": 3,
+   "ms": 2014.8102090024622,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "amazon-two-items-third-party",
+   "round": 3,
+   "ms": 1380.118291999679,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "bestbuy-product-page",
+   "round": 3,
+   "ms": 788.7965420086402,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "bestbuy-tv-plan-offer",
+   "round": 3,
+   "ms": 2030.5477920046542,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "doordash-line-totals",
+   "round": 3,
+   "ms": 1906.3862500042887,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": false,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": false,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "nike-order-confirmation",
+   "round": 3,
+   "ms": 1256.4532499964116,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "target-card-form-applepay",
+   "round": 3,
+   "ms": 1699.5912910060724,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "unknown-store-open-box-bike",
+   "round": 3,
+   "ms": 2021.4145409991033,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": true,
+    "condition": true,
+    "conf": true
+   }
+  },
+  {
+   "set": "hard",
+   "fixture": "walmart-gift-card-blender",
+   "round": 3,
+   "ms": 1563.650249998318,
+   "error": null,
+   "checks": {
+    "screen": true,
+    "merchant": true,
+    "total": true,
+    "items": true,
+    "payment": false,
+    "condition": true,
+    "conf": true
+   }
+  }
+ ]
+}

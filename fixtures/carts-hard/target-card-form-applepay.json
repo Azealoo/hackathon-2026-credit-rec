@@ -1,0 +1,48 @@
+{
+  "screenType": "checkout",
+  "merchant": {
+    "name": "Target",
+    "merchantId": "target"
+  },
+  "items": [
+    {
+      "name": "Stoneware Dinner Plates, Set of 4",
+      "priceUsd": 24.0,
+      "quantity": 1,
+      "category": "home",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    },
+    {
+      "name": "Cotton Bath Towel",
+      "priceUsd": 8.0,
+      "quantity": 3,
+      "category": "home",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 52.32,
+  "currency": "USD",
+  "paymentOptionsVisible": [
+    "apple_pay",
+    "card_form"
+  ],
+  "selectedPayment": {
+    "kind": "card_form",
+    "network": "unknown"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": false,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

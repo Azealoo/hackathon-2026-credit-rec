@@ -35,6 +35,13 @@ targets:
       # Onboarding's first result (§5.1 step 2) runs the real check on the sample $1,499 laptop checkout (fake data).
       - path: ../fixtures/screenshots/laptop-checkout.png
         buildPhase: resources
+      # Experiment only (experiment/on-device-parser): fake OCR screens for the `-parserLab` on-device parser test.
+      - path: ../fixtures/ocr
+        type: folder
+        buildPhase: resources
+      - path: ../fixtures/ocr-hard
+        type: folder
+        buildPhase: resources
     info:
       path: Paywise/Info.plist
       properties:

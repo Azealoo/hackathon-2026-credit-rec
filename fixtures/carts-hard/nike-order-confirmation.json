@@ -1,0 +1,35 @@
+{
+  "screenType": "order_confirmation",
+  "merchant": {
+    "name": "Nike",
+    "merchantId": "nike"
+  },
+  "items": [
+    {
+      "name": "Pegasus Running Shoes, Men's Size 10",
+      "priceUsd": 140.0,
+      "quantity": 1,
+      "category": "apparel",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 152.25,
+  "currency": "USD",
+  "paymentOptionsVisible": [],
+  "selectedPayment": {
+    "kind": "apple_pay",
+    "network": "unknown"
+  },
+  "upsells": {
+    "protectionPlanUsd": null
+  },
+  "bnplVisible": false,
+  "confidence": {
+    "merchant": 0.95,
+    "total": 0.95,
+    "items": 0.9
+  }
+}

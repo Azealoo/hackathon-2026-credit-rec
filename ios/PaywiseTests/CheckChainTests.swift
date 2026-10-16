@@ -160,8 +160,16 @@ struct CheckStoreTests {
         return record
     }
 
+    /// A store in a fresh folder, aged against the demo-day clock.
+    private func makeStore() -> CheckStore {
+        CheckStore(
+            containerURL: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString),
+            now: { Fixtures.demoNow }
+        )
+    }
+
     @Test func writesReadsAndPrunes() throws {
-        let store = CheckStore(containerURL: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString))
+        let store = makeStore()
         let now = Fixtures.demoNow
         try store.write(record(id: "old-1", createdAt: now.addingTimeInterval(-25 * 3600)), now: now.addingTimeInterval(-25 * 3600))
         try store.write(record(id: "new-1", createdAt: now.addingTimeInterval(-60)), now: now)
@@ -174,7 +182,7 @@ struct CheckStoreTests {
     }
 
     @Test func rejectsPathLikeIDs() throws {
-        let store = CheckStore(containerURL: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString))
+        let store = makeStore()
         #expect(throws: CheckStore.StoreError.invalidCheckId) {
             try store.write(record(id: "../escape", createdAt: Fixtures.demoNow))
         }
@@ -182,7 +190,7 @@ struct CheckStoreTests {
     }
 
     @Test func concurrentUpdatesDontLoseWrites() async throws {
-        let store = CheckStore(containerURL: FileManager.default.temporaryDirectory.appending(path: UUID().uuidString))
+        let store = makeStore()
         try store.write(record(id: "c-1", createdAt: Fixtures.demoNow), now: Fixtures.demoNow)
         await withTaskGroup(of: Void.self) { group in
             for index in 0..<20 {

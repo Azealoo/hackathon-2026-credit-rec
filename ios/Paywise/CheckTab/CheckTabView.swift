@@ -14,18 +14,24 @@ struct CheckTabView: View {
     @State private var path: [CheckRoute] = []
     @State private var checkCount: Int
     @State private var triggerSetupDone: Bool
+    @Environment(\.scenePhase) private var scenePhase
     private let settings: PaywiseSettings
     private let catalog: CardCatalog
+    /// Off while a debug `-checkState` answer is on screen.
+    private let offersLastPress: Bool
 
     init(deps: AppDependencies) {
         let check = InAppCheck(deps: deps)
+        var offersLastPress = true
         #if DEBUG
         // `-checkState <state>`: one of the island's answers, as the app shows it (screenshots).
         if let demo = CheckTabDemo.requested(),
            let phase = demo.phase(catalog: deps.catalog, wallet: deps.walletStore.load()) {
             check.show(phase)
+            offersLastPress = false
         }
         #endif
+        self.offersLastPress = offersLastPress
         _check = State(initialValue: check)
         settings = deps.settings
         catalog = deps.catalog
@@ -42,6 +48,13 @@ struct CheckTabView: View {
                             .font(.app(15))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if check.showsLastPress {
+                        // §6.6 "save later": the last press's answer, which had no [Paying with …] where it showed.
+                        Text("Your last check")
+                            .font(.app(13, .semibold))
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("check.lastPress")
                     }
                     InAppResultCard(check: check, catalog: catalog)
                     #if DEBUG
@@ -98,6 +111,13 @@ struct CheckTabView: View {
         .onChange(of: pickerItem) { _, item in
             guard let item else { return }
             Task { await run(item) }
+        }
+        .task {
+            if offersLastPress { check.offerLastPress() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // A press runs while the app is in the background; its result is offered when the app comes back.
+            if phase == .active, offersLastPress { check.offerLastPress() }
         }
     }
 

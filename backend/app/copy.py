@@ -4,6 +4,13 @@ The phone fills `{last4:<cardId>}` from its wallet and drops "••{…}" when 
 `{ppCap}` is filled here from the protection's verified limit; an unverified limit drops the
 amount ("Adds a warranty year + theft cover", §6.3 and the §8.2 display rule).
 
+§8.2 display rule, applied by the engine through the keyword arguments below:
+- `show_cap=False` when the decision's confidence is "medium" (it leans on a partial or unverified
+  value): line 2 drops the cap even when the cap itself is verified.
+- `cash_verified=False` (`verified=False` for Keep, method) when a rate behind a cash figure isn't
+  verified: the line keeps the comparison but states no dollar amount or rate ("Likely less cash
+  back than Active Cash"), since a partial value is never stated as fact (§15.8).
+
 Card names (`shortName`) and networks come from data/cards.json through the Card objects the
 engine passes in; nothing here holds card data. §6.2 lengths: lines 2 and 3 are at most 44
 characters and the instruction at most 48, measured with the last 4 filled in.
@@ -76,11 +83,12 @@ def _warranty_phrase(ew: Protection) -> str:
     return f"{months} warranty months"
 
 
-def protection_line(protections: list[Protection]) -> str:
-    """Line 2 for a protection switch and for Keep, protected (§6.3)."""
+def protection_line(protections: list[Protection], *, show_cap: bool = True) -> str:
+    """Line 2 for a protection switch and for Keep, protected (§6.3). `show_cap=False` (a medium-
+    confidence decision, §8.2) drops the cap as an unverified one does."""
     ew = next((p for p in protections if p.type == "extended_warranty"), None)
     pp = next((p for p in protections if p.type == "purchase_protection"), None)
-    cap = verified_cap(pp) if pp else None
+    cap = verified_cap(pp) if pp and show_cap else None
     if ew and pp:
         theft = f"{usd(cap)} theft cover" if cap is not None else "theft cover"
         return f"Adds {_warranty_phrase(ew)} + {theft}"
@@ -124,26 +132,32 @@ def paying_with(card: Card) -> str:
 
 
 def switch_protection(card: Card, gained: list[Protection], delta_vs_cash_best: Decimal,
-                      cash_best: Card, path: str) -> Copy:
+                      cash_best: Card, path: str, *, show_cap: bool = True, cash_verified: bool = True) -> Copy:
     """Switch, protection (Rule P). Line 3 compares with the wallet's cash-best card (§6.2)."""
     if delta_vs_cash_best >= 0:
-        line3 = "Also earns the most cash back here"
-    else:
+        line3 = "Also earns the most cash back here" if cash_verified else "Likely also earns the most cash back here"
+    elif cash_verified:
         line3 = f"{usd(-delta_vs_cash_best, cents=True)} less cash back than {cash_best.short_name}"
-    return _copy(f"Use {card.short_name} {DOTS}{last4(card)}", protection_line(gained), line3,
+    else:
+        line3 = f"Likely less cash back than {cash_best.short_name}"
+    return _copy(f"Use {card.short_name} {DOTS}{last4(card)}", protection_line(gained, show_cap=show_cap), line3,
                  instruction_text(card, path), paying_with(card))
 
 
-def switch_cash(card: Card, gain_vs_default: Decimal, default: Card, notes: list[str], path: str) -> Copy:
+def switch_cash(card: Card, gain_vs_default: Decimal, default: Card, notes: list[str], path: str,
+                *, cash_verified: bool = True) -> Copy:
     """Switch, cash (Rule C), with the first eligibility note as line 3."""
     line3 = next((note for note in notes if len(note) <= LINE_MAX), None)
-    return _copy(f"Use {card.short_name} {DOTS}{last4(card)}",
-                 f"{usd(gain_vs_default, cents=True)} more cash back than {default.short_name}", line3,
+    if cash_verified:
+        line2 = f"{usd(gain_vs_default, cents=True)} more cash back than {default.short_name}"
+    else:
+        line2 = f"Likely more cash back than {default.short_name}"
+    return _copy(f"Use {card.short_name} {DOTS}{last4(card)}", line2, line3,
                  instruction_text(card, path), paying_with(card))
 
 
-def keep_protected(card: Card, kept: list[Protection]) -> Copy:
-    return _copy(f"{CHECK} Keep {card.short_name} {DOTS}{last4(card)}", protection_line(kept),
+def keep_protected(card: Card, kept: list[Protection], *, show_cap: bool = True) -> Copy:
+    return _copy(f"{CHECK} Keep {card.short_name} {DOTS}{last4(card)}", protection_line(kept, show_cap=show_cap),
                  "Save it so you can claim later", None, paying_with(card))
 
 
@@ -156,9 +170,11 @@ def keep_below_threshold(card: Card, threshold: Decimal) -> Copy:
     return _copy(f"{CHECK} Keep {card.short_name} {DOTS}{last4(card)}", f"Switching gains under {usd(threshold)} here")
 
 
-def keep_method(card: Card, apple_pay_rate: Decimal, apple_pay_cash: Decimal, typed_rate: Decimal) -> Copy:
-    return _copy(f"{CHECK} {card.short_name}: use Apple Pay",
-                 f"{pct(apple_pay_rate)} ({usd(apple_pay_cash, cents=True)}) with Apple Pay vs {pct(typed_rate)} typed")
+def keep_method(card: Card, apple_pay_rate: Decimal, apple_pay_cash: Decimal, typed_rate: Decimal,
+                *, verified: bool = True) -> Copy:
+    line2 = (f"{pct(apple_pay_rate)} ({usd(apple_pay_cash, cents=True)}) with Apple Pay vs {pct(typed_rate)} typed"
+             if verified else "Likely more cash back with Apple Pay")
+    return _copy(f"{CHECK} {card.short_name}: use Apple Pay", line2)
 
 
 def keep_items_unreadable(card: Card) -> Copy:

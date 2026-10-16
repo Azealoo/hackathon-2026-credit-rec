@@ -131,6 +131,8 @@ actor RecordingIsland: IslandPresenting {
     }
 
     private(set) var events: [Event] = []
+    /// The check ID passed to each `startChecking`, `alert` and `end`, in order.
+    private(set) var checkIds: [String] = []
     private let available: Bool
 
     init(available: Bool = true) {
@@ -141,15 +143,20 @@ actor RecordingIsland: IslandPresenting {
 
     func startChecking(checkId: String) async -> Bool {
         events.append(.startChecking)
+        checkIds.append(checkId)
         return available
     }
 
     func alert(checkId: String, state: PaywiseActivityAttributes.ContentState, sound: AlertSoundChoice) async -> Bool {
         events.append(.alert(state, sound))
+        checkIds.append(checkId)
         return available
     }
 
-    func end() async { events.append(.end) }
+    func end(checkId: String) async {
+        events.append(.end)
+        checkIds.append(checkId)
+    }
 
     var alerts: [PaywiseActivityAttributes.ContentState] {
         events.compactMap { if case .alert(let state, _) = $0 { state } else { nil } }
@@ -191,7 +198,8 @@ struct TestEnvironment {
                 session: PaywiseAPI.makeSession(timeout: timeout, protocolClasses: [StubURLProtocol.self]),
                 timeout: timeout
             ),
-            checkStore: CheckStore(containerURL: directory),
+            // Aged against the same fixed clock as `now`, so the demo-day records never expire mid-run.
+            checkStore: CheckStore(containerURL: directory, now: { Fixtures.demoNow }),
             settings: settings,
             catalog: .bundled(.main),
             replay: ReplayStore(bundle: .main),

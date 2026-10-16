@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// "What we sent" (SPEC §10, §15.7 step 10): every stored check, newest first, with the exact redacted text that left
-/// the phone (`CheckRecord.sentPayload` → `screen.ocrText`), in monospaced type. Replayed results say so.
+/// "What we sent" (SPEC §10, §15.7 step 10): every check from the last 24 h, newest first, with the exact payload that
+/// left the phone (`CheckRecord.sentPayload`): the redacted text (`screen.ocrText`), then every other field as sent
+/// (`CheckRecord.sentFields`), in monospaced type. Replayed results say so.
 struct SentListView: View {
     let checkStore: CheckStore
     let catalog: CardCatalog
@@ -72,19 +73,23 @@ private struct SentRow: View {
                     .font(.app(13))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
-                Text(record.sentText)
-                    .font(.system(.footnote, design: .monospaced))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(12)
-                    .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .textSelection(.enabled)
-                    .accessibilityIdentifier("sent.text")
-                if let cards = SentText.cards(record, catalog: catalog) {
-                    Text(cards)
-                        .font(.app(13))
-                        .foregroundStyle(.secondary)
+                // The exact payload: the redacted text, then the card IDs, clientDate, redaction kinds and the rest.
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(record.sentText)
+                        .accessibilityIdentifier("sent.text")
+                    let fields = record.sentFields
+                    if !fields.isEmpty {
+                        Text(fields.joined(separator: "\n"))
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("sent.fields")
+                    }
                 }
+                .font(.system(.footnote, design: .monospaced))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .textSelection(.enabled)
             }
         }
         .accessibilityElement(children: .contain)
@@ -112,13 +117,4 @@ enum SentText {
         return date.formatted(.dateTime.month(.abbreviated).day().hour().minute())
     }
 
-    /// "Cards: Apple Card (default), Active Cash, Freedom": the product IDs that were sent, by name.
-    static func cards(_ record: CheckRecord, catalog: CardCatalog) -> String? {
-        guard let cards = record.request?.wallet.cards, !cards.isEmpty else { return nil }
-        let names = cards.map { card in
-            let name = catalog.shortName(card.cardId) ?? card.cardId
-            return card.isDefault ? "\(name) (default)" : name
-        }
-        return "Cards: " + names.joined(separator: ", ")
-    }
 }

@@ -225,23 +225,112 @@ def test_draft_dates_past_year_9999_raise_date_out_of_range():
 # --- §8.2 display rule ------------------------------------------------------------------------
 
 
+S1_WALLET = ("apple-card", "wf-active-cash", "chase-freedom-unlimited")
+
+
+def partial_base_rate(card_id: str):
+    def edit(raw):
+        next(c for c in raw["cards"] if c["id"] == card_id)["earn"]["baseRateStatus"] = "partial"
+    return edit
+
+
+def partial_protection(card_id: str, type_: str):
+    def edit(raw):
+        protection(raw, card_id, type_)["verification"]["status"] = "partial"
+    return edit
+
+
+def coverage_by_type(result) -> dict:
+    return {entry.type: entry for entry in result.purchase_draft.coverage}
+
+
+def test_shipped_catalog_s1_states_the_cap_and_the_cash_figure():
+    result = decide(cart(), wallet(*S1_WALLET))
+    assert result.decision.confidence == "high"
+    assert result.decision.copy_.line2 == "Adds a warranty year + $500 theft cover"
+    assert result.decision.copy_.line3 == "$7.49 less cash back than Active Cash"
+    assert coverage_by_type(result)["purchase_protection"].limit_usd == 500
+
+
 def test_unverified_cap_drops_from_the_copy_and_lowers_confidence():
-    def partial_pp(raw):
-        protection(raw, "chase-freedom-unlimited", "purchase_protection")["verification"]["status"] = "partial"
-
-    result = decide(cart(), wallet("apple-card", "wf-active-cash", "chase-freedom-unlimited"), catalog_with(partial_pp))
-    assert result.decision.copy_.line2 == "Adds a warranty year + theft cover"
+    result = decide(cart(), wallet(*S1_WALLET),
+                    catalog_with(partial_protection("chase-freedom-unlimited", "purchase_protection")))
     assert result.decision.confidence == "medium"
-    pp = next(c for c in result.purchase_draft.coverage if c.type == "purchase_protection")
-    assert pp.limit_usd is None
+    assert result.decision.copy_.line2 == "Adds a warranty year + theft cover"
+    assert result.decision.copy_.line3 == "$7.49 less cash back than Active Cash"  # both rates are verified
+    # The Saved view would state the partial protection's window and cap as fact: no entry for it.
+    assert set(coverage_by_type(result)) == {"extended_warranty"}
 
 
-def test_partial_earn_rate_lowers_confidence():
-    def partial_rate(raw):
-        next(c for c in raw["cards"] if c["id"] == "wf-active-cash")["earn"]["baseRateStatus"] = "partial"
+@pytest.mark.parametrize("card_id", ["wf-active-cash", "chase-freedom-unlimited"])
+def test_medium_confidence_from_a_partial_rate_drops_the_verified_cap_and_the_cash_figure(card_id):
+    """§8.2: a partial value used -> confidence medium -> no cap in the copy, and no partial figure as fact."""
+    result = decide(cart(), wallet(*S1_WALLET), catalog_with(partial_base_rate(card_id)))
+    d = result.decision
+    assert (d.kind, d.reason, d.recommended_card_id, d.confidence) == (
+        "switch", "protection", "chase-freedom-unlimited", "medium")
+    assert d.copy_.line2 == "Adds a warranty year + theft cover"
+    assert d.copy_.line3 == "Likely less cash back than Active Cash"
+    by_type = coverage_by_type(result)
+    assert by_type["purchase_protection"].limit_usd is None  # the Saved view drops the cap as line 2 does
+    assert by_type["purchase_protection"].until == dt.date(2027, 2, 14)  # the protection itself is verified
+    assert by_type["extended_warranty"].until == dt.date(2028, 10, 17)
 
-    d = decide(cart(), wallet("apple-card", "wf-active-cash", "chase-freedom-unlimited"), catalog_with(partial_rate)).decision
-    assert d.confidence == "medium" and d.reason == "protection"
+
+def test_partial_extended_warranty_saves_no_warranty_dates():
+    result = decide(cart(), wallet(*S1_WALLET),
+                    catalog_with(partial_protection("chase-freedom-unlimited", "extended_warranty")))
+    assert result.decision.confidence == "medium"
+    assert result.decision.copy_.line2 == "Adds extra warranty + theft cover"
+    assert set(coverage_by_type(result)) == {"purchase_protection"}
+    assert coverage_by_type(result)["purchase_protection"].limit_usd is None
+
+
+def test_pick_also_cash_best_with_a_partial_rate_is_hedged():
+    result = decide(cart(), wallet("apple-card", "chase-freedom-unlimited"),
+                    catalog_with(partial_base_rate("chase-freedom-unlimited")))
+    assert result.decision.cash_best_card_id == "chase-freedom-unlimited"
+    assert result.decision.copy_.line3 == "Likely also earns the most cash back here"
+
+
+def test_keep_protected_with_a_partial_rate_drops_the_cap():
+    result = decide(cart(), wallet("chase-freedom-unlimited", "wf-active-cash"),
+                    catalog_with(partial_base_rate("wf-active-cash")))
+    d = result.decision
+    assert (d.kind, d.reason, d.confidence) == ("keep", "already_protected", "medium")
+    assert d.copy_.line2 == "Adds a warranty year + theft cover"
+    assert coverage_by_type(result)["purchase_protection"].limit_usd is None
+
+
+def test_cash_switch_with_a_partial_rate_states_no_amount():
+    result = decide(cart(), wallet("apple-card", "wf-active-cash"), catalog_with(partial_base_rate("wf-active-cash")))
+    d = result.decision
+    assert (d.kind, d.reason, d.confidence) == ("switch", "cash", "medium")
+    assert d.copy_.line2 == "Likely more cash back than Apple Card"
+
+
+def test_keep_method_with_a_partial_rate_states_no_rates():
+    def partial_nike(raw):
+        apple = next(c for c in raw["cards"] if c["id"] == "apple-card")
+        next(r for r in apple["earn"]["rules"] if r["id"] == "apple-card-bonus-merchants")["status"] = "partial"
+
+    nike = cart(items=(("Running Shoes", 180.0, "apparel", "new"),), merchant=("Nike", "nike"), options=("apple_pay",))
+    d = decide(nike, wallet("apple-card"), catalog_with(partial_nike)).decision
+    assert (d.kind, d.reason, d.confidence) == ("keep", "method", "medium")
+    assert d.copy_.line2 == "Likely more cash back with Apple Pay"
+    assert decide(nike, wallet("apple-card")).decision.copy_.line2 == "3% ($5.40) with Apple Pay vs 1% typed"
+
+
+@pytest.mark.parametrize("other_id", catalog.card_ids())
+@pytest.mark.parametrize("card_id", catalog.card_ids())
+def test_hedged_cash_lines_fit_44_characters(card_id, other_id):
+    card, other = catalog.card(card_id), catalog.card(other_id)
+    lines = [copy.switch_protection(card, [], Decimal("-1"), other, "saved_card", cash_verified=False).line3,
+             copy.switch_protection(card, [], Decimal("0"), other, "saved_card", cash_verified=False).line3,
+             copy.switch_cash(card, Decimal("1"), other, [], "saved_card", cash_verified=False).line2,
+             copy.keep_method(card, Decimal("2"), Decimal("1"), Decimal("1"), verified=False).line2]
+    assert all(copy.filled_length(line) <= copy.LINE_MAX for line in lines), lines
+    assert not any(ch.isdigit() or ch == "$" for line in lines for ch in line)
 
 
 # --- Copy ----------------------------------------------------------------------------------------
@@ -262,6 +351,8 @@ def test_protection_line_variants():
     assert copy.protection_line([ew]) == "Adds a warranty year"
     unverified = pp.model_copy(update={"verification": pp.verification.model_copy(update={"status": "unverified"})})
     assert copy.protection_line([unverified, ew]) == "Adds a warranty year + theft cover"
+    assert copy.protection_line([pp, ew], show_cap=False) == "Adds a warranty year + theft cover"
+    assert copy.protection_line([pp], show_cap=False) == "Adds theft & damage cover"
 
 
 def test_money_and_rate_formats():

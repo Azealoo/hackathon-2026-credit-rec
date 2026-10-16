@@ -60,6 +60,14 @@ enum JSONValue: Codable, Sendable, Equatable {
         if case .string(let value) = self { return value }
         return nil
     }
+
+    /// An object or an array.
+    var isContainer: Bool {
+        switch self {
+        case .object, .array: true
+        default: false
+        }
+    }
 }
 
 enum JSONCoding {

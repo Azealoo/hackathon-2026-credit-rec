@@ -164,6 +164,12 @@ def test_purchase_draft_dates_for_s1():
     assert by_type["extended_warranty"].assumes_manufacturer_warranty_months == 12
 
 
+def test_every_scenario_is_high_confidence():
+    """§8.2: the demo catalog is verified, so no scenario hedges its copy or drops a cap."""
+    assert {scenario["id"]: RESULTS[scenario["id"]].decision.confidence for scenario in SCENARIOS} == {
+        scenario["id"]: "high" for scenario in SCENARIOS}
+
+
 def test_snippet_states_save_a_draft_and_island_states_dont():
     for scenario in SCENARIOS:
         result = RESULTS[scenario["id"]]

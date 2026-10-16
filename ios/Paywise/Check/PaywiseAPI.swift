@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// `POST {base}/v1/check` (SPEC §15.5) with the 6.0 s deadline from §6.2. The deadline is enforced here, not only by
 /// URLSession, so a stalled connection still gives up on time.
@@ -96,6 +97,92 @@ func withDeadline<T: Sendable>(
         defer { group.cancelAll() }
         guard let first = try await group.next() else { throw DeadlineExceeded() }
         return first
+    }
+}
+
+/// Like `withDeadline`, but returns at `limit` even when `operation` ignores cancellation: a task group waits for every
+/// child, so `withDeadline` is only as prompt as its operation's cancellation. Here the operation runs in its own task
+/// (which inherits task-local values, as a child would), is cancelled at the deadline and left to finish on its own;
+/// its late result is dropped. For waits on the system that must not hold the intent past §6.2's 30 s (Pattern B's
+/// confirmation prompt). Cancelling the caller cancels the operation and throws `CancellationError`.
+func withHardDeadline<T: Sendable>(
+    _ limit: Duration,
+    _ operation: @escaping @Sendable () async throws -> T
+) async throws -> T {
+    let once = ResumeOnce<T>()
+    return try await withTaskCancellationHandler {
+        try await withCheckedThrowingContinuation { continuation in
+            once.set(continuation)
+            let work = Task {
+                do {
+                    once.resume(with: .success(try await operation()))
+                } catch {
+                    once.resume(with: .failure(error))
+                }
+            }
+            let timer = Task {
+                try? await Task.sleep(for: limit)
+                if once.resume(with: .failure(DeadlineExceeded())) { work.cancel() }
+            }
+            once.onFinish { work.cancel(); timer.cancel() }
+        }
+    } onCancel: {
+        once.resume(with: .failure(CancellationError()))
+    }
+}
+
+/// Resumes a continuation at most once, from whichever task gets there first; `onFinish` runs after that resume.
+private final class ResumeOnce<T: Sendable>: Sendable {
+    private struct State {
+        var continuation: CheckedContinuation<T, any Error>?
+        /// A result that arrived before the continuation was set (cancellation can come first).
+        var early: Result<T, any Error>?
+        var finished = false
+        var cleanup: (@Sendable () -> Void)?
+    }
+
+    private let state = Mutex(State())
+
+    func set(_ continuation: CheckedContinuation<T, any Error>) {
+        let early: Result<T, any Error>? = state.withLock { state in
+            if let early = state.early {
+                state.early = nil
+                return early
+            }
+            state.continuation = continuation
+            return nil
+        }
+        if let early { continuation.resume(with: early) }
+    }
+
+    func onFinish(_ cleanup: @escaping @Sendable () -> Void) {
+        let runNow = state.withLock { state in
+            if state.finished { return true }
+            state.cleanup = cleanup
+            return false
+        }
+        if runNow { cleanup() }
+    }
+
+    /// true if this call delivered the result.
+    @discardableResult
+    func resume(with result: Result<T, any Error>) -> Bool {
+        let (continuation, cleanup, delivered): (CheckedContinuation<T, any Error>?, (@Sendable () -> Void)?, Bool) =
+            state.withLock { state in
+                guard !state.finished else { return (nil, nil, false) }
+                state.finished = true
+                guard let continuation = state.continuation else {
+                    state.early = result
+                    return (nil, nil, true)
+                }
+                state.continuation = nil
+                let cleanup = state.cleanup
+                state.cleanup = nil
+                return (continuation, cleanup, true)
+            }
+        continuation?.resume(with: result)
+        cleanup?()
+        return delivered
     }
 }
 

@@ -72,6 +72,30 @@ extension CheckRecord {
     /// The exact redacted text that was sent (§6.3 *Sent*).
     var sentText: String { sentPayload["screen"]?["ocrText"]?.stringValue ?? "" }
 
+    /// Every other field of `sentPayload`, one `path: value` line each with the value as it was sent (its JSON),
+    /// in the body's own key order (sorted): the card IDs and `isDefault`, `clientDate`, the redaction kinds, and
+    /// the rest. "What we sent" shows these under `sentText`, so it shows the exact payload (§10), not a summary.
+    var sentFields: [String] { Self.fieldLines(sentPayload, path: "").filter { !$0.hasPrefix("screen.ocrText: ") } }
+
+    private static func fieldLines(_ value: JSONValue, path: String) -> [String] {
+        switch value {
+        case .object(let object):
+            if object.isEmpty { return path.isEmpty ? [] : ["\(path): {}"] }
+            return object.keys.sorted().flatMap { key in
+                fieldLines(object[key] ?? .null, path: path.isEmpty ? key : "\(path).\(key)")
+            }
+        case .array(let items) where items.contains(where: \.isContainer):
+            return items.enumerated().flatMap { index, item in fieldLines(item, path: "\(path)[\(index)]") }
+        default:
+            return ["\(path): \(json(value))"]
+        }
+    }
+
+    /// One value as the request body has it (the same encoder).
+    private static func json(_ value: JSONValue) -> String {
+        (try? value.data()).map { String(decoding: $0, as: UTF8.self) } ?? "null"
+    }
+
     var createdDate: Date? { CheckRecord.timestamp(from: createdAt) }
 
     static func timestamp(_ date: Date, timeZone: TimeZone = .current) -> String {

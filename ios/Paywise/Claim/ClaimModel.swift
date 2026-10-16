@@ -130,9 +130,11 @@ final class ClaimModel {
     }
 
     /// `POST /v1/coverage?format=json` with `cause: null`: the server's LLM reads the cause; its chip is pre-selected.
-    /// A missing `incident.cause` (or a value with no chip) leaves the chips as they are.
+    /// A missing `incident.cause` (or a value with no chip) leaves the chips as they are. The description is sent
+    /// redacted (`sendableDescription`), and not at all if what the user typed holds a long number.
     func classify(_ text: String) async {
-        guard let body = try? request(description: text, cause: nil, causeSource: nil).body(),
+        guard isSendableAsTyped(description: text, cause: nil, causeSource: nil),
+              let body = try? request(description: text, cause: nil, causeSource: nil).body(),
               PrivacyGuard.isSendable(body)
         else { return }
         classifying = true
@@ -152,17 +154,21 @@ final class ClaimModel {
 
     // MARK: Verdict
 
-    /// The [Check] request: the purchase as confirmed, the incident with the user's chip, `asOf` = today.
+    /// The [Check] request: the purchase as confirmed, the incident with the user's chip, `asOf` = today, and the
+    /// description redacted on the phone.
     func verdictRequest() -> CoverageRequest {
         request(description: trimmedDescription, cause: cause, causeSource: "user_confirmed")
     }
 
     /// Saves the warranty answer and returns the request to render, or nil (with `hasLongNumber` set) when the body
-    /// would break the backend's privacy rule, so it is never sent.
+    /// would break the backend's privacy rule, so it is never sent. The rule is checked on what the user typed, so a
+    /// serial or card number asks them to take it out rather than being sent as `[CARD]`.
     func prepareVerdict(_ purchases: PurchasesModel) async -> CoverageRequest? {
         classifyTask?.cancel()
         let request = verdictRequest()
-        guard let body = try? request.body(), PrivacyGuard.isSendable(body) else {
+        guard isSendableAsTyped(description: trimmedDescription, cause: cause, causeSource: "user_confirmed"),
+              let body = try? request.body(), PrivacyGuard.isSendable(body)
+        else {
             hasLongNumber = true
             return nil
         }
@@ -176,8 +182,31 @@ final class ClaimModel {
         return request
     }
 
-    func request(description: String, cause: ClaimCause?, causeSource: String?) -> CoverageRequest {
+    /// What the user typed, as it may leave the phone (SPEC §10): the Redactor's rules for typed text (card numbers,
+    /// expiry and security code, last 4, emails, phones, street addresses), then `PrivacyGuard.scrub` with the
+    /// wallet's own last 4 and the catalog's card names ("my Freedom 1234"). The words around them stay, so the
+    /// server can still read the cause.
+    func sendableDescription(_ text: String) -> String {
+        let redacted = Redactor.redactFreeText(text)
+        let reading = ScreenReading(redactedText: redacted.text, redactions: redacted.kinds, ocrConfidence: 1, isCheckout: true)
+        return PrivacyGuard.scrub(
+            reading,
+            walletLast4: wallet.cards.compactMap { wallet.last4(for: $0.cardId) },
+            cardNames: deps.catalog.cards.flatMap { [$0.shortName, $0.displayName].compactMap { $0 } }
+        ).text
+    }
+
+    /// The backend's privacy rule on the body with the description as typed.
+    private func isSendableAsTyped(description: String, cause: ClaimCause?, causeSource: String?) -> Bool {
+        guard let body = try? request(description: description, cause: cause, causeSource: causeSource, redacted: false).body()
+        else { return false }
+        return PrivacyGuard.isSendable(body)
+    }
+
+    /// - Parameter redacted: false only for the on-device check of what the user typed; every body sent is redacted.
+    func request(description: String, cause: ClaimCause?, causeSource: String?, redacted: Bool = true) -> CoverageRequest {
         let warranty = warranty ?? .unknown
+        let description = redacted ? sendableDescription(description) : description
         return CoverageRequest(
             purchase: .init(
                 cardId: paidCardId,

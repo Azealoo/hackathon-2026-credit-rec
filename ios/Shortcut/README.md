@@ -86,7 +86,7 @@ the team's iCloud link (see "Share it" below). Tap **Add Shortcut** (u). Then ch
 | You see | Do |
 |---|---|
 | Nothing happens on a press | Open **Shortcuts**, long-press **Paywise** and tap **Details** (or open it and tap **ⓘ**). Check: Share Sheet on, Images only. In **Privacy**, nothing should be blocked. Back in the editor, tap **▶**. You should get "No checkout total found" for the Shortcuts screen, which proves the chain works, or an error that names the broken action. Also check that **Settings › Action Button** still shows Shortcut › Paywise. |
-| The island works but the snippet never appears (§6.6 G2) | In the **Paywise** app, go to **Settings › Results › Switch results** and pick **Island alert, held 8 s**. Switch answers then come as an 8 s island alert, and you save them later with "I bought this" in **Purchases**. |
+| The island works but the snippet never appears (§6.6 G2) | In the **Paywise** app, go to **Settings › Results › Switch results** and pick **Island alert, held 8 s**. Switch answers then come as an 8 s island alert. To save one, open the **Paywise** app: the **Check** tab shows your last check with **Paying with …**. |
 | "Use the Paywise shortcut" | Check Checkout ran without an image. Redo steps 8 and 10 so both fields hold a blue token. |
 | A prompt on every press | You tapped *Allow Once*. Go to **Details › Privacy › Reset Privacy**, press again and pick **Always Allow**. |
 | **Check Checkout** isn't in the action search | Open the Paywise app once, then search `Paywise`. |

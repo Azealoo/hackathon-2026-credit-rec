@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		011B9B5A03E12EF4D18C59AD /* CheckRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BD62216517DE6451D0521D /* CheckRecord.swift */; };
+		02DF4324C7393BC54071E511 /* CheckLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02CF820C6516F2225B273F3 /* CheckLifecycleTests.swift */; };
 		04409158A8DC79DD842A49FF /* PaywiseLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC2F8DFF0D8112E3C9A6E716 /* PaywiseLiveActivity.swift */; };
 		0B4E6BDB520AFB8D4D8CC8B9 /* check.request.example.json in Resources */ = {isa = PBXBuildFile; fileRef = 92B4E97EC6C9EA3FD7EE314F /* check.request.example.json */; };
 		103F6A6FCF987CCCE3EB337F /* PaywiseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1690B4C28A2D74519C8DB82 /* PaywiseApp.swift */; };
@@ -239,6 +240,7 @@
 		CA6C4C778CA9E6B4936BCFF8 /* Purchase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Purchase.swift; sourceTree = "<group>"; };
 		CC46690F3081658FCC69659C /* Replay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Replay.swift; sourceTree = "<group>"; };
 		CF03B07DA3BE615E30647FC8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D02CF820C6516F2225B273F3 /* CheckLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckLifecycleTests.swift; sourceTree = "<group>"; };
 		D420A4365FDC50B7D315DF90 /* ReadingOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingOrder.swift; sourceTree = "<group>"; };
 		D5191C3BC68341F63DF079EC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D550FF439271447005F396CF /* Paywise.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Paywise.entitlements; sourceTree = "<group>"; };
@@ -312,6 +314,7 @@
 				74163714B9A851DD18FBA97D /* AssetTests.swift */,
 				6D76C21DAC43A9E7AAB928AC /* CheckChainTests.swift */,
 				A08E0D7F7E2D2A4F335382C9 /* CheckCheckoutIntentTests.swift */,
+				D02CF820C6516F2225B273F3 /* CheckLifecycleTests.swift */,
 				448A6657388B3FC035F135A1 /* CheckTraceTests.swift */,
 				46562C4A911A7430AB9C785B /* DebugHookTests.swift */,
 				399E1AD111473D53E51800A6 /* LiveActivityStateTests.swift */,
@@ -773,6 +776,7 @@
 				8EDB4661532E61457EA98352 /* AssetTests.swift in Sources */,
 				47627DB6F0189F59CCE51F2A /* CheckChainTests.swift in Sources */,
 				4F93E1E02DD16644D6F4D002 /* CheckCheckoutIntentTests.swift in Sources */,
+				02DF4324C7393BC54071E511 /* CheckLifecycleTests.swift in Sources */,
 				5BEBDC056DFA75B1733798BD /* CheckTraceTests.swift in Sources */,
 				660EF3A473A90F19AE6D60F4 /* DebugHookTests.swift in Sources */,
 				C644A4E1CD7D243A917745EC /* LiveActivityStateTests.swift in Sources */,

@@ -21,6 +21,8 @@ final class AppModel {
 
     init(deps: AppDependencies = Dependencies.current, launch: LaunchOptions = .current) {
         launch.applyOnce(deps: deps)
+        // §15.5: check records older than 24 h are pruned on launch too, not only when the next check is written.
+        deps.checkStore.prune(now: deps.now())
         self.deps = deps
         purchases = PurchasesModel(deps: deps)
         tab = launch.tab ?? .check
@@ -107,6 +109,7 @@ struct LaunchOptions: Equatable, Sendable {
             for key in [
                 PaywiseSettings.Key.wallet, PaywiseSettings.Key.onboarded, PaywiseSettings.Key.dateOverrideEnabled,
                 PaywiseSettings.Key.dateOverride, PaywiseSettings.Key.inAppCheckCount, PaywiseSettings.Key.triggerSetupDone,
+                PaywiseSettings.Key.lastPressCheckId,
             ] {
                 settings.defaults.removeObject(forKey: key)
             }

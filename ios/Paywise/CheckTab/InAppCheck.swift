@@ -19,6 +19,8 @@ final class InAppCheck {
     }
 
     private(set) var phase: Phase = .idle
+    /// The phase shows the last press's result, offered to save (§6.6 "save later"), not a check run here.
+    private(set) var showsLastPress = false
     let deps: AppDependencies
 
     private static let log = Logger(subsystem: "com.azealoo.paywise", category: "in-app-check")
@@ -40,6 +42,23 @@ final class InAppCheck {
 
     func reset() {
         phase = .idle
+        showsLastPress = false
+    }
+
+    /// §6.3 *Switch fallback* and §6.6: a press whose result had no [Paying with …] (the island alert, or Pattern B's
+    /// static snippet) is saved later in the app. Shows the last press's check with [Paying with …] while it can still
+    /// be saved: a Switch or Keep-protected record under 24 h old (`CheckStore` drops older ones) with nothing saved
+    /// yet. Run when the Check tab appears and whenever the app becomes active; never interrupts a running check.
+    func offerLastPress() {
+        guard phase != .checking,
+              let checkId = deps.settings.lastPressCheckId,
+              let record = deps.checkStore.record(id: checkId),
+              record.savedPurchaseId == nil,
+              CheckResultView.showsSaveButton(record, catalog: deps.catalog)
+        else { return }
+        if case .record(let shown) = phase, shown.checkId == checkId { return }
+        phase = .record(record)
+        showsLastPress = true
     }
 
     #if DEBUG
@@ -52,7 +71,10 @@ final class InAppCheck {
     /// Runs one check on `imageData` (a screenshot from Photos, or the bundled sample).
     func run(imageData: Data) async {
         phase = .checking
+        showsLastPress = false
         let deps = deps
+        // A check run here is now the latest check, so the last press's result is no longer offered.
+        deps.settings.lastPressCheckId = nil
         // Signposts `read`, `post` and `record` like a press (CheckTrace), labeled "in-app".
         let outcome = await CheckFlow(deps: deps).run(imageData: imageData, trace: CheckTrace(source: .inApp))
         switch outcome {
@@ -129,5 +151,5 @@ struct NoIsland: IslandPresenting {
     func endAll() async {}
     func startChecking(checkId: String) async -> Bool { false }
     func alert(checkId: String, state: PaywiseActivityAttributes.ContentState, sound: AlertSoundChoice) async -> Bool { false }
-    func end() async {}
+    func end(checkId: String) async {}
 }

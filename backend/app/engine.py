@@ -10,6 +10,9 @@ Rulings applied here (see the module docstrings and the track report):
   else the items' category (only when every item shares it).
 - Earn precedence: merchant rule > category rule > a payment-method rule with neither
   (e.g. Apple Card's 2% via Apple Pay) > base rate; the best rate wins within a tier.
+- §8.2 display rule: confidence is worked out before the copy. A "medium" answer drops the cap
+  (copy line 2 and the draft's limitUsd); a cash figure from a rate that isn't verified is stated
+  without its number; the draft saves no dates for a protection that isn't verified.
 """
 
 import calendar
@@ -24,6 +27,7 @@ from app.catalog import CATALOG, Card, Catalog, ItemCategory, Protection
 from app.models import (
     Cart,
     Cash,
+    Confidence,
     CoverageEntry,
     Decision,
     Item,
@@ -267,7 +271,7 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
 
     # Rule 2: items unreadable.
     if not cart.items or cart.confidence.items < policy.ITEM_CONFIDENCE_MIN:
-        return ctx.keep("items_unreadable", copy_text.keep_items_unreadable(default))
+        return ctx.keep("items_unreadable", copy_text.keep_items_unreadable(default), ctx.confidence(default))
 
     # Rule 3: eligible protections per card, on qualifying items.
     qualifying = [item for item in cart.items if rules.qualifying_types(item)]
@@ -289,23 +293,28 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
         gained_types = set().union(*(set(e) - d for e, d in zip(eligible[pick.id], default_types)))
         gained = _protections(eligible[pick.id], gained_types)
         delta = cash[pick.id] - cash[cash_best.id]
-        return ctx.switch("protection", pick, gained,
-                          copy_text.switch_protection(pick, gained, delta, cash_best, path))
+        confidence = ctx.confidence(pick, gained)
+        return ctx.switch("protection", pick, gained, confidence, copy_text.switch_protection(
+            pick, gained, delta, cash_best, path, show_cap=confidence == "high",
+            cash_verified=_verified(rates[pick.id], rates[cash_best.id])))
 
     # Rule 5 (G): the default has an eligible type cashBest lacks -> keep.
     kept = _protections(eligible[default.id], set().union(*default_types))
+    kept_confidence = ctx.confidence(default, kept)
     if cash_best is not default:
         best_types = [set(e) for e in eligible[cash_best.id]]
         if any(theirs - mine for mine, theirs in zip(best_types, default_types)):
-            return ctx.keep("already_protected", copy_text.keep_protected(default, kept), kept=kept)
+            return ctx.keep("already_protected", copy_text.keep_protected(
+                default, kept, show_cap=kept_confidence == "high"), kept_confidence, kept=kept)
 
     # Rule 6 (C): cash switch above the path's threshold.
     threshold = policy.CASH_SWITCH_MIN_USD[path]
     gain = cash[cash_best.id] - cash[default.id]
     if cash_best is not default and gain >= threshold:
         notes = ctx.notes()
-        return ctx.switch("cash", cash_best, [],
-                          copy_text.switch_cash(cash_best, gain, default, notes, path), notes=notes)
+        return ctx.switch("cash", cash_best, [], ctx.confidence(cash_best), copy_text.switch_cash(
+            cash_best, gain, default, notes, path, cash_verified=_verified(rates[cash_best.id], rates[default.id])),
+            notes=notes)
 
     # Rule 7 (M): the default earns more via Apple Pay than typed, and the button is visible.
     if path == "apple_pay":
@@ -313,15 +322,23 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
         typed_rate = earn_rate(default, merchant_id, rule_category, "card")
         apple_pay_cash = cash_for(amount, apple_pay_rate)
         if apple_pay_cash > cash_for(amount, typed_rate):
-            return ctx.keep("method", copy_text.keep_method(default, apple_pay_rate.pct, apple_pay_cash, typed_rate.pct),
-                            extra_rates=[apple_pay_rate, typed_rate])
+            return ctx.keep("method", copy_text.keep_method(
+                default, apple_pay_rate.pct, apple_pay_cash, typed_rate.pct,
+                verified=_verified(apple_pay_rate, typed_rate)),
+                ctx.confidence(default, extra_rates=[apple_pay_rate, typed_rate]))
 
     # Rule 8: keep.
     if kept:
-        return ctx.keep("already_protected", copy_text.keep_protected(default, kept), kept=kept)
+        return ctx.keep("already_protected", copy_text.keep_protected(
+            default, kept, show_cap=kept_confidence == "high"), kept_confidence, kept=kept)
     if cash_best is not default:
-        return ctx.keep("below_threshold", copy_text.keep_below_threshold(default, threshold))
-    return ctx.keep("default_best", copy_text.keep_default_best(default, len(cards)))
+        return ctx.keep("below_threshold", copy_text.keep_below_threshold(default, threshold), ctx.confidence(default))
+    return ctx.keep("default_best", copy_text.keep_default_best(default, len(cards)), ctx.confidence(default))
+
+
+def _verified(*rates: Rate) -> bool:
+    """§8.2: a cash figure is stated as fact only when every rate behind it is verified."""
+    return all(rate.status == "verified" for rate in rates)
 
 
 def _merchant(cat: Catalog, cart: Cart):
@@ -397,10 +414,11 @@ class _Context:
             default_kept.append(mine)
         return [_change(p) for p in _protections(default_kept, lost)]
 
-    def _confidence(self, picked: Card, protections: list[Protection], extra_rates: list[Rate]) -> str:
+    def confidence(self, picked: Card, protections: Sequence[Protection] = (),
+                   extra_rates: Sequence[Rate] = ()) -> Confidence:
         """medium when the answer leans on a partial or unverified value (§8.2), else high."""
         rates = [self.rates[c.id] for c in {picked.id: picked, self.default.id: self.default,
-                                            self.cash_best.id: self.cash_best}.values()] + extra_rates
+                                            self.cash_best.id: self.cash_best}.values()] + list(extra_rates)
         statuses = [r.status for r in rates] + [p.verification.status for p in protections]
         return "high" if all(s == "verified" for s in statuses) else "medium"
 
@@ -412,16 +430,21 @@ class _Context:
         qualifying = [i for i in self.cart.items if self.rules.qualifying_types(i)]
         return max(preferred or covered or qualifying or self.cart.items, key=lambda i: dec(i.price_usd))
 
-    def _draft(self, picked: Card, prefer: set[str] = frozenset()) -> PurchaseDraft:
-        """The purchase [Paying with …] saves, with coverage dates (§5.4, §15.5)."""
+    def _draft(self, picked: Card, confidence: Confidence, prefer: set[str] = frozenset()) -> PurchaseDraft:
+        """The purchase [Paying with …] saves, with coverage dates (§5.4, §15.5). The phone states these dates and
+        the cap as fact (Saved, Purchases), so §8.2 applies: a protection that isn't verified saves no entry, and a
+        medium-confidence answer saves no cap, as its copy line 2 shows none."""
         item = self._main_item(picked, prefer)
         coverage = []
         for protection in self.rules.eligible(picked, item).values():
+            if protection.verification.status != "verified":
+                continue
             if protection.type == "purchase_protection" and protection.window_days:
+                cap = copy_text.verified_cap(protection) if confidence == "high" else None
                 coverage.append(CoverageEntry(
                     type=protection.type,
                     until=add_days(self.client_date, protection.window_days),
-                    limit_usd=_float(copy_text.verified_cap(protection))))
+                    limit_usd=_float(cap)))
             elif protection.type == "extended_warranty" and protection.extends_by_months:
                 maker = policy.ASSUMED_MANUFACTURER_WARRANTY_MONTHS
                 if protection.max_original_warranty_months is not None and maker > protection.max_original_warranty_months:
@@ -449,8 +472,7 @@ class _Context:
         return sources
 
     def _decision(self, kind: str, reason: str, picked: Card, gained: list[Protection], copy,
-                  notes: list[str], confidence_protections: list[Protection],
-                  extra_rates: list[Rate]) -> Decision:
+                  notes: list[str], confidence: Confidence) -> Decision:
         if kind == "switch":
             instruction = {"apple_pay": "apple_pay_swipe", "saved_card": "change_saved_card",
                            "card_form": "enter_card"}.get(self.path, "none")
@@ -462,22 +484,20 @@ class _Context:
             default_card_id=self.default.id, cash_best_card_id=self.cash_best.id, payment_path=self.path,
             instruction=instruction, cash=self._cash(picked),
             protections_gained=[_change(p) for p in gained], protections_lost=self._lost(picked),
-            eligibility_notes=notes, confidence=self._confidence(picked, confidence_protections, extra_rates),
-            copy=copy)
+            eligibility_notes=notes, confidence=confidence, copy=copy)
 
-    def switch(self, reason: str, picked: Card, gained: list[Protection], copy,
+    def switch(self, reason: str, picked: Card, gained: list[Protection], confidence: Confidence, copy,
                notes: list[str] | None = None) -> EngineResult:
         notes = self.notes() if notes is None else notes
-        decision = self._decision("switch", reason, picked, gained, copy, notes, gained, [])
-        return EngineResult(decision, self._draft(picked, {p.type for p in gained}),
+        decision = self._decision("switch", reason, picked, gained, copy, notes, confidence)
+        return EngineResult(decision, self._draft(picked, confidence, {p.type for p in gained}),
                             self._sources(picked, gained, cash_copy=reason == "cash"))
 
-    def keep(self, reason: str, copy, kept: list[Protection] | None = None,
-             extra_rates: list[Rate] | None = None) -> EngineResult:
+    def keep(self, reason: str, copy, confidence: Confidence, kept: list[Protection] | None = None) -> EngineResult:
         kept = kept or []
         notes = [] if reason == "items_unreadable" else self.notes()
-        decision = self._decision("keep", reason, self.default, [], copy, notes, kept, extra_rates or [])
-        draft = self._draft(self.default) if reason == "already_protected" else None
+        decision = self._decision("keep", reason, self.default, [], copy, notes, confidence)
+        draft = self._draft(self.default, confidence) if reason == "already_protected" else None
         return EngineResult(decision, draft, self._sources(self.default, kept, cash_copy=reason == "method"))
 
 

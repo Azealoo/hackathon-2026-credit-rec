@@ -3,7 +3,8 @@ import Synchronization
 
 /// `CheckRecord` files in `<container>/checks/` (SPEC §15.5). Thread-safe within a process: every read-modify-write
 /// runs under one lock, and files are written atomically so the widget never reads half a record.
-/// Records older than 24 h are pruned on every write.
+/// Records older than 24 h are pruned on every write and on app launch (`prune`), and every read leaves them out, so
+/// a record past 24 h never shows (What we sent, a snippet, a save) even before the files go.
 final class CheckStore: Sendable {
     static let maxAge: TimeInterval = 24 * 60 * 60
 
@@ -14,43 +15,49 @@ final class CheckStore: Sendable {
 
     /// `<container>/checks`
     let directory: URL
+    /// The clock reads are aged against (tests pass a fixed one).
+    private let now: @Sendable () -> Date
     private let lock = Mutex(())
 
-    init(containerURL: URL) {
+    init(containerURL: URL, now: @escaping @Sendable () -> Date = { .now }) {
         directory = containerURL.appending(path: "checks", directoryHint: .isDirectory)
+        self.now = now
     }
 
     static let appGroup = CheckStore(containerURL: AppGroup.containerURL)
 
     // MARK: Reading
 
-    func record(id checkId: String) -> CheckRecord? {
+    /// The record, unless it has expired.
+    func record(id checkId: String, now: Date? = nil) -> CheckRecord? {
         guard let url = fileURL(for: checkId) else { return nil }
-        return lock.withLock { _ in Self.read(url) }
+        let cutoff = cutoff(now)
+        return lock.withLock { _ in Self.read(url).flatMap { Self.isLive($0, cutoff: cutoff) ? $0 : nil } }
     }
 
     /// The most recently created record that hasn't expired.
-    func latest(now: Date = .now) -> CheckRecord? {
-        lock.withLock { _ in
-            allRecords()
-                .filter { ($0.createdDate ?? .distantPast) > now.addingTimeInterval(-Self.maxAge) }
-                .max { ($0.createdDate ?? .distantPast) < ($1.createdDate ?? .distantPast) }
+    func latest(now: Date? = nil) -> CheckRecord? {
+        all(now: now).max { ($0.createdDate ?? .distantPast) < ($1.createdDate ?? .distantPast) }
+    }
+
+    /// Every record that hasn't expired.
+    func all(now: Date? = nil) -> [CheckRecord] {
+        let cutoff = cutoff(now)
+        return lock.withLock { _ in allRecords().filter { Self.isLive($0, cutoff: cutoff) } }
+    }
+
+    /// Every record that hasn't expired, the newest first ("What we sent").
+    func newestFirst(now: Date? = nil) -> [CheckRecord] {
+        all(now: now).sorted {
+            ($0.createdDate ?? .distantPast, $0.checkId) > ($1.createdDate ?? .distantPast, $1.checkId)
         }
-    }
-
-    func all() -> [CheckRecord] {
-        lock.withLock { _ in allRecords() }
-    }
-
-    /// Every stored record, the newest first ("What we sent").
-    func newestFirst() -> [CheckRecord] {
-        all().sorted { ($0.createdDate ?? .distantPast, $0.checkId) > ($1.createdDate ?? .distantPast, $1.checkId) }
     }
 
     // MARK: Writing
 
-    func write(_ record: CheckRecord, now: Date = .now) throws {
+    func write(_ record: CheckRecord, now: Date? = nil) throws {
         guard let url = fileURL(for: record.checkId) else { throw StoreError.invalidCheckId }
+        let now = now ?? self.now()
         try lock.withLock { _ in
             try Self.save(record, to: url, directory: directory)
             pruneLocked(now: now)
@@ -58,12 +65,13 @@ final class CheckStore: Sendable {
     }
 
     /// Atomically loads, changes and saves one record. `body` runs under the store's lock, so two updates of the
-    /// same record never interleave. Returns the saved record.
+    /// same record never interleave. Returns the saved record. An expired record is `notFound`.
     @discardableResult
-    func update(id checkId: String, _ body: (inout CheckRecord) throws -> Void) throws -> CheckRecord {
+    func update(id checkId: String, now: Date? = nil, _ body: (inout CheckRecord) throws -> Void) throws -> CheckRecord {
         guard let url = fileURL(for: checkId) else { throw StoreError.invalidCheckId }
+        let cutoff = cutoff(now)
         return try lock.withLock { _ in
-            guard var record = Self.read(url) else { throw StoreError.notFound }
+            guard var record = Self.read(url), Self.isLive(record, cutoff: cutoff) else { throw StoreError.notFound }
             try body(&record)
             try Self.save(record, to: url, directory: directory)
             return record
@@ -79,11 +87,23 @@ final class CheckStore: Sendable {
         }
     }
 
-    func prune(now: Date = .now) {
+    /// Deletes every record older than 24 h (run on app launch, and after every write).
+    func prune(now: Date? = nil) {
+        let now = now ?? self.now()
         lock.withLock { _ in pruneLocked(now: now) }
     }
 
     // MARK: Private (call with the lock held)
+
+    private func cutoff(_ now: Date?) -> Date {
+        (now ?? self.now()).addingTimeInterval(-Self.maxAge)
+    }
+
+    /// Created after `cutoff`. A record whose timestamp can't be read can't be aged, so it counts as expired (as
+    /// `latest` always treated it).
+    private static func isLive(_ record: CheckRecord, cutoff: Date) -> Bool {
+        (record.createdDate ?? .distantPast) > cutoff
+    }
 
     private func fileURL(for checkId: String) -> URL? {
         // The ID comes from intent parameters; never let it name a path outside the folder.

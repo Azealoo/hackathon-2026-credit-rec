@@ -21,6 +21,9 @@ struct AppDependencies: Sendable {
     var fallbackHold: Duration = .seconds(8)
     /// On-device reading gives up after this, keeping the whole intent under 30 s (§6.2).
     var readTimeout: Duration = .seconds(8)
+    /// §6.2 "the intent never runs past 30 s": Pattern B's prompt is given up this long after the press, leaving 2 s
+    /// for the intent to return.
+    var intentLimit: Duration = .seconds(28)
 
     var walletStore: WalletStore { WalletStore(settings: settings) }
 

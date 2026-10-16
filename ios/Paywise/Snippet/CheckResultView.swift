@@ -39,7 +39,8 @@ struct CheckResultView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SnippetHeader(replayed: record.replayed && record.view == .sent)
+            // A replayed answer is labelled in every view, so a cached result never reads as a live one (§5.2 E).
+            SnippetHeader(replayed: record.replayed)
             switch record.view {
             case .result: result
             case .saved: saved
@@ -207,10 +208,11 @@ struct CheckResultView: View {
             .font(.system(size: line1Size, weight: .bold))
             .tracking(-0.5)
             .accessibilityIdentifier("result.sentTitle")
-        // The whole text when it fits; scrolls only when it doesn't (scrolling in a snippet is unverified).
+        // The whole payload when it fits; scrolls only when it doesn't (scrolling in a snippet is unverified, so the
+        // redacted text comes first and the other fields follow it).
         ViewThatFits(in: .vertical) {
-            sentText
-            ScrollView { sentText }
+            sentPayload
+            ScrollView { sentPayload }
         }
         .frame(maxHeight: 180)
         .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -219,13 +221,23 @@ struct CheckResultView: View {
             .foregroundStyle(.secondary)
     }
 
-    private var sentText: some View {
-        Text(record.sentText)
-            .font(.system(size: footnoteSize, design: .monospaced))
-            .accessibilityIdentifier("result.sentText")
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
+    /// The exact payload (§10): the redacted text as sent, then every other field as sent (`CheckRecord.sentFields`).
+    private var sentPayload: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(record.sentText)
+                .accessibilityIdentifier("result.sentText")
+            let fields = record.sentFields
+            if !fields.isEmpty {
+                // Primary like the text: on the snippet's material, a `.secondary` style is vibrant and all but
+                // vanishes on the box's fill (seen in the -gallery sent screenshot).
+                Text(fields.joined(separator: "\n"))
+                    .accessibilityIdentifier("result.sentFields")
+            }
+        }
+        .font(.system(size: footnoteSize, design: .monospaced))
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
     }
 
     // MARK: Parts
@@ -392,6 +404,7 @@ private struct SnippetHeader: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(Color(.tertiarySystemFill), in: Capsule())
+                    .accessibilityIdentifier("result.replayed")
             }
         }
     }

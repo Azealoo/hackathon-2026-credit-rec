@@ -40,6 +40,8 @@ struct PaywiseSettings: Sendable {
         static let inAppCheckCount = "inAppCheckCount"
         /// The trigger setup screen (§15.7 step 14) was finished, not skipped.
         static let triggerSetupDone = "triggerSetupDone"
+        /// The check ID of the last press that stored a `CheckRecord` in a fallback mode (§6.6 "save later").
+        static let lastPressCheckId = "lastPressCheckId"
     }
 
     /// `nil` means `UserDefaults.standard`. Tests pass a unique suite name.
@@ -103,6 +105,15 @@ struct PaywiseSettings: Sendable {
     var triggerSetupDone: Bool {
         get { defaults.bool(forKey: Key.triggerSetupDone) }
         nonmutating set { defaults.set(newValue, forKey: Key.triggerSetupDone) }
+    }
+
+    /// The last press's check (`CheckCheckoutIntent`) in the island or confirm mode, which the Check tab offers to save
+    /// while it still can be: §6.6's island fallback and Pattern B's static snippet have no [Paying with …], so the
+    /// purchase is saved later in the app. Pattern A's snippet has the button, so a press in that mode clears it, as
+    /// does a check run in the app.
+    var lastPressCheckId: String? {
+        get { defaults.string(forKey: Key.lastPressCheckId) }
+        nonmutating set { defaults.set(newValue, forKey: Key.lastPressCheckId) }
     }
 
     /// A real calendar day written yyyy-MM-dd.

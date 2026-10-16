@@ -52,7 +52,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Results")
                 } footer: {
-                    Text("Use the island alert if results don't appear over other apps; save those purchases later with I bought this. A replayed result is always labelled.")
+                    Text("Use the island alert if results don't appear over other apps; your last check then waits in the Check tab for you to save. A replayed result is labelled in the app and in What we sent.")
                 }
 
                 Section {

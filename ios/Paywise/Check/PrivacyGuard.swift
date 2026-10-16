@@ -51,9 +51,11 @@ enum PrivacyGuard {
     ///
     /// Each of these becomes `[CARD]` (§10's example sends "Mastercard [CARD]"):
     /// 1. any run of 12+ digits (§9.2);
-    /// 2. a separated 13–19 digit number that is card-shaped (4-4-4-4, 4-6-5) or Luhn-valid (§15.7 step 8);
+    /// 2. a separated 13–19 digit number that is card-shaped (4-4-4-4, 4-6-5) or Luhn-valid (§15.7 step 8), also when
+    ///    OCR read a few of its digits as look-alike letters ("4111 1111 l111 1111", "5105 105| 0510 5100");
     /// 3. "ending in dddd" (§15.7 step 8);
-    /// 4. a masked last 4: "••5678", "•••• 1234", "**1234", "..1234", "…1234", "XXXX-1234";
+    /// 4. a masked last 4: "••5678", "•••• 1234", "**1234", "..1234", "…1234", "XXXX-1234", and misread masks
+    ///    "#### 4321", "°°°° 5678", "---- 4321", "oooo 5678";
     /// 5. 4 digits right after a network or card word: "Visa 4321", "Mastercard: 5678";
     /// 6. one of the wallet's own last 4 within a few characters of a card word or a card name from cards.json.
     /// Invisible format characters are dropped and other control characters become spaces first, since the JSON
@@ -64,6 +66,8 @@ enum PrivacyGuard {
         let start = plain(reading.redactedText)
         var text = start
         text = replaceAll(longRun, in: text)
+        // Before the digits-only rule, so a misread last group ("… 1111 111I") goes whole, letter included.
+        text = replaceLookalikeCardNumbers(in: text)
         text = replaceMatches(separatedRun, in: text) { isCardNumber($0) }
         text = replaceAll(endingIn, in: text)
         text = replaceAll(maskedLast4, in: text)
@@ -99,8 +103,17 @@ enum PrivacyGuard {
     private static let separatedRun = regex(#"[0-9](?:[ \u00A0\u2009\u202F\-\u2013]?[0-9]){12,}"#)
     private static let endingIn = regex(#"(?i)\b(?:ending|ends)(?:\s+(?:in|with))?\s*[:#\-]?\s*[0-9]{4}(?![0-9])"#)
     private static let maskedLast4 = regex(
-        #"(?:[\u2022\u25CF\u2219]+|\u00B7{2,}|\.{2,}|\u2026|\*+|(?<![A-Za-z])[xX]{2,})[ \u00A0\-]?[0-9]{4}(?![0-9])(?![.,][0-9])"#
+        #"(?:[\u2022\u25CF\u2219]+|\u00B7{2,}|\.{2,}|\u2026|\*+|#{2,}|\u00B0{2,}|[\-\u2013\u2014_]{2,}|(?<![A-Za-z])[xX]{2,}|(?<![A-Za-z])[oO]{3,4})"#
+            + #"[ \u00A0\-]?[0-9]{4}(?![0-9])(?![.,][0-9])"#
     )
+    /// Digit groups in which some digits may be OCR look-alike letters, single or double separators between groups.
+    private static let lookalikeRun = regex(
+        #"(?<![A-Za-z0-9])[0-9OolISBZ|!]+(?:[ \u00A0\u2009\u202F\-\u2013]{1,2}[0-9OolISBZ|!]+)*(?![A-Za-z0-9])"#
+    )
+    /// The letters OCR reads for digits in some fonts (the Redactor maps the same set).
+    private static let lookalikeDigits: [Character: Character] = [
+        "O": "0", "o": "0", "l": "1", "I": "1", "|": "1", "!": "1", "S": "5", "B": "8", "Z": "2",
+    ]
     /// Payment networks and generic card words (not card data: names of cards come from cards.json).
     private static let networkWords = [
         "visa", "master ?card", "amex", "american express", "discover", "debit", "credit", "card",
@@ -132,6 +145,64 @@ enum PrivacyGuard {
             }
         }
         return false
+    }
+
+    /// Replaces each run of digit groups that holds a look-alike letter and, with the letters read as digits, is a
+    /// card number (`isCardNumber`) with at least 9 real digits. A group without a real digit ("So", "BOSS", "llll")
+    /// is part of a run only between two groups with one, or at the end of a run of 12+ characters, so words next to a
+    /// shorter number stay.
+    private static func replaceLookalikeCardNumbers(in text: String) -> String {
+        func isASCIIDigit(_ character: Character) -> Bool { character.isASCII && character.isNumber }
+        var ranges: [NSRange] = []
+        for match in lookalikeRun.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+            guard let matchRange = Range(match.range, in: text) else { continue }
+            // The match's groups, split at the separators.
+            var groups: [Range<String.Index>] = []
+            var groupStart: String.Index?
+            var index = matchRange.lowerBound
+            while index < matchRange.upperBound {
+                let isGroupCharacter = isASCIIDigit(text[index]) || lookalikeDigits[text[index]] != nil
+                if isGroupCharacter, groupStart == nil { groupStart = index }
+                if !isGroupCharacter, let start = groupStart {
+                    groups.append(start..<index)
+                    groupStart = nil
+                }
+                index = text.index(after: index)
+            }
+            if let start = groupStart { groups.append(start..<matchRange.upperBound) }
+
+            // Runs of consecutive groups: a group with a real digit always joins; a group of letters only joins
+            // between two groups with a digit ("4111 1111 llll 1111"), or, 3–6 letters long, at either end of a run
+            // whose groups hold 12+ characters without it ("4111 1111 1111 llll").
+            func hasDigit(_ index: Int) -> Bool { text[groups[index]].contains(where: isASCIIDigit) }
+            func isEdgeWord(_ index: Int) -> Bool {
+                groups.indices.contains(index) && !hasDigit(index) && (3...6).contains(text[groups[index]].count)
+            }
+            var runs: [[Int]] = []
+            var current: [Int] = []
+            for index in groups.indices {
+                if hasDigit(index) || (!current.isEmpty && index + 1 < groups.count && hasDigit(index + 1)) {
+                    current.append(index)
+                } else if !current.isEmpty {
+                    runs.append(current)
+                    current = []
+                }
+            }
+            if !current.isEmpty { runs.append(current) }
+            for var run in runs {
+                guard let first = run.first, let last = run.last else { continue }
+                if run.reduce(0, { $0 + text[groups[$1]].count }) >= 12 {
+                    if isEdgeWord(first - 1) { run.insert(first - 1, at: 0) }
+                    if isEdgeWord(last + 1) { run.append(last + 1) }
+                }
+                let characters = run.flatMap { Array(text[groups[$0]]) }
+                let real = characters.filter(isASCIIDigit).count
+                guard real < characters.count, real >= 9, let start = run.first, let end = run.last else { continue }
+                let mapped = run.map { String(text[groups[$0]].map { lookalikeDigits[$0] ?? $0 }) }.joined(separator: " ")
+                if isCardNumber(mapped) { ranges.append(NSRange(groups[start].lowerBound..<groups[end].upperBound, in: text)) }
+            }
+        }
+        return replaceRanges(ranges, in: text) { _ in true }
     }
 
     private static func isCardShaped(_ shape: [Int]) -> Bool {

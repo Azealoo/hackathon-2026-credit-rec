@@ -18,6 +18,15 @@ struct CheckFlow: Sendable {
         case confirm(checkId: String, actionName: String)
         /// An alerting island update, held, then ended `.immediate`.
         case island(IslandAlert)
+
+        /// The check whose `CheckRecord` was written; nil when nothing was stored.
+        var recordCheckId: String? {
+            switch self {
+            case .notSetUp: nil
+            case .snippet(let checkId), .confirm(let checkId, _): checkId
+            case .island(let alert): alert.hasRecord ? alert.checkId : nil
+            }
+        }
     }
 
     struct IslandAlert: Sendable, Equatable {
@@ -266,12 +275,13 @@ struct CheckFlow: Sendable {
             case .confirm:
                 guard let actionName = ResultText.primaryButtonTitle(decision: decision, catalog: deps.catalog) else {
                     // No card name for the verb: §6.6's static snippet (Pattern B hides the view's own button);
-                    // the purchase is saved later with "I bought this".
+                    // the purchase is saved later in the app (`InAppCheck.offerLastPress`).
                     return .snippet(checkId: record.checkId)
                 }
                 return .confirm(checkId: record.checkId, actionName: actionName)
             case .island:
-                // §6.6 G2 fallback: lines 1–3 as Switch, `.default` sound, held 8 s; save later with "I bought this".
+                // §6.6 G2 fallback: lines 1–3 as Switch, `.default` sound, held 8 s; saved later in the app's Check
+                // tab, which offers the last press's result (`InAppCheck.offerLastPress`).
                 var state = islandState(decision: decision, copy: record.filledCopy, wallet: wallet)
                 state.phase = .switchFallback
                 state.glyph = .card

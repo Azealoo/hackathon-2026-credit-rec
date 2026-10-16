@@ -592,10 +592,9 @@ struct AppCopyTests {
         #expect(disclaimer.hasSuffix("Not affiliated with or paid by any issuer."))
     }
 
-    @Test func sentRowTitleAndCards() throws {
+    @Test func sentRowTitle() throws {
         let record = try Fixtures.recordExample()
         #expect(SentText.title(record, catalog: .bundled()) == "Northbay Electronics · $1,499.00")
-        #expect(SentText.cards(record, catalog: .bundled()) == "Cards: Apple Card (default), Active Cash, Freedom")
     }
 
     @Test func days() {

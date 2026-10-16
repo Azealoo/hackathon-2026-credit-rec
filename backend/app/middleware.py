@@ -2,9 +2,14 @@
 
 PrivacyGuard: answers 400 privacy_rejected for ANY request body holding a card-number-like run,
 before parsing or logging. Rulings:
-- Rejected: a literal run of 12+ digits (the §9.2 rule), and a card number as a card form formats
-  it: 13–19 digits in groups of 4 (or 4-6-5) split by single spaces or hyphens, passing the Luhn
-  check. The shape and Luhn checks keep order numbers ("112-3456789-1234567") from tripping it.
+- Rejected: a literal run of 12+ digits (the §9.2 rule), and a card number as a card form, OCR or a
+  paste formats it: 13–19 digits in groups of 4 (or 4-6-5), passing the Luhn check, with up to 5
+  separators between groups: spaces (also no-break and figure spaces), tabs, hyphens (also Unicode
+  hyphens and minus), en and em dashes, and periods ("4111  1111  1111  1111" as ReadingOrder joins
+  OCR columns, "4111 - 1111 - 1111 - 1111", "4111.1111.1111.1111"). A period before exactly two
+  digits is a decimal point, not a separator, as in the phone's Redactor (ios/Paywise/Reading/
+  Redactor.swift, Patterns.digitSeparator). The shape and Luhn checks keep prices ("$1,499.00") and
+  order numbers ("112-3456789-1234567") from tripping it.
 - Checked in the raw body and in the JSON-decoded strings (so \\u0034-style escapes don't hide digits).
 - The literal 12+ digit rule (§9.2/§15.5) reads every byte, the requestId included: nothing is exempt.
   A random v4 UUID's last group is all digits about one time in 282, so the phone draws its requestId
@@ -34,7 +39,12 @@ from app.models import CheckError, ErrorDecision, ErrorDetail
 MAX_BODY_BYTES = 256 * 1024
 
 _LITERAL_RUN = re.compile(r"\d{12,}")
-_SEPARATED_RUN = re.compile(r"\d(?:[ -]?\d){12,}")
+# What may sit between two digit groups of a card number (the Redactor's set, plus Unicode spaces and
+# hyphens); a period followed by exactly two digits is a decimal point ("$18.00"), not a separator.
+_SEPARATOR = r"(?:[ \t\u00a0\u2007\u202f\-\u2010\u2011\u2012\u2013\u2014\u2212]|\.(?!\d{2}(?!\d)))"
+MAX_SEPARATORS = 5
+_SEPARATED_RUN = re.compile(r"\d(?:" + _SEPARATOR + "{0," + str(MAX_SEPARATORS) + r"}\d){12,}")
+_SEPARATORS = re.compile(_SEPARATOR + "+")
 _UUID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 _REQUEST_ID_FIELD = re.compile(r'"requestId"\s*:\s*"(' + _UUID + r')"')
 _UUID_ONLY = re.compile(r"^" + _UUID + r"$")
@@ -82,7 +92,7 @@ def _card_shaped(shape: list[int]) -> bool:
 
 def _card_number_in(run: str) -> bool:
     """A card-shaped window of 13–19 digits, aligned to the run's separators, that passes Luhn."""
-    groups = [g for g in re.split(r"[ -]", run) if g]
+    groups = [g for g in _SEPARATORS.split(run) if g]
     for start in range(len(groups)):
         for end in range(start + 1, len(groups) + 1):
             window = groups[start:end]
@@ -100,7 +110,7 @@ def has_long_run(text: str) -> bool:
 
 
 def has_card_number(text: str) -> bool:
-    """A card number as a card form formats it (spaces or hyphens between groups, Luhn-valid)."""
+    """A card number as a card form formats it (up to 5 separators between groups, Luhn-valid)."""
     return any(_card_number_in(m.group(0)) for m in _SEPARATED_RUN.finditer(text))
 
 

@@ -16,6 +16,11 @@ The checks run in the §5.5 order:
 The LLM is used for one thing only: with COVERAGE_MODE=llm, a null `incident.cause` is classified
 by app.llm.classify_cause (owned by the LLM track and imported lazily). It never touches dates or
 money.
+
+Every response echoes the cause it used in `incident` (ruling R17): {"cause", "causeSource"}, with
+causeSource "llm" when the classifier filled a null cause. A null-cause request is therefore also a
+classify call: the claim screen pre-selects the returned chip and the user confirms it (§5.5), even
+when the verdict is need_more_info (cause loss, cosmetic or unknown).
 """
 
 import asyncio
@@ -38,6 +43,7 @@ from app.models import (
     CoverageRequest,
     CoverageResponse,
     Deadline,
+    IncidentCause,
 )
 
 log = logging.getLogger(__name__)
@@ -70,7 +76,7 @@ ROUTES = {"purchase_protection": "card_purchase_protection", "extended_warranty"
 
 # §5.5 checklists.
 CHECKLIST_BASE = ["Itemized receipt", "Card statement showing the purchase"]
-CHECKLIST_EW = [*CHECKLIST_BASE, "Original manufacturer warranty", "Repair estimate"]
+CHECKLIST_EW = [*CHECKLIST_BASE, "Original warranty", "Repair estimate"]
 POLICE_REPORT = "Police report (made within 48 hours if you can)"
 PORCH_THEFT = "For porch theft, claim with the carrier or store first"
 REPAIR_ESTIMATE = "Repair estimate"
@@ -369,6 +375,7 @@ class _Assessment:
             limit = CoverageLimit(applies_to=None)
             contact = Contact(administrator=None, url=None)
         deadline = self.deadline(protection) if with_deadline and protection is not None else self.no_deadline()
+        cause = self.incident.cause
         return CoverageResponse(
             verdict=verdict,
             benefit=benefit,
@@ -382,9 +389,13 @@ class _Assessment:
             deadline=deadline,
             contact=contact,
             disclaimer=DISCLAIMER,
+            # The cause actually used (after classify_if_needed) and its source as sent or set; no
+            # source without a cause.
+            incident=IncidentCause(cause=cause, cause_source=self.incident.cause_source if cause is not None else None),
         )
 
-    def not_covered(self, why: str, citation: Citation, headline: str = "Not covered",
+    # §5.5 headlines end with a period ("Not covered.", "Need more info.").
+    def not_covered(self, why: str, citation: Citation, headline: str = "Not covered.",
                     route: str = "none") -> CoverageResponse:
         return self.respond(verdict="not_covered", benefit="none", route=route, headline=headline,
                             why=why, citations=[citation])
@@ -396,7 +407,7 @@ class _Assessment:
             verdict="need_more_info",
             benefit=benefit,
             route=ROUTES.get(benefit, "none"),
-            headline="Need more info",
+            headline="Need more info.",
             why=why,
             citations=citations or ([self.cite(protection)] if protection is not None else [self.cite_absence()]),
             protection=protection if benefit != "none" else None,
@@ -424,9 +435,9 @@ class _Assessment:
         if not verified:
             self.assume("Paywise hasn't fully verified these terms yet; check the cited clause.")
         if verified and cap < price:
-            headline = f"May be eligible: {BENEFIT_NAMES[benefit]}, up to {fmt_usd(cap)} of the {fmt_usd(price)}"
+            headline = f"May be eligible: {BENEFIT_NAMES[benefit]}, up to {fmt_usd(cap)} of the {fmt_usd(price)}."
         else:
-            headline = f"May be eligible: {BENEFIT_NAMES[benefit]} ({self.name})"
+            headline = f"May be eligible: {BENEFIT_NAMES[benefit]} ({self.name})."
         return self.respond(
             verdict="may_be_eligible",
             benefit=benefit,
@@ -525,8 +536,10 @@ class _Assessment:
         if w.in_ew(day):
             return self.may_be_eligible(
                 ew,
-                f"The maker's {maker} warranty ended {fmt_date(w.maker_end)}. The {extra} runs to "
-                f"{fmt_date(w.ew_end)}. A failure without a drop fits this benefit.",
+                # §5.5 copy, verbatim: "The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to
+                # Oct 17, 2028."
+                f"The maker's {maker} warranty ended {fmt_date(w.maker_end)}; the {extra} runs to "
+                f"{fmt_date(w.ew_end)}.",
                 CHECKLIST_EW,
             )
         return self.not_covered(
@@ -658,7 +671,8 @@ async def _classify(description: str) -> str | None:
 
 async def classify_if_needed(req: CoverageRequest) -> tuple[CoverageRequest, bool]:
     """With COVERAGE_MODE=llm and a null cause, fill the cause from the description
-    (causeSource "llm"). Returns (request, classifier_failed)."""
+    (causeSource "llm"; assess echoes it in the response's `incident`). Returns
+    (request, classifier_failed)."""
     if req.incident.cause is not None or coverage_mode() != "llm":
         return req, False
     cause = await _classify(req.incident.description)

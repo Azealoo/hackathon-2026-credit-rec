@@ -4,6 +4,11 @@ JSON is the contracts/coverage.response.schema.json body. HTML renders the same 
 templates/verdict.html (Jinja2, autoescaped) for the app's in-app web view: always dark, phone
 width, no scripts and no external resources.
 
+The JSON carries `incident` {"cause", "causeSource"}: the cause the verdict used (ruling R17). With
+COVERAGE_MODE=llm, a request whose cause is null comes back with the LLM's cause and causeSource
+"llm", whatever the verdict, so the claim screen can pre-select that chip before the user confirms
+it (§5.5). The HTML shows the same cause as its chip label.
+
 Request bodies are never logged. A body with a run of 12+ digits is rejected with 400
 privacy_rejected (§15.5), before it is parsed.
 """

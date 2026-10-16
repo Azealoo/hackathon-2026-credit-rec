@@ -138,25 +138,25 @@ def test_disclaimer_and_payout_cap_rules(case, results):
 
 def test_copy_extended_warranty(results):
     data = results[1]
-    assert data["headline"] == "May be eligible: Extended warranty (Freedom Unlimited)"
-    assert data["why"] == ("The maker's 1-year warranty ended Oct 17, 2027. The extra year runs to Oct 17, 2028. "
-                           "A failure without a drop fits this benefit.")
+    assert data["headline"] == "May be eligible: Extended warranty (Freedom Unlimited)."
+    # §5.5, word for word.
+    assert data["why"] == "The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028."
     assert data["checklist"] == ["Itemized receipt", "Card statement showing the purchase",
-                                 "Original manufacturer warranty", "Repair estimate"]
+                                 "Original warranty", "Repair estimate"]
 
 
 def test_copy_purchase_protection_capped(results):
     for case_id in (3, 13):
-        assert results[case_id]["headline"] == "May be eligible: Purchase protection, up to $500 of the $1,499"
+        assert results[case_id]["headline"] == "May be eligible: Purchase protection, up to $500 of the $1,499."
         assert "120 days (90 in NY), to Feb 14, 2027" in results[case_id]["why"]
     assert results[13]["why"] == "Theft is covered within 120 days (90 in NY), to Feb 14, 2027."
     assert any("Police report" in item and "48 hours" in item for item in results[13]["checklist"])
     # Uncapped: the full $249 fits under $500, so the headline names the card instead.
-    assert results[4]["headline"] == "May be eligible: Purchase protection (Freedom Unlimited)"
+    assert results[4]["headline"] == "May be eligible: Purchase protection (Freedom Unlimited)."
 
 
 def test_copy_not_covered(results):
-    assert results[2]["headline"] == "Not covered"
+    assert results[2]["headline"] == "Not covered."
     assert results[2]["why"] == ("Damage was covered for 120 days (90 in NY), to Feb 14, 2027. "
                                  "The extended warranty covers failures, not drops.")
     assert results[2]["checklist"] == []
@@ -171,13 +171,13 @@ def test_copy_maker_route(results):
 
 def test_copy_need_more_info(results):
     data = results[5]
-    assert data["headline"] == "Need more info"
+    assert data["headline"] == "Need more info."
     assert "“involuntary and accidental parting”" in data["why"]
     assert "simply losing something may not be" in data["why"]
 
 
 def test_copy_partial_payment(results):
-    assert results[12]["headline"] == "May be eligible: Extended warranty, up to $1,000 of the $1,499"
+    assert results[12]["headline"] == "May be eligible: Extended warranty, up to $1,000 of the $1,499."
     assert "$1,000 paid on the card" in results[12]["why"]
 
 
@@ -627,3 +627,98 @@ def test_format_param():
     assert html.status_code == 200 and html.headers["content-type"].startswith("text/html")
     assert post(body_for(1), "xml").status_code == 422
     assert post(body_for(1)).headers["cache-control"] == "no-store"
+
+
+# --------------------------------------------------------------------- incident echo (ruling R17)
+# §5.5 "The LLM pre-selects a chip; the user confirms": the response says which cause it used and
+# where it came from, so a null-cause request also works as the claim screen's classify call.
+
+
+def echoed(data: dict) -> tuple:
+    return data["incident"]["cause"], data["incident"]["causeSource"]
+
+
+@pytest.mark.parametrize("case", CASES, ids=lambda c: f"c{c['id']}")
+def test_every_verdict_echoes_the_user_confirmed_cause(case, results):
+    assert echoed(results[case["id"]]) == (case["incident"]["cause"], "user_confirmed")
+
+
+@pytest.mark.parametrize("cause", coverage.CAUSES)
+def test_llm_cause_is_echoed_whatever_the_verdict(monkeypatch, cause):
+    """Case 13 (day 30, Freedom Unlimited): the classifier's answer comes back with causeSource "llm",
+    also when the verdict is need_more_info (loss, cosmetic, unknown) or the maker's route (failure)."""
+    monkeypatch.setenv("COVERAGE_MODE", "llm")
+    calls = fake_llm(monkeypatch, lambda _d: cause)
+    data = verdict(body_for(13, incident={"cause": None, "causeSource": None}))
+    assert echoed(data) == (cause, "llm")
+    assert calls == [BY_ID[13]["incident"]["description"]]
+    expected = {"failure": "not_covered", "accidental_damage": "may_be_eligible", "theft": "may_be_eligible",
+                "loss": "need_more_info", "cosmetic": "need_more_info", "unknown": "need_more_info"}
+    assert data["verdict"] == expected[cause]
+
+
+def test_llm_cause_matches_a_confirmed_cause_verdict(monkeypatch):
+    """Classifying, then confirming the same chip, gives the same verdict; only the source and the
+    "Paywise read the cause as" assumption differ."""
+    monkeypatch.setenv("COVERAGE_MODE", "llm")
+    fake_llm(monkeypatch, lambda _d: "failure")
+    classified = verdict(body_for(1, incident={"cause": None, "causeSource": None}))
+    confirmed = verdict(body_for(1))
+    assert echoed(classified) == ("failure", "llm") and echoed(confirmed) == ("failure", "user_confirmed")
+    for key in ("verdict", "benefit", "route", "headline", "limit", "checklist", "deadline"):
+        assert classified[key] == confirmed[key], key
+    assert any("“Stopped working”" in a for a in classified["assumptions"])
+    assert not any("Paywise read the cause" in a for a in confirmed["assumptions"])
+
+
+@pytest.mark.parametrize("answer", [None, "dropped", RuntimeError("down")], ids=["none", "bad", "error"])
+def test_classifier_failure_echoes_no_cause(monkeypatch, answer):
+    monkeypatch.setenv("COVERAGE_MODE", "llm")
+
+    def classify(_description):
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    fake_llm(monkeypatch, classify)
+    data = verdict(body_for(13, incident={"cause": None, "causeSource": None}))
+    assert data["verdict"] == "need_more_info"
+    assert echoed(data) == (None, None)
+
+
+@pytest.mark.parametrize("source", [None, "user_confirmed", "llm"])
+def test_rules_mode_null_cause_echoes_no_cause(monkeypatch, source):
+    """No cause was used, so no source either, whatever the request claimed."""
+    monkeypatch.setenv("COVERAGE_MODE", "rules")
+    fake_llm(monkeypatch, explode)
+    data = verdict(body_for(13, incident={"cause": None, "causeSource": source}))
+    assert data["verdict"] == "need_more_info"
+    assert echoed(data) == (None, None)
+
+
+@pytest.mark.parametrize("source", [None, "llm"])
+def test_a_sent_cause_is_echoed_with_its_source(monkeypatch, source):
+    """A non-null cause is never re-classified; it comes back with the source the request gave."""
+    monkeypatch.setenv("COVERAGE_MODE", "llm")
+    fake_llm(monkeypatch, explode)
+    assert echoed(verdict(body_for(13, incident={"causeSource": source}))) == ("theft", source)
+
+
+def test_html_shows_the_llm_cause_as_its_chip(monkeypatch):
+    monkeypatch.setenv("COVERAGE_MODE", "llm")
+    fake_llm(monkeypatch, lambda _d: "theft")
+    html = post(body_for(13, incident={"cause": None, "causeSource": None}), "html")
+    assert html.status_code == 200
+    assert f"Stolen · {coverage.fmt_date(dt.date.fromisoformat(BY_ID[13]['incident']['date']))}" in html.text
+
+
+def test_incident_is_optional_and_strict_in_the_contract():
+    example = json.loads((CONTRACTS_DIR / "coverage.response.example.json").read_text(encoding="utf-8"))
+    without = {k: v for k, v in example.items() if k != "incident"}
+    assert RESPONSE_VALIDATOR.is_valid(without) and CoverageResponse.model_validate(without).incident is None
+    assert RESPONSE_VALIDATOR.is_valid({**example, "incident": {"cause": None, "causeSource": None}})
+    for bad in ({"cause": "dropped", "causeSource": "llm"}, {"cause": "theft", "causeSource": "user"},
+                {"cause": "theft"}, {"cause": "theft", "causeSource": "llm", "confidence": 0.9}):
+        assert not RESPONSE_VALIDATOR.is_valid({**example, "incident": bad}), bad
+        with pytest.raises(ValueError):
+            CoverageResponse.model_validate({**example, "incident": bad})

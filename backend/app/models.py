@@ -367,6 +367,16 @@ class Contact(Contract):
     url: str | None
 
 
+class IncidentCause(Contract):
+    """The cause the verdict used and where it came from (ruling R17; §5.5 "The LLM pre-selects a
+    chip; the user confirms"). With COVERAGE_MODE=llm and a null request cause, this is the LLM's
+    classification (causeSource "llm"), sent even when the verdict is need_more_info, so the claim
+    screen can pre-select that chip. cause null: no cause was used; causeSource is then null."""
+
+    cause: Literal["failure", "accidental_damage", "theft", "loss", "cosmetic", "unknown"] | None
+    cause_source: Literal["user_confirmed", "llm"] | None
+
+
 class CoverageResponse(Contract):
     verdict: Literal["may_be_eligible", "not_covered", "need_more_info"]
     benefit: Literal["purchase_protection", "extended_warranty", "none"]
@@ -380,6 +390,8 @@ class CoverageResponse(Contract):
     deadline: Deadline
     contact: Contact
     disclaimer: str
+    # Optional (ruling R17): app.coverage always sets it; older bodies without it still validate.
+    incident: IncidentCause | None = None
 
 
 # --- POST /v1/store/pay ----------------------------------------------------------------------

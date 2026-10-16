@@ -171,7 +171,7 @@ blockquote { margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--s
     </div>
 
     {% if v.contact %}
-    <p class="contact">You file it yourself{% if v.contact.administrator %} with {{ v.contact.administrator }}{% endif %} at <a href="{{ v.contact.url }}" rel="noopener noreferrer">{{ v.contact.host }}</a>.</p>
+    <p class="contact">You file it yourself at <a href="{{ v.contact.url }}" rel="noopener noreferrer">{{ v.contact.host }}</a>.</p>
     {% endif %}
   </section>
 

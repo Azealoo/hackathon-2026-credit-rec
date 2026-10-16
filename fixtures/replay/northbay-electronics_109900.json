@@ -1,0 +1,102 @@
+{
+  "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+  "screenType": "checkout",
+  "cart": {
+    "merchant": {
+      "name": "Northbay Electronics",
+      "merchantId": "northbay-electronics"
+    },
+    "items": [
+      {
+        "name": "Aero 14 Laptop, 14-inch",
+        "priceUsd": 1099.0,
+        "quantity": 1,
+        "category": "computers",
+        "condition": "renewed",
+        "seller": "merchant",
+        "isGiftCard": false,
+        "isServicePlan": false
+      }
+    ],
+    "totalUsd": 1099.0,
+    "currency": "USD",
+    "paymentOptionsVisible": [
+      "saved_card"
+    ],
+    "selectedPayment": {
+      "kind": "saved_card",
+      "network": "mastercard"
+    },
+    "upsells": {
+      "protectionPlanUsd": null
+    },
+    "bnplVisible": false,
+    "confidence": {
+      "merchant": 0.97,
+      "total": 0.98,
+      "items": 0.92
+    }
+  },
+  "decision": {
+    "kind": "switch",
+    "reason": "cash",
+    "presentation": "snippet",
+    "recommendedCardId": "wf-active-cash",
+    "defaultCardId": "apple-card",
+    "cashBestCardId": "wf-active-cash",
+    "paymentPath": "saved_card",
+    "instruction": "change_saved_card",
+    "cash": {
+      "byCard": {
+        "apple-card": 10.99,
+        "wf-active-cash": 21.98,
+        "chase-freedom-unlimited": 16.49
+      },
+      "deltaVsCashBest": 0.0,
+      "deltaVsDefault": 10.99
+    },
+    "protectionsGained": [],
+    "protectionsLost": [],
+    "eligibilityNotes": [
+      "Renewed, no warranty: no card covers it"
+    ],
+    "confidence": "high",
+    "copy": {
+      "line1": "Use Active Cash ••{last4:wf-active-cash}",
+      "line2": "$10.99 more cash back than Apple Card",
+      "line3": "Renewed, no warranty: no card covers it",
+      "instruction": "Change card to Visa ••{last4:wf-active-cash}, then place order",
+      "primaryButton": "Paying with Active Cash"
+    }
+  },
+  "purchaseDraft": {
+    "merchant": "Northbay Electronics",
+    "item": "Aero 14 Laptop, 14-inch",
+    "category": "computers",
+    "condition": "renewed",
+    "priceUsd": 1099.0,
+    "purchaseDate": "2026-10-17",
+    "cardId": "wf-active-cash",
+    "coverage": []
+  },
+  "sources": [
+    {
+      "cardId": "wf-active-cash",
+      "document": "Wells Fargo Active Cash Card Guide to Benefits",
+      "section": "whole guide (benefit list)",
+      "versionDate": "2025-09-15",
+      "verification": "verified"
+    },
+    {
+      "cardId": "wf-active-cash",
+      "document": "Wells Fargo Active Cash card page",
+      "section": "hero; footnote 2",
+      "versionDate": null,
+      "verification": "verified"
+    }
+  ],
+  "timingMs": {
+    "parse": 0,
+    "engine": 0
+  }
+}

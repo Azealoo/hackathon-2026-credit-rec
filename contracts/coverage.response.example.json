@@ -2,14 +2,15 @@
   "verdict": "may_be_eligible",
   "benefit": "extended_warranty",
   "route": "card_extended_warranty",
-  "headline": "May be eligible: Extended warranty (Freedom Unlimited)",
-  "why": "The maker's 1-year warranty ended Oct 17, 2027. The extra year runs to Oct 17, 2028. A failure without a drop fits this benefit.",
+  "headline": "May be eligible: Extended warranty (Freedom Unlimited).",
+  "why": "The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028.",
   "limit": {"perItemUsd": null, "perClaimUsd": null, "perAccountUsd": null, "payoutCapUsd": null, "appliesTo": "claim"},
   "assumptions": [],
   "citations": [{"document": "Example Guide to Benefits (placeholder)", "section": "Extended Warranty Protection",
                  "versionDate": "2000-01-01", "quote": "Example quote (placeholder).", "verification": "verified"}],
-  "checklist": ["Itemized receipt", "Card statement showing the purchase", "Original manufacturer warranty", "Repair estimate"],
+  "checklist": ["Itemized receipt", "Card statement showing the purchase", "Original warranty", "Repair estimate"],
   "deadline": {"type": "unknown", "date": null, "note": "Check the notice deadline in your Guide to Benefits"},
   "contact": {"administrator": "Example Benefits Administrator (placeholder)", "url": "https://example.com/claims"},
-  "disclaimer": "Only the benefit administrator decides claims. Paywise never files for you."
+  "disclaimer": "Only the benefit administrator decides claims. Paywise never files for you.",
+  "incident": {"cause": "failure", "causeSource": "user_confirmed"}
 }

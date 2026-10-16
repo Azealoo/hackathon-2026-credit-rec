@@ -1,11 +1,11 @@
 {
   "$schema": "./cards.schema.json",
   "schemaVersion": 1,
-  "catalogVersion": "2026-10-14",
+  "catalogVersion": "2026-10-15",
   "cards": [
     {
       "id": "apple-card",
-      "issuer": null,
+      "issuer": "Goldman Sachs Bank USA",
       "product": "Apple Card",
       "displayName": "Apple Card",
       "shortName": "Apple Card",
@@ -14,25 +14,38 @@
         "value": null,
         "status": "unverified"
       },
-      "annualFeeUsd": null,
+      "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
-      "foreignTransactionFeePct": null,
+      "foreignTransactionFeePct": 0,
       "art": {
         "assetName": "card-apple-card",
-        "color": "#8E8E93"
+        "color": "#fbfbfc"
       },
       "earn": {
         "baseRatePct": 1,
-        "baseRateStatus": "unverified",
+        "baseRateStatus": "verified",
         "rules": [
           {
-            "id": "apple-card-apple-pay-select-merchants",
+            "id": "apple-card-apple",
+            "category": null,
+            "merchantIds": [
+              "apple"
+            ],
+            "paymentMethods": [
+              "any"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified"
+          },
+          {
+            "id": "apple-card-bonus-merchants",
             "category": null,
             "merchantIds": [
               "nike",
-              "walgreens",
-              "apple"
+              "walgreens"
             ],
             "paymentMethods": [
               "apple_pay"
@@ -40,7 +53,7 @@
             "ratePct": 3,
             "cap": null,
             "needsActivation": false,
-            "status": "unverified"
+            "status": "verified"
           },
           {
             "id": "apple-card-apple-pay",
@@ -52,48 +65,93 @@
             "ratePct": 2,
             "cap": null,
             "needsActivation": false,
-            "status": "unverified"
+            "status": "verified"
           }
         ]
       },
       "protections": [],
-      "sources": [],
+      "sources": [
+        {
+          "document": "Apple Card Customer Agreement",
+          "section": "Daily Cash Program > How You Earn Daily Cash (p. 6 of 19)",
+          "versionDate": "2026-09-18",
+          "url": "https://www.goldmansachs.com/terms-and-conditions/Apple-Card-Customer-Agreement.pdf",
+          "quote": "Apple Pay Purchase Transactions 2% of the transaction amount",
+          "checkedOn": "2026-10-14"
+        },
+        {
+          "document": "Apple Card Customer Agreement",
+          "section": "whole agreement, 19 pp. (no purchase protection or extended warranty terms)",
+          "versionDate": "2026-09-18",
+          "url": "https://www.goldmansachs.com/terms-and-conditions/Apple-Card-Customer-Agreement.pdf",
+          "quote": null,
+          "checkedOn": "2026-10-14"
+        },
+        {
+          "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+          "section": "Merchants that offer 3% Daily Cash back; Nike and Walgreens footnotes",
+          "versionDate": "2026-09-25",
+          "url": "https://support.apple.com/en-us/120400",
+          "quote": "using Apple Card with Apple Pay at Nike stores, Nike.com, the Nike mobile app",
+          "checkedOn": "2026-10-14"
+        },
+        {
+          "document": "Mastercard Benefits for Apple Card Customers",
+          "section": "whole page (no purchase protection or extended warranty listed)",
+          "versionDate": null,
+          "url": "https://www.mastercard.com/us/en/personal/find-a-card/card-benefits/apple-card-benefits.html",
+          "quote": "Mastercard Benefits for Apple Card Customers",
+          "checkedOn": "2026-10-14"
+        }
+      ],
       "notes": [
-        "Issuer: to confirm.",
-        "3% merchants: only those in this file's merchant list are included.",
-        "Protections: none known; only 2019 reports (SPEC.md §8.1). Confirm at G5."
+        "Mastercard tier (World or World Elite) and Wallet's in-app benefits list not checked (benefits-verification.md §4.1); neither changes the no-protection answer.",
+        "3% at Apple excludes payments through a third-party wallet and purchases from resellers (Customer Agreement p. 6-7).",
+        "3% via Apple Pay: only the merchants in this file's list (Nike, Walgreens). Apple's list as of Sep 25, 2026 also has Ace Hardware, Booking.com, ChargePoint, Duane Reade, Exxon/Mobil, Hertz, Uber and Uber Eats; offers may change at any time.",
+        "Walgreens: online or in-app orders with more than one item can't use Apple Pay; the engine's apple_pay path already needs a visible Apple Pay button."
       ]
     },
     {
       "id": "wf-active-cash",
-      "issuer": "Wells Fargo",
-      "product": "Active Cash",
+      "issuer": "Wells Fargo Bank, N.A.",
+      "product": "Wells Fargo Active Cash Card",
       "displayName": "Wells Fargo Active Cash",
       "shortName": "Active Cash",
       "network": "visa",
       "networkTier": {
-        "value": null,
-        "status": "unverified"
+        "value": "visa_signature",
+        "status": "verified"
       },
-      "annualFeeUsd": null,
+      "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
       "foreignTransactionFeePct": null,
       "art": {
         "assetName": "card-wf-active-cash",
-        "color": "#8E8E93"
+        "color": "#ef6a5b"
       },
       "earn": {
         "baseRatePct": 2,
-        "baseRateStatus": "unverified",
+        "baseRateStatus": "verified",
         "rules": []
       },
       "protections": [
         {
           "type": "cell_phone_protection",
-          "summary": "Cell phone protection up to $600 per claim, $25 deductible.",
-          "covers": [],
-          "excludes": [],
+          "summary": "Phone repair or replacement after damage, theft or involuntary parting when the monthly wireless bill is paid with the card. $600 per claim minus $25 deductible; max 2 paid claims and $1,200 per 12 months.",
+          "covers": [
+            "theft",
+            "accidental_damage",
+            "involuntary_parting"
+          ],
+          "excludes": [
+            "Lost or mysteriously disappeared phones",
+            "Cosmetic damage that doesn't affect function",
+            "Tablets, smartwatches and other non-phone devices",
+            "Accessories not in the original box",
+            "Phones in a carrier's or delivery service's custody",
+            "Phones bought for resale or commercial use"
+          ],
           "limits": {
             "perItemUsd": null,
             "perClaimUsd": 600,
@@ -101,44 +159,61 @@
             "appliesTo": "claim"
           },
           "eligibility": {
-            "conditionsAllowed": [],
-            "paymentRequirement": null,
+            "conditionsAllowed": null,
+            "paymentRequirement": "full",
             "excludedCategories": []
           },
           "notice": {
-            "notifyWithinDays": null,
-            "submitDocsWithinDays": null
+            "notifyWithinDays": 60,
+            "submitDocsWithinDays": 120
           },
           "claim": {
-            "administrator": null,
-            "url": null,
-            "phone": null
+            "administrator": "Virginia Surety Company, Inc. (Assurant)",
+            "url": "https://mycardbenefits.assurant.com",
+            "phone": "1-800-316-8051"
           },
           "source": {
-            "document": null,
-            "section": null,
-            "versionDate": null,
+            "document": "Wells Fargo Active Cash Card Guide to Benefits",
+            "section": "Cellular Telephone Protection > How to File a Claim",
+            "versionDate": "2025-09-15",
             "url": "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/",
-            "quote": null
+            "quote": "$600 per claim."
           },
           "verification": {
-            "status": "unverified",
-            "checkedBy": null,
-            "checkedOn": null,
-            "note": "From SPEC.md §8.1. Verify against the Guide to Benefits PDF (G5)."
+            "status": "verified",
+            "checkedBy": "claude (card-benefits session)",
+            "checkedOn": "2026-10-14",
+            "note": "Per-account cap is per 12-month period (2 claims / $1,200), so perAccountUsd is null. Notice is 60 days 'or as soon as reasonably possible'; documents 120 days. The guide has no extended warranty or purchase protection (0 text matches). Not counted by the v1 engine."
           }
         }
       ],
-      "sources": [],
+      "sources": [
+        {
+          "document": "Wells Fargo Active Cash Card Guide to Benefits",
+          "section": "whole guide (benefit list)",
+          "versionDate": "2025-09-15",
+          "url": "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/",
+          "quote": "describes the benefits in effect as of 09/15/2025",
+          "checkedOn": "2026-10-14"
+        },
+        {
+          "document": "Wells Fargo Active Cash card page",
+          "section": "hero; footnote 2",
+          "versionDate": null,
+          "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
+          "quote": "unlimited 2% cash rewards on purchases",
+          "checkedOn": "2026-10-14"
+        }
+      ],
       "notes": [
-        "2% flat earn: verify.",
-        "Extended warranty and purchase protection: sources conflict (SPEC.md §8.1). Not listed until G5 confirms."
+        "No extended warranty or purchase protection: the Wells Fargo Guide (in effect 09/15/2025) has 0 matches. CardRatings' generic Visa Signature list conflicts; the issuer guide wins (benefits-verification.md §1 #1).",
+        "Foreign transaction fee not checked."
       ]
     },
     {
       "id": "chase-freedom-unlimited",
-      "issuer": "Chase",
-      "product": "Freedom Unlimited",
+      "issuer": "JPMorgan Chase Bank, N.A.",
+      "product": "Chase Freedom Unlimited",
       "displayName": "Chase Freedom Unlimited",
       "shortName": "Freedom",
       "network": "visa",
@@ -146,28 +221,69 @@
         "value": null,
         "status": "unverified"
       },
-      "annualFeeUsd": null,
+      "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
       "foreignTransactionFeePct": null,
       "art": {
         "assetName": "card-chase-freedom-unlimited",
-        "color": "#8E8E93"
+        "color": "#3f7ff0"
       },
       "earn": {
         "baseRatePct": 1.5,
-        "baseRateStatus": "unverified",
-        "rules": []
+        "baseRateStatus": "verified",
+        "rules": [
+          {
+            "id": "cfu-dining",
+            "category": "dining",
+            "merchantIds": null,
+            "paymentMethods": [
+              "any"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified"
+          },
+          {
+            "id": "cfu-drugstores",
+            "category": "pharmacy",
+            "merchantIds": null,
+            "paymentMethods": [
+              "any"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified"
+          }
+        ]
       },
       "protections": [
         {
           "type": "purchase_protection",
-          "summary": "Covers new items against theft or damage for 120 days from purchase (90 in NY), up to $500 per item.",
+          "summary": "Theft, damage or involuntary and accidental parting within 120 days of purchase (90 in NY). Up to $500 per item, $50,000 per account. Pays the lesser of repair, replacement, the amount charged to the card, or $500. Secondary to other insurance.",
           "covers": [
             "theft",
-            "accidental_damage"
+            "accidental_damage",
+            "involuntary_parting"
           ],
-          "excludes": [],
+          "excludes": [
+            "Lost or mysteriously disappeared items",
+            "Items in a common carrier's or delivery service's care",
+            "Unattended items in baggage on a common carrier",
+            "Computer software",
+            "Medical equipment",
+            "Living animals and plants",
+            "Antiques or collectibles",
+            "Motorized vehicles and their parts",
+            "Items for resale, professional or commercial use",
+            "Normal wear and tear; inherent product defects; abuse; flood; earthquake",
+            "Mis-delivery or voluntary parting",
+            "Perishables, consumables and rechargeable batteries",
+            "Traveler's checks, cash, tickets, credit or debit cards",
+            "Used or pre-owned items (refurbished with a warranty is not treated as used)"
+          ],
           "windowDays": 120,
           "windowDaysByState": {
             "NY": 90
@@ -175,7 +291,7 @@
           "limits": {
             "perItemUsd": 500,
             "perClaimUsd": null,
-            "perAccountUsd": null,
+            "perAccountUsd": 50000,
             "appliesTo": "item"
           },
           "eligibility": {
@@ -186,43 +302,53 @@
             "excludedCategories": []
           },
           "notice": {
-            "notifyWithinDays": null,
-            "submitDocsWithinDays": null
+            "notifyWithinDays": 90,
+            "submitDocsWithinDays": 120
           },
           "claim": {
-            "administrator": null,
-            "url": null,
-            "phone": null
+            "administrator": "Virginia Surety Company, Inc. (Assurant)",
+            "url": "https://chasecardbenefits.com",
+            "phone": "1-800-349-2691"
           },
           "source": {
-            "document": null,
-            "section": null,
-            "versionDate": null,
-            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
-            "quote": null
+            "document": "Chase Freedom Guide to Benefits (BGC11366)",
+            "section": "Purchase Protection, pp. 9-11",
+            "versionDate": "2024-10-01",
+            "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+            "quote": "$500 per item and a maximum of $50,000 per Account"
           },
           "verification": {
-            "status": "unverified",
-            "checkedBy": null,
-            "checkedOn": null,
-            "note": "From SPEC.md §8.1 (Chase card page, via search). Cap basis is open: the card page says $500 per item; reviews say per claim, $50,000 per account. Notice deadline: reviews say 90 or 120 days. Verify against the Guide to Benefits PDF (G5)."
+            "status": "verified",
+            "checkedBy": "claude (card-benefits session)",
+            "checkedOn": "2026-10-14",
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3."
           }
         },
         {
           "type": "extended_warranty",
-          "summary": "Adds 1 year to eligible U.S. manufacturer's warranties of 3 years or less, up to 4 years from purchase.",
+          "summary": "Adds 1 year after the manufacturer's U.S. repair warranty (after any store warranty or service contract) when all of them total 3 years or less; never more than 4 years from purchase. Up to $10,000 per item, $50,000 per account.",
           "covers": [
             "failure"
           ],
-          "excludes": [],
+          "excludes": [
+            "Items without a valid original manufacturer's U.S. repair warranty",
+            "Combined warranties and service contracts over 3 years",
+            "Costs not covered by the original manufacturer's warranty",
+            "Motorized vehicles and their parts",
+            "Items for resale, professional or commercial use",
+            "Rented or leased items",
+            "Computer software",
+            "Medical equipment",
+            "Used or pre-owned items (refurbished with a warranty is covered)"
+          ],
           "extendsByMonths": 12,
           "maxOriginalWarrantyMonths": 36,
           "maxTotalFromPurchaseMonths": 48,
           "limits": {
-            "perItemUsd": null,
+            "perItemUsd": 10000,
             "perClaimUsd": null,
-            "perAccountUsd": null,
-            "appliesTo": "claim"
+            "perAccountUsd": 50000,
+            "appliesTo": "item"
           },
           "eligibility": {
             "conditionsAllowed": [
@@ -232,38 +358,57 @@
             "excludedCategories": []
           },
           "notice": {
-            "notifyWithinDays": null,
-            "submitDocsWithinDays": null
+            "notifyWithinDays": 90,
+            "submitDocsWithinDays": 120
           },
           "claim": {
-            "administrator": null,
-            "url": null,
-            "phone": null
+            "administrator": "Virginia Surety Company, Inc. (Assurant)",
+            "url": "https://chasecardbenefits.com",
+            "phone": "1-800-349-2691"
           },
           "source": {
-            "document": null,
-            "section": null,
-            "versionDate": null,
-            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
-            "quote": null
+            "document": "Chase Freedom Guide to Benefits (BGC11366)",
+            "section": "Extended Warranty Protection, pp. 6-8",
+            "versionDate": "2024-10-01",
+            "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+            "quote": "extends the original manufacturer’s U.S. repair warranty coverage by one (1) additional year"
           },
           "verification": {
-            "status": "unverified",
-            "checkedBy": null,
-            "checkedOn": null,
-            "note": "From SPEC.md §8.1. Verify against the Guide to Benefits PDF (G5)."
+            "status": "verified",
+            "checkedBy": "claude (card-benefits session)",
+            "checkedOn": "2026-10-14",
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3."
           }
         }
       ],
-      "sources": [],
+      "sources": [
+        {
+          "document": "Chase Freedom Unlimited card page",
+          "section": "Earn rewards; offer details; Service & protection",
+          "versionDate": null,
+          "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+          "quote": "against damage or theft up to $500 per item",
+          "checkedOn": "2026-10-14"
+        },
+        {
+          "document": "Chase Freedom Guide to Benefits (BGC11366)",
+          "section": "cover, p. 2",
+          "versionDate": "2024-10-01",
+          "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+          "quote": "describes the benefit that is in effect as of 10/1/24",
+          "checkedOn": "2026-10-14"
+        }
+      ],
       "notes": [
-        "1.5% base: verify. Bonus categories are P2 and not modeled."
+        "3% dining and drugstores: Chase decides by merchant category code. Whether Walgreens and DoorDash code that way is partial (no Chase statement found).",
+        "5% on Chase Travel is verified but not modeled (no merchant).",
+        "Network tier and foreign transaction fee not checked."
       ]
     },
     {
       "id": "chase-freedom-rise",
-      "issuer": "Chase",
-      "product": "Freedom Rise",
+      "issuer": "JPMorgan Chase Bank, N.A.",
+      "product": "Chase Freedom Rise",
       "displayName": "Chase Freedom Rise",
       "shortName": "Freedom Rise",
       "network": "visa",
@@ -271,28 +416,44 @@
         "value": null,
         "status": "unverified"
       },
-      "annualFeeUsd": null,
+      "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
       "foreignTransactionFeePct": null,
       "art": {
         "assetName": "card-chase-freedom-rise",
-        "color": "#8E8E93"
+        "color": "#35b6a8"
       },
       "earn": {
         "baseRatePct": 1.5,
-        "baseRateStatus": "unverified",
+        "baseRateStatus": "verified",
         "rules": []
       },
       "protections": [
         {
           "type": "purchase_protection",
-          "summary": "Covers new items against theft or damage for 120 days from purchase (90 in NY), up to $500 per item.",
+          "summary": "Theft, damage or involuntary and accidental parting within 120 days of purchase (90 in NY). Up to $500 per item, $50,000 per account. Pays the lesser of repair, replacement, the amount charged to the card, or $500. Secondary to other insurance.",
           "covers": [
             "theft",
-            "accidental_damage"
+            "accidental_damage",
+            "involuntary_parting"
           ],
-          "excludes": [],
+          "excludes": [
+            "Lost or mysteriously disappeared items",
+            "Items in a common carrier's or delivery service's care",
+            "Unattended items in baggage on a common carrier",
+            "Computer software",
+            "Medical equipment",
+            "Living animals and plants",
+            "Antiques or collectibles",
+            "Motorized vehicles and their parts",
+            "Items for resale, professional or commercial use",
+            "Normal wear and tear; inherent product defects; abuse; flood; earthquake",
+            "Mis-delivery or voluntary parting",
+            "Perishables, consumables and rechargeable batteries",
+            "Traveler's checks, cash, tickets, credit or debit cards",
+            "Used or pre-owned items (refurbished with a warranty is not treated as used)"
+          ],
           "windowDays": 120,
           "windowDaysByState": {
             "NY": 90
@@ -300,7 +461,7 @@
           "limits": {
             "perItemUsd": 500,
             "perClaimUsd": null,
-            "perAccountUsd": null,
+            "perAccountUsd": 50000,
             "appliesTo": "item"
           },
           "eligibility": {
@@ -311,43 +472,53 @@
             "excludedCategories": []
           },
           "notice": {
-            "notifyWithinDays": null,
-            "submitDocsWithinDays": null
+            "notifyWithinDays": 90,
+            "submitDocsWithinDays": 120
           },
           "claim": {
-            "administrator": null,
-            "url": null,
-            "phone": null
+            "administrator": "Virginia Surety Company, Inc. (Assurant)",
+            "url": "https://chasecardbenefits.com",
+            "phone": "1-800-349-2691"
           },
           "source": {
-            "document": null,
-            "section": null,
-            "versionDate": null,
-            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
-            "quote": null
+            "document": "Chase Freedom Guide to Benefits (BGC11366)",
+            "section": "Purchase Protection, pp. 9-11",
+            "versionDate": "2024-10-01",
+            "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+            "quote": "$500 per item and a maximum of $50,000 per Account"
           },
           "verification": {
-            "status": "unverified",
-            "checkedBy": null,
-            "checkedOn": null,
-            "note": "Same as Freedom Unlimited per Chase's page (SPEC.md §8.1). Verify against Freedom Rise's own Guide to Benefits PDF (G5)."
+            "status": "verified",
+            "checkedBy": "claude (card-benefits session)",
+            "checkedOn": "2026-10-14",
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3."
           }
         },
         {
           "type": "extended_warranty",
-          "summary": "Adds 1 year to eligible U.S. manufacturer's warranties of 3 years or less, up to 4 years from purchase.",
+          "summary": "Adds 1 year after the manufacturer's U.S. repair warranty (after any store warranty or service contract) when all of them total 3 years or less; never more than 4 years from purchase. Up to $10,000 per item, $50,000 per account.",
           "covers": [
             "failure"
           ],
-          "excludes": [],
+          "excludes": [
+            "Items without a valid original manufacturer's U.S. repair warranty",
+            "Combined warranties and service contracts over 3 years",
+            "Costs not covered by the original manufacturer's warranty",
+            "Motorized vehicles and their parts",
+            "Items for resale, professional or commercial use",
+            "Rented or leased items",
+            "Computer software",
+            "Medical equipment",
+            "Used or pre-owned items (refurbished with a warranty is covered)"
+          ],
           "extendsByMonths": 12,
           "maxOriginalWarrantyMonths": 36,
           "maxTotalFromPurchaseMonths": 48,
           "limits": {
-            "perItemUsd": null,
+            "perItemUsd": 10000,
             "perClaimUsd": null,
-            "perAccountUsd": null,
-            "appliesTo": "claim"
+            "perAccountUsd": 50000,
+            "appliesTo": "item"
           },
           "eligibility": {
             "conditionsAllowed": [
@@ -357,33 +528,52 @@
             "excludedCategories": []
           },
           "notice": {
-            "notifyWithinDays": null,
-            "submitDocsWithinDays": null
+            "notifyWithinDays": 90,
+            "submitDocsWithinDays": 120
           },
           "claim": {
-            "administrator": null,
-            "url": null,
-            "phone": null
+            "administrator": "Virginia Surety Company, Inc. (Assurant)",
+            "url": "https://chasecardbenefits.com",
+            "phone": "1-800-349-2691"
           },
           "source": {
-            "document": null,
-            "section": null,
-            "versionDate": null,
-            "url": "https://www.chase.com/personal/credit-cards/education/chase-cards/chase-freedom-benefits-guide",
-            "quote": null
+            "document": "Chase Freedom Guide to Benefits (BGC11366)",
+            "section": "Extended Warranty Protection, pp. 6-8",
+            "versionDate": "2024-10-01",
+            "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+            "quote": "extends the original manufacturer’s U.S. repair warranty coverage by one (1) additional year"
           },
           "verification": {
-            "status": "unverified",
-            "checkedBy": null,
-            "checkedOn": null,
-            "note": "Same as Freedom Unlimited per Chase's page (SPEC.md §8.1). Verify against Freedom Rise's own Guide to Benefits PDF (G5)."
+            "status": "verified",
+            "checkedBy": "claude (card-benefits session)",
+            "checkedOn": "2026-10-14",
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3."
           }
         }
       ],
-      "sources": [],
+      "sources": [
+        {
+          "document": "Chase Freedom Rise card page",
+          "section": "Cardmember rewards; Service & protection",
+          "versionDate": null,
+          "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/rise",
+          "quote": "Establish credit and earn 1.5% cash back on all purchases",
+          "checkedOn": "2026-10-14"
+        },
+        {
+          "document": "Chase Freedom Guide to Benefits (BGC11366)",
+          "section": "cover, p. 2 (lists Chase Freedom Rise)",
+          "versionDate": "2024-10-01",
+          "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+          "quote": "Chase Freedom Rise® and Chase Freedom Student Visa Platinum and Visa Signature®",
+          "checkedOn": "2026-10-14"
+        }
+      ],
       "notes": [
-        "Network: Visa per SPEC.md §8.1, unverified.",
-        "1.5% flat earn: verify."
+        "Same guide (BGC11366) and terms as Freedom Unlimited: protections are an exact copy of chase-freedom-unlimited's. Keep them identical when editing.",
+        "Earn is 1.5% flat; Freedom Unlimited's bonus categories don't apply.",
+        "Art color is design.md §6's proposed teal (the card isn't in the film).",
+        "Network tier and foreign transaction fee not checked."
       ]
     },
     {
@@ -397,24 +587,36 @@
         "value": null,
         "status": "unverified"
       },
-      "annualFeeUsd": null,
+      "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
       "foreignTransactionFeePct": null,
       "art": {
         "assetName": "card-discover-it-student-cash-back",
-        "color": "#8E8E93"
+        "color": "#f6a54a"
       },
       "earn": {
         "baseRatePct": 1,
-        "baseRateStatus": "unverified",
+        "baseRateStatus": "verified",
         "rules": []
       },
       "protections": [],
-      "sources": [],
+      "sources": [
+        {
+          "document": "Discover student credit cards page",
+          "section": "Discover it Student Cash Back: rewards",
+          "versionDate": null,
+          "url": "https://www.discover.com/credit-cards/student-credit-card/",
+          "quote": "Plus, earn 1% cash back on all other purchases.",
+          "checkedOn": "2026-10-14"
+        }
+      ],
       "notes": [
-        "5% rotating categories are not modeled.",
-        "Purchase protection and extended warranty were removed Feb 28, 2018 (SPEC.md §8.1)."
+        "5% rotating quarterly categories need activation and have a cap: not modeled in v1.",
+        "No purchase protection or extended warranty on the current card page (verified absence). Their removal on Feb 28, 2018 comes from secondary sources only (partial).",
+        "Discover is now part of Capital One (card page).",
+        "Art color is design.md §6's proposed amber (the card isn't in the film).",
+        "Network tier and foreign transaction fee not checked."
       ]
     }
   ],
@@ -432,7 +634,7 @@
       },
       "isDemo": true,
       "notes": [
-        "Fictional demo store (demo-store/). No Apple Pay in v1."
+        "Fictional demo store (demo-store/). Its checkout pays with a saved card (Change card); no Apple Pay button in v1."
       ]
     },
     {
@@ -448,7 +650,7 @@
       },
       "isDemo": true,
       "notes": [
-        "Fictional demo store page (P1)."
+        "Fictional demo store page (P1); not built yet."
       ]
     },
     {
@@ -462,9 +664,12 @@
       "category": "apparel",
       "acceptsApplePay": {
         "value": true,
-        "status": "unverified"
+        "status": "verified"
       },
-      "isDemo": false
+      "isDemo": false,
+      "notes": [
+        "Apple Pay at Nike stores, Nike.com and the Nike app (Apple Support HT 120400, Sep 25, 2026)."
+      ]
     },
     {
       "id": "amazon",
@@ -526,9 +731,12 @@
       "category": "pharmacy",
       "acceptsApplePay": {
         "value": true,
-        "status": "unverified"
+        "status": "partial"
       },
-      "isDemo": false
+      "isDemo": false,
+      "notes": [
+        "Apple Pay online, in the app and in stores, but not for online or in-app orders with more than one item (Apple Support HT 120400), so partial."
+      ]
     },
     {
       "id": "doordash",
@@ -559,7 +767,10 @@
         "value": true,
         "status": "unverified"
       },
-      "isDemo": false
+      "isDemo": false,
+      "notes": [
+        "Apple Pay at Apple wasn't checked in benefits-verification.md. Apple Card's 3% here applies with any payment method."
+      ]
     },
     {
       "id": "walmart",

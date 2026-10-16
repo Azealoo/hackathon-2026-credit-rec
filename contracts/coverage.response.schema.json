@@ -65,6 +65,21 @@
         "url": {"type": ["string", "null"]}
       }
     },
-    "disclaimer": {"type": "string"}
+    "disclaimer": {"type": "string"},
+    "incident": {
+      "description": "Optional (ruling R17). The cause the verdict used and where it came from: the user's confirmed chip, or, with COVERAGE_MODE=llm and a null request cause, the LLM's classification (causeSource llm), sent even when the verdict is need_more_info so the claim screen can pre-select that chip (SPEC.md §5.5). cause null means no cause was used (rules mode, or the classifier couldn't tell); causeSource is then null.",
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cause", "causeSource"],
+          "properties": {
+            "cause": {"enum": ["failure", "accidental_damage", "theft", "loss", "cosmetic", "unknown", null]},
+            "causeSource": {"enum": ["user_confirmed", "llm", null]}
+          }
+        },
+        {"type": "null"}
+      ]
+    }
   }
 }

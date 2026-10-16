@@ -1,0 +1,1037 @@
+{
+  "description": "SPEC v2.1 §15.4 scenarios, written and hand-computed by D (no engine code). Each cart is a §15.5 Cart plus screenType. Cash is Decimal, each card rounded to cents half-up before subtracting (§7.2 rule 1). recommendedCardId is the default card for keep and null for no_checkout. cashDeltaVsCashBest and cashDeltaVsDefault are the recommended (or kept) card's cash minus the cash-best card's and the default's. protectionsGained lists the types the recommended card has that the default lacks, so it is [] for every keep. screenshot names the fixtures/carts and fixtures/ocr file the cart comes from, or null for a synthetic cart.",
+  "demoDate": "2026-10-17",
+  "scenarios": [
+    {
+      "id": 1,
+      "title": "S1: laptop $1,499, saved card",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "protection",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 14.99,
+          "wf-active-cash": 29.98,
+          "chase-freedom-unlimited": 22.49
+        },
+        "cashDeltaVsCashBest": -7.49,
+        "cashDeltaVsDefault": 7.5,
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 0: checkout. Rule 1: no Apple Pay button, so path saved_card and card rates. apple-card 1% x 1499.00 = 14.99; wf-active-cash 2% x 1499.00 = 29.98; chase-freedom-unlimited 1.5% x 1499.00 = 22.485 -> 22.49 (half-up). cashBest = wf-active-cash (29.98). Rule 2: items readable (0.92 >= 0.8). Rule 3: laptop is new, not a gift card or service plan, computers is warrantyRelevant and theftDamageRelevant, 1499.00 >= 100, so it qualifies; FU has purchase_protection + extended_warranty (paymentRequirement some_portion, met); apple-card has none; wf-active-cash only cell_phone_protection (not counted). Rule 4 (P): FU adds both types the default lacks and drops none -> switch / protection -> FU. deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 22.49 - 14.99 = +7.50 (matches §6.3)."
+    },
+    {
+      "id": 2,
+      "title": "S1-R: renewed laptop $1,099, no warranty",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-renewed-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1099.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "renewed",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1099.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "cash",
+        "presentation": "snippet",
+        "recommendedCardId": "wf-active-cash",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 10.99,
+          "wf-active-cash": 21.98,
+          "chase-freedom-unlimited": 16.49
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 10.99,
+        "protectionsGained": [],
+        "eligibilityNotes": ["Renewed, no warranty: no card covers it"]
+      },
+      "workings": "Rule 1 (saved_card): apple-card 1% x 1099.00 = 10.99; wf-active-cash 2% x 1099.00 = 21.98; FU 1.5% x 1099.00 = 16.485 -> 16.49. cashBest = wf-active-cash. Rule 2: readable. Rule 3: condition renewed is not in conditionsAllowed ['new'], so no card has an eligible protection. Rule 4 (P): nothing to gain. Rule 5 (G): default has nothing to lose. Rule 6 (C): cashBest != default, gain 21.98 - 10.99 = 10.99 >= 5 (saved_card) -> switch / cash -> AC. deltaVsCashBest = 21.98 - 21.98 = 0.00; deltaVsDefault = +10.99 (the spec's '+$10.99 vs Apple Card'). Eligibility note per §6.3 / §7.3."
+    },
+    {
+      "id": 3,
+      "title": "Earbuds $249 (audio), saved card",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": "earbuds-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Wireless Earbuds, Noise-Cancelling",
+            "priceUsd": 249.0,
+            "quantity": 1,
+            "category": "audio",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 249.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "protection",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 2.49,
+          "wf-active-cash": 4.98,
+          "chase-freedom-unlimited": 3.74
+        },
+        "cashDeltaVsCashBest": -1.24,
+        "cashDeltaVsDefault": 1.25,
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 1% x 249.00 = 2.49; wf-active-cash 2% x 249.00 = 4.98; FU 1.5% x 249.00 = 3.735 -> 3.74 (half-up, before subtracting). cashBest = wf-active-cash. Rule 3: audio is relevant to both types, 249.00 >= 100, new -> qualifies; FU has PP + EW. Rule 4 (P): FU adds both, drops none -> switch / protection -> FU. deltaVsCashBest = 3.74 - 4.98 = -1.24; deltaVsDefault = 3.74 - 2.49 = +1.25. (Rounding after subtracting would give -1.245 -> -1.25: the spec's -1.24 needs round-first.)"
+    },
+    {
+      "id": 4,
+      "title": "Mug $18 (home), saved card",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": "mug-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Ceramic Coffee Mug, 12 oz",
+            "priceUsd": 18.0,
+            "quantity": 1,
+            "category": "home",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 18.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "below_threshold",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 0.18,
+          "wf-active-cash": 0.36,
+          "chase-freedom-unlimited": 0.27
+        },
+        "cashDeltaVsCashBest": -0.18,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 1% x 18.00 = 0.18; wf-active-cash 2% x 18.00 = 0.36; FU 1.5% x 18.00 = 0.27. cashBest = wf-active-cash. Rule 3: home is neither warrantyRelevant nor theftDamageRelevant and 18.00 < 100 -> no qualifying item. Rules 4-5: nothing. Rule 6 (C): gain 0.36 - 0.18 = 0.18 < 5 -> no switch. Rule 7 (M): no Apple Pay button. Rule 8: default protects nothing; cashBest != default -> keep / below_threshold. Kept card = default apple-card: deltaVsCashBest = 0.18 - 0.36 = -0.18; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 5,
+      "title": "S1-K: laptop $1,499 with Freedom as the default",
+      "wallet": "fu-default",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "already_protected",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "chase-freedom-unlimited": 22.49,
+          "wf-active-cash": 29.98,
+          "apple-card": 14.99
+        },
+        "cashDeltaVsCashBest": -7.49,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): FU 1.5% x 1499.00 = 22.485 -> 22.49; wf-active-cash 29.98; apple-card 14.99. cashBest = wf-active-cash. Rule 3: laptop qualifies; default FU has PP + EW eligible. Rule 4 (P): no card has a type FU lacks. Rule 5 (G): default has purchase_protection (and extended_warranty) that cashBest wf-active-cash lacks -> keep / already_protected (snippet). Rule C (+7.49 >= 5) never runs. deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 6,
+      "title": "Laptop $1,499, no protection cards (tie)",
+      "wallet": "no-protection",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "default_best",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "apple-card",
+        "cashByCard": {"apple-card": 14.99, "discover-it-student-cash-back": 14.99},
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 1% x 1499.00 = 14.99; discover 1% x 1499.00 = 14.99. Tie -> cashBest = the default, apple-card. Rule 3: laptop qualifies but neither card has PP or EW. Rules 4-5: nothing. Rule 6: cashBest == default. Rule 7: no Apple Pay button. Rule 8: cashBest == default -> keep / default_best. Deltas 0.00 / 0.00."
+    },
+    {
+      "id": 7,
+      "title": "Laptop $1,499, Apple Card + Active Cash",
+      "wallet": "apple-ac",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "cash",
+        "presentation": "snippet",
+        "recommendedCardId": "wf-active-cash",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {"apple-card": 14.99, "wf-active-cash": 29.98},
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 14.99,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 14.99; wf-active-cash 2% x 1499.00 = 29.98. cashBest = wf-active-cash. Rule 3: laptop qualifies but neither card has PP or EW (Active Cash: cell phone only). Rules 4-5: nothing. Rule 6 (C): gain 29.98 - 14.99 = 14.99 >= 5 -> switch / cash -> AC. deltaVsCashBest = 0.00; deltaVsDefault = +14.99."
+    },
+    {
+      "id": 8,
+      "title": "S2: Nike $180 shoes, Apple Pay visible",
+      "wallet": "demo-3card",
+      "paymentPath": "apple_pay",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Nike", "merchantId": "nike"},
+        "items": [
+          {
+            "name": "Running Shoes",
+            "priceUsd": 180.0,
+            "quantity": 1,
+            "category": "apparel",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 180.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["apple_pay", "card_form"],
+        "selectedPayment": {"kind": "card_form", "network": "unknown"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "method",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "apple-card",
+        "cashByCard": {
+          "apple-card": 5.4,
+          "wf-active-cash": 3.6,
+          "chase-freedom-unlimited": 2.7
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1: Apple Pay button visible -> path apple_pay. apple-card: merchant rule nike + apple_pay 3% beats the 2% Apple Pay rule (merchant > category > base) -> 3% x 180.00 = 5.40; wf-active-cash 2% = 3.60; FU 1.5% = 2.70. cashBest = apple-card = default. Rule 3: apparel not relevant -> no qualifying item. Rules 4-6: nothing (cashBest == default). Rule 7 (M): default earns more via Apple Pay (5.40) than typed (1% = 1.80) and the button is visible -> keep / method ('3% ($5.40) with Apple Pay vs 1% typed'). Deltas 0.00 / 0.00."
+    },
+    {
+      "id": 9,
+      "title": "Nike $180 shoes, card form only",
+      "wallet": "demo-3card",
+      "paymentPath": "card_form",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Nike", "merchantId": "nike"},
+        "items": [
+          {
+            "name": "Running Shoes",
+            "priceUsd": 180.0,
+            "quantity": 1,
+            "category": "apparel",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 180.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["card_form"],
+        "selectedPayment": {"kind": "card_form", "network": "unknown"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "below_threshold",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 1.8,
+          "wf-active-cash": 3.6,
+          "chase-freedom-unlimited": 2.7
+        },
+        "cashDeltaVsCashBest": -1.8,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1: no Apple Pay button -> path card_form. apple-card: the nike and Apple Pay rules need apple_pay, so base 1% x 180.00 = 1.80; wf-active-cash 3.60; FU 2.70. cashBest = wf-active-cash. Rule 3: apparel -> nothing qualifies. Rule 6 (C): gain 3.60 - 1.80 = 1.80 < 5 -> no switch. Rule 7: no Apple Pay button. Rule 8 -> keep / below_threshold. The spec's '$1.80' is that gain; kept default vs cashBest = 1.80 - 3.60 = -1.80; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 10,
+      "title": "Headphones $120 (audio)",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Studio Headphones, Over-Ear",
+            "priceUsd": 120.0,
+            "quantity": 1,
+            "category": "audio",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 120.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "protection",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 1.2,
+          "wf-active-cash": 2.4,
+          "chase-freedom-unlimited": 1.8
+        },
+        "cashDeltaVsCashBest": -0.6,
+        "cashDeltaVsDefault": 0.6,
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 1% x 120.00 = 1.20; wf-active-cash 2.40; FU 1.5% x 120.00 = 1.80. cashBest = wf-active-cash. Rule 3: audio, 120.00 >= 100, new -> qualifies; FU has PP + EW. Rule 4 (P) -> switch / protection -> FU. deltaVsCashBest = 1.80 - 2.40 = -0.60; deltaVsDefault = 1.80 - 1.20 = +0.60."
+    },
+    {
+      "id": 11,
+      "title": "Headphones $90 (under the $100 protection minimum)",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Wired Headphones, On-Ear",
+            "priceUsd": 90.0,
+            "quantity": 1,
+            "category": "audio",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 90.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "below_threshold",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 0.9,
+          "wf-active-cash": 1.8,
+          "chase-freedom-unlimited": 1.35
+        },
+        "cashDeltaVsCashBest": -0.9,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 0.90; wf-active-cash 1.80; FU 1.5% x 90.00 = 1.35. cashBest = AC. Rule 3: 90.00 < PROTECTION_MIN_ITEM_USD 100 -> the item doesn't qualify (FU's protections are eligible but there's no qualifying item). Rules 4-5: nothing. Rule 6: gain 0.90 < 5. Rule 8 -> keep / below_threshold. deltaVsCashBest = 0.90 - 1.80 = -0.90; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 12,
+      "title": "Gift card $100 only",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Northbay eGift Card",
+            "priceUsd": 100.0,
+            "quantity": 1,
+            "category": "gift_card",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": true,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 100.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "below_threshold",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 1.0,
+          "wf-active-cash": 2.0,
+          "chase-freedom-unlimited": 1.5
+        },
+        "cashDeltaVsCashBest": -1.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 1.00; wf-active-cash 2.00; FU 1.50. cashBest = AC. Rule 3: isGiftCard -> no protection is eligible, and gift_card is not a relevant category, so the $100.00 item doesn't qualify even though it meets the $100 minimum. Rule 6: gain 1.00 < 5. Rule 8 -> keep / below_threshold. deltaVsCashBest = 1.00 - 2.00 = -1.00; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 13,
+      "title": "Social feed: text with no total",
+      "wallet": "demo-3card",
+      "paymentPath": "unknown",
+      "screenshot": "feed-not-checkout",
+      "cart": {
+        "screenType": "not_checkout",
+        "merchant": {"name": null, "merchantId": null},
+        "items": [],
+        "totalUsd": null,
+        "currency": "USD",
+        "paymentOptionsVisible": [],
+        "selectedPayment": {"kind": "unknown", "network": "unknown"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.0, "total": 0.0, "items": 0.0}
+      },
+      "expected": {
+        "kind": "no_checkout",
+        "reason": "not_checkout",
+        "presentation": "island",
+        "recommendedCardId": null,
+        "cashBestCardId": null,
+        "cashByCard": null,
+        "cashDeltaVsCashBest": null,
+        "cashDeltaVsDefault": null,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 0: screenType not_checkout -> no_checkout / not_checkout. No cash, no card. (On device this page fails the checkout gate and nothing is sent; this tests the backend path.)"
+    },
+    {
+      "id": 14,
+      "title": "Blurry screen: garbage OCR",
+      "wallet": "demo-3card",
+      "paymentPath": "unknown",
+      "screenshot": "blurry-unreadable",
+      "cart": {
+        "screenType": "unreadable",
+        "merchant": {"name": null, "merchantId": null},
+        "items": [],
+        "totalUsd": null,
+        "currency": "USD",
+        "paymentOptionsVisible": [],
+        "selectedPayment": {"kind": "unknown", "network": "unknown"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.0, "total": 0.0, "items": 0.0}
+      },
+      "expected": {
+        "kind": "no_checkout",
+        "reason": "unreadable",
+        "presentation": "island",
+        "recommendedCardId": null,
+        "cashBestCardId": null,
+        "cashByCard": null,
+        "cashDeltaVsCashBest": null,
+        "cashDeltaVsDefault": null,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 0: screenType unreadable -> no_checkout / unreadable. No cash, no card."
+    },
+    {
+      "id": 15,
+      "title": "Order confirmation (already paid)",
+      "wallet": "demo-3card",
+      "paymentPath": "unknown",
+      "screenshot": "laptop-confirmation",
+      "cart": {
+        "screenType": "order_confirmation",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": [],
+        "selectedPayment": {"kind": "saved_card", "network": "visa"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "no_checkout",
+        "reason": "already_paid",
+        "presentation": "island",
+        "recommendedCardId": null,
+        "cashBestCardId": null,
+        "cashByCard": null,
+        "cashDeltaVsCashBest": null,
+        "cashDeltaVsDefault": null,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 0: screenType order_confirmation -> no_checkout / already_paid. No cash, no card."
+    },
+    {
+      "id": 16,
+      "title": "Laptop $1,499, Discover default + Freedom",
+      "wallet": "discover-fu",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "protection",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "chase-freedom-unlimited",
+        "cashByCard": {
+          "discover-it-student-cash-back": 14.99,
+          "chase-freedom-unlimited": 22.49
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 7.5,
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): discover 1% x 1499.00 = 14.99; FU 22.485 -> 22.49. cashBest = FU. Rule 3: laptop qualifies; FU has PP + EW; discover none. Rule 4 (P) -> switch / protection -> FU. The pick is also cash-best: deltaVsCashBest = 0.00 ('Also earns the most cash back here'); deltaVsDefault = 22.49 - 14.99 = +7.50."
+    },
+    {
+      "id": 17,
+      "title": "Earbuds $249, Apple Card default + Freedom Rise",
+      "wallet": "rise-2card",
+      "paymentPath": "saved_card",
+      "screenshot": "earbuds-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Wireless Earbuds, Noise-Cancelling",
+            "priceUsd": 249.0,
+            "quantity": 1,
+            "category": "audio",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 249.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "protection",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-rise",
+        "cashBestCardId": "chase-freedom-rise",
+        "cashByCard": {"apple-card": 2.49, "chase-freedom-rise": 3.74},
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 1.25,
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 2.49; chase-freedom-rise 1.5% x 249.00 = 3.735 -> 3.74. cashBest = Freedom Rise. Rule 3: earbuds qualify; Rise has PP + EW (same guide as FU). Rule 4 (P) -> switch / protection -> chase-freedom-rise; also cash-best: deltaVsCashBest = 0.00; deltaVsDefault = 3.74 - 2.49 = +1.25."
+    },
+    {
+      "id": 18,
+      "title": "Laptop, items unreadable, total readable",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Acro 1A Lnqtop",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.95, "total": 0.95, "items": 0.45}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "items_unreadable",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 14.99,
+          "wf-active-cash": 29.98,
+          "chase-freedom-unlimited": 22.49
+        },
+        "cashDeltaVsCashBest": -14.99,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 0: checkout. Rule 1 (saved_card, on totalUsd 1499.00): apple-card 14.99; AC 29.98; FU 22.49; cashBest = AC. Rule 2: confidence.items 0.45 < ITEM_CONFIDENCE_MIN 0.8 -> keep / items_unreadable, no protection switch and no cash switch (without rule 2, rule P would pick FU and rule C AC). deltaVsCashBest = 14.99 - 29.98 = -14.99; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 19,
+      "title": "Walgreens $40, Apple Pay visible",
+      "wallet": "demo-3card",
+      "paymentPath": "apple_pay",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Walgreens", "merchantId": "walgreens"},
+        "items": [
+          {
+            "name": "Multivitamin, 200 ct",
+            "priceUsd": 40.0,
+            "quantity": 1,
+            "category": "pharmacy",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 40.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["apple_pay", "card_form"],
+        "selectedPayment": {"kind": "card_form", "network": "unknown"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "method",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "apple-card",
+        "cashByCard": {
+          "apple-card": 1.2,
+          "wf-active-cash": 0.8,
+          "chase-freedom-unlimited": 1.2
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1: Apple Pay button -> path apple_pay. apple-card: merchant rule walgreens + apple_pay 3% x 40.00 = 1.20; wf-active-cash 2% = 0.80; FU: category rule pharmacy 3% (cfu-drugstores, any method) = 1.20 (1.5% = 0.60 without that rule). Tie 1.20 / 1.20 -> the default: cashBest = apple-card. Rule 3: pharmacy not relevant. Rules 4-6: nothing. Rule 7 (M): Apple Pay 1.20 > typed 1% = 0.40, button visible -> keep / method. Deltas 0.00 / 0.00. Same answer with or without FU's pharmacy rule."
+    },
+    {
+      "id": 20,
+      "title": "Amazon $38 household, saved card",
+      "wallet": "demo-3card",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Amazon", "merchantId": "amazon"},
+        "items": [
+          {
+            "name": "Storage Bins, 6-pack",
+            "priceUsd": 38.0,
+            "quantity": 1,
+            "category": "home",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 38.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "below_threshold",
+        "presentation": "island",
+        "recommendedCardId": "apple-card",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "apple-card": 0.38,
+          "wf-active-cash": 0.76,
+          "chase-freedom-unlimited": 0.57
+        },
+        "cashDeltaVsCashBest": -0.38,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): apple-card 0.38; wf-active-cash 0.76; FU 1.5% x 38.00 = 0.57. cashBest = AC. Rule 3: home not relevant, 38.00 < 100. Rule 6: gain 0.38 < 5. Rule 7: no Apple Pay button. Rule 8 -> keep / below_threshold. deltaVsCashBest = 0.38 - 0.76 = -0.38; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 21,
+      "title": "Laptop $1,200, Freedom Rise default + Active Cash",
+      "wallet": "rise-ac",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Northbay Electronics",
+          "merchantId": "northbay-electronics"
+        },
+        "items": [
+          {
+            "name": "Aero 13 Laptop, 13-inch",
+            "priceUsd": 1200.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1200.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "visa"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "already_protected",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-rise",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {"chase-freedom-rise": 18.0, "wf-active-cash": 24.0},
+        "cashDeltaVsCashBest": -6.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1 (saved_card): chase-freedom-rise 1.5% x 1200.00 = 18.00; wf-active-cash 2% = 24.00. cashBest = AC. Rule 3: laptop qualifies; default Rise has PP + EW; AC none. Rule 4 (P): nothing Rise lacks. Rule 5 (G): default has purchase_protection that cashBest AC lacks -> keep / already_protected. Without the guard, rule C would switch: gain 24.00 - 18.00 = 6.00 >= 5. deltaVsCashBest = 18.00 - 24.00 = -6.00; deltaVsDefault = 0.00."
+    },
+    {
+      "id": 22,
+      "title": "Laptop $1,499 with Freedom default, Apple Pay visible",
+      "wallet": "fu-default",
+      "paymentPath": "apple_pay",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {
+          "name": "Best Buy",
+          "merchantId": "best-buy"
+        },
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["apple_pay", "saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "already_protected",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "chase-freedom-unlimited": 22.49,
+          "wf-active-cash": 29.98,
+          "apple-card": 29.98
+        },
+        "cashDeltaVsCashBest": -7.49,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1: Apple Pay button -> path apple_pay. FU 1.5% (any) = 22.49; wf-active-cash 2% (any) = 29.98; apple-card Apple Pay 2% x 1499.00 = 29.98. Tie AC / Apple Card at 29.98, neither is the default -> wallet order (FU, AC, Apple) -> cashBest = wf-active-cash. Rule 3: laptop qualifies; FU's PP + EW are eligible on this path (Apple Pay charges the FU card). Rule 4 (P): nothing FU lacks. Rule 5 (G): FU has PP that cashBest lacks (Apple Card lacks it too) -> keep / already_protected. deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00. Synthetic cart at Best Buy (acceptsApplePay unknown in data/cards.json), not Northbay: Northbay has no Apple Pay button in v1 (acceptsApplePay false, verified). Best Buy has no earn rule on any card and the same category (electronics), so the numbers are the same as at Northbay."
+    }
+  ]
+}

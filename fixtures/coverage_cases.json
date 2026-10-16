@@ -1,0 +1,447 @@
+{
+  "description": "SPEC v2.1 §15.4 coverage cases, written and hand-computed by D (no engine code). Purchases are on 2026-10-17 (demo date); asOf is the incident date + 1 day. payoutCapUsd is the lesser of the benefit cap and the amount charged to the card (§5.5), null unless may_be_eligible. citesSection is never null (SPEC §13: 13/13 cite section + version date). For a card with purchase protection or extended warranty it is the source.section in data/cards.json of the protection that decides the verdict; for a card with neither it is the section of the dated card source in data/cards.json that shows the absence (the issuer document read as a whole). checklistIncludes: case-insensitive phrases the verdict's checklist must contain.",
+  "cases": [
+    {
+      "id": 1,
+      "title": "Freedom laptop: lines across the screen at month 14, never dropped",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-12-17",
+        "description": "Lines across the screen. Never dropped.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-12-18",
+      "expected": {
+        "verdict": "may_be_eligible",
+        "benefit": "extended_warranty",
+        "route": "card_extended_warranty",
+        "payoutCapUsd": 1499.0,
+        "citesSection": "Extended Warranty Protection, pp. 6-8",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2027-12-17: after the maker's warranty, inside the extra year. Cause failure, which the extended warranty covers. Payout cap = min($10,000 per item, $1,499.00 charged) = 1499.00."
+    },
+    {
+      "id": 2,
+      "title": "Freedom laptop: dropped at month 14",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-12-17",
+        "description": "Cracked it when I dropped it.",
+        "cause": "accidental_damage",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-12-18",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "Extended Warranty Protection, pp. 6-8",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2027-12-17. Accidental damage: purchase protection ended 2027-02-14; the extended warranty is in effect but covers failures only, not drops (§5.5 'covers failures, not drops'). citesSection is the extended warranty clause, the only benefit in effect on the incident date."
+    },
+    {
+      "id": 3,
+      "title": "Freedom laptop: dropped at day 30",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2026-11-16",
+        "description": "Cracked the screen when I dropped it.",
+        "cause": "accidental_damage",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2026-11-17",
+      "expected": {
+        "verdict": "may_be_eligible",
+        "benefit": "purchase_protection",
+        "route": "card_purchase_protection",
+        "payoutCapUsd": 500.0,
+        "citesSection": "Purchase Protection, pp. 9-11",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2026-11-16 (day 30) <= 2027-02-14. Accidental damage is covered by purchase protection. The maker's warranty is running but covers failures, not drops. Payout cap = min($500 per item, $1,499.00 charged) = 500.00."
+    },
+    {
+      "id": 4,
+      "title": "Freedom earbuds: stolen at week 6",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Wireless Earbuds, Noise-Cancelling",
+        "category": "audio",
+        "condition": "new",
+        "priceUsd": 249.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2026-11-28",
+        "description": "Someone took them from my bag at the library.",
+        "cause": "theft",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2026-11-29",
+      "expected": {
+        "verdict": "may_be_eligible",
+        "benefit": "purchase_protection",
+        "route": "card_purchase_protection",
+        "payoutCapUsd": 249.0,
+        "citesSection": "Purchase Protection, pp. 9-11",
+        "checklistIncludes": ["police report"]
+      },
+      "workings": "Purchase 2026-10-17; purchase protection to 2027-02-14. Incident 2026-11-28 (week 6, day 42). Theft is covered. Payout cap = min($500 per item, $249.00 charged) = 249.00 (the full price). Checklist adds a police report (within 48 hours if you can, §5.5)."
+    },
+    {
+      "id": 5,
+      "title": "Freedom earbuds: left on a bus at week 6",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Wireless Earbuds, Noise-Cancelling",
+        "category": "audio",
+        "condition": "new",
+        "priceUsd": 249.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2026-11-28",
+        "description": "Left them on the bus.",
+        "cause": "loss",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2026-11-29",
+      "expected": {
+        "verdict": "need_more_info",
+        "benefit": "purchase_protection",
+        "route": "card_purchase_protection",
+        "payoutCapUsd": null,
+        "citesSection": "Purchase Protection, pp. 9-11",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17; purchase protection to 2027-02-14; incident 2026-11-28 is inside the window. Cause loss: theft and involuntary and accidental parting may be covered, but lost or mysteriously disappeared items are excluded, so the user must say which (§5.5) -> need_more_info, citing the purchase protection clause. No payout cap until it's eligible."
+    },
+    {
+      "id": 6,
+      "title": "Apple Card laptop: failure at month 14",
+      "purchase": {
+        "cardId": "apple-card",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-12-17",
+        "description": "Stopped turning on. Never dropped.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-12-18",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "whole agreement, 19 pp. (no purchase protection or extended warranty terms)",
+        "checklistIncludes": []
+      },
+      "workings": "Maker's warranty ended 2027-10-17; incident 2027-12-17 is after it. Apple Card has no extended warranty or purchase protection (data/cards.json protections: []), so nothing applies. Cites the dated source that shows the absence: Apple Card Customer Agreement, whole agreement, version 2026-09-18 (the Mastercard benefits page says the same but has no version date)."
+    },
+    {
+      "id": 7,
+      "title": "Freedom laptop: failure at month 8 (still under the maker's warranty)",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-06-17",
+        "description": "Stopped turning on. Never dropped.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-06-18",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "manufacturer",
+        "payoutCapUsd": null,
+        "citesSection": "Extended Warranty Protection, pp. 6-8",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2027-06-17 < 2027-10-17: still under the maker's warranty, so the card's extra year hasn't started -> not_covered by the card, route manufacturer. citesSection: the extended warranty clause, which starts after the maker's warranty ends."
+    },
+    {
+      "id": 8,
+      "title": "Freedom renewed laptop, no maker's warranty: failure at month 14",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "renewed",
+        "priceUsd": 1099.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 0,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-12-17",
+        "description": "Stopped turning on.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-12-18",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "Extended Warranty Protection, pp. 6-8",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17, renewed, manufacturerWarrantyMonths 0. The extended warranty needs a valid original manufacturer's U.S. warranty to extend, so there is nothing to extend (G5). Purchase protection ended 2027-02-14 and doesn't cover failures. -> not_covered."
+    },
+    {
+      "id": 9,
+      "title": "Freedom earbuds: stolen at day 200",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Wireless Earbuds, Noise-Cancelling",
+        "category": "audio",
+        "condition": "new",
+        "priceUsd": 249.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-05-05",
+        "description": "Stolen from my bag.",
+        "cause": "theft",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-05-06",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "Purchase Protection, pp. 9-11",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase protection ran 2026-10-17 to 2027-02-14. Incident 2027-05-05 (day 200) is after it. The extended warranty doesn't cover theft. -> not_covered, citing the purchase protection window."
+    },
+    {
+      "id": 10,
+      "title": "Active Cash headphones: failure at month 14",
+      "purchase": {
+        "cardId": "wf-active-cash",
+        "merchant": "Northbay Electronics",
+        "item": "Studio Headphones, Over-Ear",
+        "category": "audio",
+        "condition": "new",
+        "priceUsd": 120.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2027-12-17",
+        "description": "The left side stopped working.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-12-18",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "whole guide (benefit list)",
+        "checklistIncludes": []
+      },
+      "workings": "Maker's warranty ended 2027-10-17; incident 2027-12-17. Active Cash has no extended warranty or purchase protection (G5); its cell phone protection doesn't cover headphones. Nothing applies. Cites the dated source that shows the absence: Wells Fargo Active Cash Card Guide to Benefits, whole guide (benefit list), version 2025-09-15."
+    },
+    {
+      "id": 11,
+      "title": "Freedom laptop: failure at month 30",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2029-04-17",
+        "description": "Stopped turning on.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2029-04-18",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "Extended Warranty Protection, pp. 6-8",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2029-04-17 is after the extra year ended on 2028-10-17 -> not_covered, citing the extended warranty clause."
+    },
+    {
+      "id": 12,
+      "title": "Freedom laptop paid partly on the card: failure at month 14",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_partial",
+        "amountOnCardUsd": 1000.0
+      },
+      "incident": {
+        "date": "2027-12-17",
+        "description": "Lines across the screen. Never dropped.",
+        "cause": "failure",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2027-12-18",
+      "expected": {
+        "verdict": "may_be_eligible",
+        "benefit": "extended_warranty",
+        "route": "card_extended_warranty",
+        "payoutCapUsd": 1000.0,
+        "citesSection": "Extended Warranty Protection, pp. 6-8",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2027-12-17 inside the extra year; cause failure. Charging part of the price qualifies (some_portion, G5). Payout cap = min($10,000 per item, $1,000.00 on the card) = 1000.00 (§5.5: with card_partial the cap is the part paid on the card; amountOnCardUsd carries it)."
+    },
+    {
+      "id": 13,
+      "title": "Freedom laptop: stolen at day 30",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "new",
+        "priceUsd": 1499.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 12,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2026-11-16",
+        "description": "Stolen from my bag.",
+        "cause": "theft",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2026-11-17",
+      "expected": {
+        "verdict": "may_be_eligible",
+        "benefit": "purchase_protection",
+        "route": "card_purchase_protection",
+        "payoutCapUsd": 500.0,
+        "citesSection": "Purchase Protection, pp. 9-11",
+        "checklistIncludes": ["police report"]
+      },
+      "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2026-11-16 (day 30) <= 2027-02-14. Theft is covered by purchase protection. Payout cap = min($500 per item, $1,499.00 charged) = 500.00 ('up to $500 of the $1,499'). Checklist adds a police report (§5.5)."
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "requestId": "5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff",
+  "screenType": "checkout",
+  "cart": {
+    "merchant": {
+      "name": "Northbay Electronics",
+      "merchantId": "northbay-electronics"
+    },
+    "items": [
+      {
+        "name": "Ceramic Coffee Mug, 12 oz",
+        "priceUsd": 18.0,
+        "quantity": 1,
+        "category": "home",
+        "condition": "new",
+        "seller": "merchant",
+        "isGiftCard": false,
+        "isServicePlan": false
+      }
+    ],
+    "totalUsd": 18.0,
+    "currency": "USD",
+    "paymentOptionsVisible": [
+      "saved_card"
+    ],
+    "selectedPayment": {
+      "kind": "saved_card",
+      "network": "mastercard"
+    },
+    "upsells": {
+      "protectionPlanUsd": null
+    },
+    "bnplVisible": false,
+    "confidence": {
+      "merchant": 0.97,
+      "total": 0.98,
+      "items": 0.92
+    }
+  },
+  "decision": {
+    "kind": "keep",
+    "reason": "below_threshold",
+    "presentation": "island",
+    "recommendedCardId": "apple-card",
+    "defaultCardId": "apple-card",
+    "cashBestCardId": "wf-active-cash",
+    "paymentPath": "saved_card",
+    "instruction": "none",
+    "cash": {
+      "byCard": {
+        "apple-card": 0.18,
+        "wf-active-cash": 0.36,
+        "chase-freedom-unlimited": 0.27
+      },
+      "deltaVsCashBest": -0.18,
+      "deltaVsDefault": 0.0
+    },
+    "protectionsGained": [],
+    "protectionsLost": [],
+    "eligibilityNotes": [],
+    "confidence": "high",
+    "copy": {
+      "line1": "✓ Keep Apple Card ••{last4:apple-card}",
+      "line2": "Switching gains under $5 here",
+      "line3": null,
+      "instruction": null,
+      "primaryButton": null
+    }
+  },
+  "purchaseDraft": null,
+  "sources": [],
+  "timingMs": {
+    "parse": 0,
+    "engine": 0
+  }
+}

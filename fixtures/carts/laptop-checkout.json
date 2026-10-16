@@ -1,0 +1,23 @@
+{
+  "screenType": "checkout",
+  "merchant": {"name": "Northbay Electronics", "merchantId": "northbay-electronics"},
+  "items": [
+    {
+      "name": "Aero 14 Laptop, 14-inch",
+      "priceUsd": 1499.0,
+      "quantity": 1,
+      "category": "computers",
+      "condition": "new",
+      "seller": "merchant",
+      "isGiftCard": false,
+      "isServicePlan": false
+    }
+  ],
+  "totalUsd": 1499.0,
+  "currency": "USD",
+  "paymentOptionsVisible": ["saved_card"],
+  "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+  "upsells": {"protectionPlanUsd": null},
+  "bnplVisible": false,
+  "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+}

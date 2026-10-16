@@ -1,0 +1,245 @@
+{
+  "schema_version": "acceptance-cases-1",
+  "policy_version": "us-online-v2-draft",
+  "note": "Hand-computed specification vectors, not an executed production engine test suite. Benefits in scenario stubs assume independently confirmed eligibility even though production seed automatic eligibility is disabled.",
+  "rounding": "sum unrounded components, then decimal half-up cents",
+  "cases": [
+    {
+      "id": "laptop-fu-ac",
+      "purchase_minor": 149900,
+      "assumptions": [
+        "USD domestic eligible new personal-use laptop, valid US 12-month manufacturer warranty, no other warranty",
+        "Only FU and Active Cash in wallet; full card payment; active grace period and full repayment confirmed",
+        "Scenario benefit eligibility stubs confirmed; annual caps not relevant to ordinary reward"
+      ],
+      "default": "wells-fargo-active-cash",
+      "mode": "protection_target",
+      "target": {
+        "type": "extended_warranty",
+        "min_extension_months": 12
+      },
+      "cash_sacrifice_budget_minor": 1000,
+      "expected_reward_minor": {
+        "chase-freedom-unlimited": 2249,
+        "wells-fargo-active-cash": 2998
+      },
+      "expected_sacrifice_minor": 749,
+      "expected_decision": "switch",
+      "expected_card": "chase-freedom-unlimited"
+    },
+    {
+      "id": "laptop-budget-unset",
+      "extends": "laptop-fu-ac",
+      "cash_sacrifice_budget_minor": null,
+      "expected_decision": "choice_required",
+      "expected_reason": "cash_sacrifice_budget_exceeded"
+    },
+    {
+      "id": "bce-cap-crossing",
+      "purchase_minor": 30000,
+      "base_rate_bps": 100,
+      "bonus_rate_bps": 300,
+      "cap_minor": 600000,
+      "posted_usage_minor": 590000,
+      "pending_usage_minor": 0,
+      "reserved_usage_minor": 0,
+      "expected_bonus_spend_minor": 10000,
+      "expected_reward_minor": 500,
+      "comparison_active_cash_minor": 600,
+      "default": "amex-blue-cash-everyday",
+      "switch_threshold_minor": 500,
+      "protection_guard": "scenario_confirmed_pass",
+      "expected_decision": "keep"
+    },
+    {
+      "id": "bofa-shared-cap",
+      "purchase_minor": 30000,
+      "choice_category": "online_shopping",
+      "intro_eligible": false,
+      "membership_bonus_bps": 0,
+      "shared_usage_components_minor": {
+        "choice": 180000,
+        "grocery": 40000,
+        "wholesale": 20000
+      },
+      "cap_minor": 250000,
+      "base_rate_bps": 100,
+      "bonus_rate_bps": 300,
+      "expected_remaining_minor": 10000,
+      "expected_reward_minor": 500
+    },
+    {
+      "id": "bofa-member-ordinary",
+      "purchase_minor": 10000,
+      "intro_eligible": false,
+      "ordinary_rate_bps": 300,
+      "membership_bonus_bps": 7500,
+      "cap_remaining_minor": 250000,
+      "expected_effective_rate_bps": 525,
+      "expected_reward_minor": 525
+    },
+    {
+      "id": "bofa-intro-stacking-unknown",
+      "purchase_minor": 10000,
+      "intro_eligible": true,
+      "membership_bonus_bps": 7500,
+      "stacking_verified": false,
+      "expected_decision": "needs_info",
+      "expected_reason": "offer_stacking_unknown"
+    },
+    {
+      "id": "bcp-return-target",
+      "purchase_minor": 20000,
+      "assumptions": [
+        "USD qualifying US new non-formal jacket in original working condition",
+        "Full payment on BCP; account eligibility and nonexcluded item established",
+        "Future merchant refusal and claim documentation remain conditions",
+        "Only BCP and AC; full repayment/grace confirmed; no prior relevant protection loss"
+      ],
+      "expected_reward_minor": {
+        "amex-blue-cash-preferred": 200,
+        "wells-fargo-active-cash": 400
+      },
+      "mode": "protection_target",
+      "target": {
+        "type": "return_protection",
+        "min_window_days": 90
+      },
+      "cash_sacrifice_budget_minor": 300,
+      "expected_card": "amex-blue-cash-preferred",
+      "expected_nominal_limit_minor": 20000,
+      "payout_guaranteed": false
+    },
+    {
+      "id": "bcp-formalwear-exclusion",
+      "purchase_minor": 20000,
+      "item_category": "formal_wear",
+      "target": "return_protection",
+      "expected_target_eligibility": "ineligible",
+      "expected_decision": "choice_required"
+    },
+    {
+      "id": "discover-unverified-quarter",
+      "purchase_minor": 10000,
+      "quarter_snapshot_verified": false,
+      "expected_enabled_bonus_rules": 0,
+      "verified_base_reward_minor": 100,
+      "expected_reason": "quarter_category_unknown"
+    },
+    {
+      "id": "discover-known-quarter-activation-unknown",
+      "purchase_minor": 10000,
+      "quarter_snapshot_verified": true,
+      "category_match": true,
+      "activation": "unknown",
+      "cap_remaining_minor": 150000,
+      "expected_reward_interval_minor": [
+        100,
+        500
+      ],
+      "expected_decision_if_competitor_two_percent": "needs_info"
+    },
+    {
+      "id": "foreign-qs-ac",
+      "purchase_minor": 50000,
+      "assumptions": [
+        "Both paths feasible; purchase grace/full repayment confirmed",
+        "Actual transaction qualifies for Active Cash 3% foreign fee",
+        "No separate DCC or checkout fees; protection comparison resolved"
+      ],
+      "expected_net_minor": {
+        "capital-one-quicksilver": 750,
+        "wells-fargo-active-cash": -500
+      },
+      "expected_difference_minor": 1250
+    },
+    {
+      "id": "capital-one-network-unknown",
+      "product_id": "capital-one-quicksilver",
+      "network": null,
+      "expected_reward_rate_bps": 150,
+      "expected_protection_eligibility": "needs_info",
+      "expected_auto_apply_discover_network_guide": false
+    },
+    {
+      "id": "citi-conditional-repayment-reward",
+      "purchase_minor": 10000,
+      "expectedFullRepayment": "yes",
+      "purchaseGracePeriodActive": "yes",
+      "eligiblePaymentAndPurchaseTrackerConfirmed": true,
+      "expected_purchase_reward_minor": 100,
+      "expected_conditional_payment_reward_minor": 100,
+      "expected_final_reward_minor": 200
+    },
+    {
+      "id": "financing-unknown",
+      "purchase_minor": 100000,
+      "expectedFullRepayment": "unknown",
+      "purchaseGracePeriodActive": "unknown",
+      "repaymentPlan": null,
+      "expected_decision": "needs_info",
+      "expected_reason": "financing_unknown"
+    },
+    {
+      "id": "chase-ny-window",
+      "benefit": "purchase_damage_theft",
+      "residency": "NY",
+      "expected_window_days": 90
+    },
+    {
+      "id": "same-type-not-same-protection",
+      "baseline": {
+        "type": "purchase_damage_theft",
+        "window_days": 120,
+        "limit_minor": 50000
+      },
+      "candidate": {
+        "type": "purchase_damage_theft",
+        "window_days": 90,
+        "limit_minor": 100000
+      },
+      "expected_guard": "loss",
+      "expected_automatic_protection_upgrade": false
+    },
+    {
+      "id": "not-listed-not-absent",
+      "benefit_knowledge": "not_listed",
+      "expected_bank_asserted_absence": false,
+      "expected_copy": "The currently reviewed guide does not list this benefit."
+    },
+    {
+      "id": "cap-per-claim-not-per-item",
+      "items_covered_value_minor": [
+        80000,
+        80000
+      ],
+      "limit_minor": 100000,
+      "limit_scope": "per_claim_occurrence",
+      "event": "single_claim",
+      "expected_max_aggregate_nominal_limit_minor": 100000
+    },
+    {
+      "id": "uncertain-reward-ranking",
+      "baseline_net_interval_minor": [
+        100,
+        500
+      ],
+      "candidate_net_interval_minor": [
+        200,
+        200
+      ],
+      "expected_difference_interval_minor": [
+        -300,
+        100
+      ],
+      "expected_cash_switch": false
+    },
+    {
+      "id": "idempotent-reservation",
+      "request_id": "synthetic-request-001",
+      "purchase_minor": 10000,
+      "calls": 2,
+      "expected_reservations": 1
+    }
+  ]
+}

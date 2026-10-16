@@ -1,0 +1,20 @@
+# Card recommendation v2 research and specification
+
+Research snapshot: October 16, 2026. Scope: choosing among a US user's existing credit cards for an online purchase, covering nine representative products across Chase, American Express, Capital One, Citi, Bank of America, Discover, and Wells Fargo.
+
+| File | Purpose |
+|---|---|
+| [Algorithm specification](algorithm-spec.en.md) | Proposed inputs, net reward calculations, uncertainty handling, protection comparisons, recommendation modes, and migration boundaries. |
+| [Issuer policy review](issuer-policy-review.en.md) | Official source links, reviewed reward and benefit terms, and unresolved policy fields. |
+| [Policy seed](card-policy-seed.json) | Structured research data with source IDs, basis-point rates, integer USD cents, and explicit readiness gates. |
+| [Acceptance vectors](acceptance-vectors.json) | Twenty hand-computed scenarios describing expected behavior and assumptions for future implementation. |
+
+Read the algorithm specification first, then the issuer review and structured files. The acceptance vectors are specification examples, not executed engine tests.
+
+## Integration status
+
+This directory contains a proposed extension to [the current product specification](../../SPEC.md). It is not loaded by the backend. The existing runtime catalog remains [data/cards.json](../../data/cards.json); the research seed uses a different schema and must not replace it directly.
+
+The seed is not a production policy bundle. Account applicability must be confirmed, and full item eligibility and exclusion rules remain incomplete. Automatic item eligibility and conditional benefit activation remain disabled. Unknown or unlisted benefits must not be interpreted as guaranteed coverage or as proof that no benefit exists. Issuer terms and account offers require verification before operational use.
+
+The proposed implementation retains the existing engine and introduces `us-online-v2-draft` behind a feature flag. Activation requires executable policy rules, validated account inputs, and passing implementation tests. This documentation commit does not enable the new algorithm.

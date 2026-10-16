@@ -1,0 +1,1631 @@
+{
+  "schema_version": "research-seed-1",
+  "policy_version": "us-online-v2-draft",
+  "observed_at": "2026-10-16",
+  "market": "US",
+  "currency": "USD",
+  "scope": "9 representative existing consumer card products across 7 issuer/product families; not all issuer products",
+  "not_production_policy_bundle": true,
+  "amount_unit": "integer_USD_cents",
+  "rate_unit": "basis_points",
+  "rule_status_values": [
+    "verified_rule",
+    "verified_summary",
+    "unknown",
+    "not_listed",
+    "conflict"
+  ],
+  "guardrails": [
+    "Unknown is not false or zero.",
+    "Issuer/product/network/tier/account applicability must be established.",
+    "All benefit automatic_item_eligibility_enabled=false until the complete executable eligibility/exclusion pack is reviewed.",
+    "Foreign fees with null value must not be imputed as zero.",
+    "Account APR, grace period, credit availability, cap use, activation and offer eligibility are personal state, not product constants.",
+    "No unverified intro/membership stacking.",
+    "No quarterly bonus without verified date-specific category snapshot.",
+    "All reward rate rules here are exclusive total rates, not additive bonus rates.",
+    "Only verified eligible net purchases qualify; no blanket classification of every online transaction.",
+    "Portal promotions, welcome spend bonuses and statement-credit offers are not implemented by this seed."
+  ],
+  "sources": [
+    {
+      "id": "CH-FU",
+      "title": "Chase Freedom Unlimited product and offer details",
+      "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CH-RPA",
+      "title": "Freedom Unlimited Rewards Program Agreement",
+      "url": "https://asset.chase.com/content/dam/card/rulesregulations/en/RPA0509_Web.pdf",
+      "type": "issuer_rewards_agreement",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CH-GTB",
+      "title": "Freedom family Guide to Benefits BGC11366",
+      "url": "https://static.chasecdn.com/content/services/structured-document/document.en.pdf/card/benefits-center/product-benefits-guide-pdf/BGC11366_v2.pdf",
+      "type": "issuer_benefits_guide",
+      "observed_at": "2026-10-16",
+      "effective_from": "2024-10-01",
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "AMEX-BCE",
+      "title": "Blue Cash Everyday product page",
+      "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "AMEX-BCE-T",
+      "title": "Blue Cash Everyday benefit terms",
+      "url": "https://global.americanexpress.com/card-benefits/terms/blue-cash-everyday",
+      "type": "issuer_rewards_terms",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "AMEX-BCE-B",
+      "title": "Blue Cash Everyday benefit summary",
+      "url": "https://global.americanexpress.com/card-benefits/view-all/blue-cash-everyday",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "AMEX-BCP",
+      "title": "Blue Cash Preferred product and benefit summaries",
+      "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "AMEX-BCP-B",
+      "title": "Blue Cash Preferred benefits dashboard",
+      "url": "https://global.americanexpress.com/card-benefits/view-all/blue-cash-preferred?linknav=en-US-oneAmex-axpSearchResults-1&searchresult=cancel+pay+over+time",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "AMEX-RP",
+      "title": "Amex Return Protection policy",
+      "url": "https://www.americanexpress.com/content/dam/amex/us/credit-cards/features-benefits/policies/NAC-Benefit-Guides/RP_Benefit_Guide_Rev_10-20_10.09.23.pdf",
+      "type": "issuer_benefits_policy",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CAP-QS",
+      "title": "Quicksilver Rewards cash-back product details",
+      "url": "https://www.capitalone.com/credit-cards/cash-back/quicksilver/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CAP-QS-F",
+      "title": "Quicksilver foreign transaction fee summary",
+      "url": "https://www.capitalone.com/credit-cards/quicksilver/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CAP-SAVOR",
+      "title": "Savor Rewards product page",
+      "url": "https://www.capitalone.com/credit-cards/savor/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CAP-GUIDES",
+      "title": "Capital One issuer-specific benefits guide selector",
+      "url": "https://www.capitalone.com/credit-cards/benefits-guide/",
+      "type": "issuer_guide_index",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CAP-DISC-GTB",
+      "title": "Named Capital One products on Discover Network only",
+      "url": "https://ecm.capitalone.com/WCM/card/benefits-guide/discover-benefits-guides/discover-english.pdf",
+      "type": "issuer_benefits_guide",
+      "observed_at": "2026-10-16",
+      "effective_from": "2026-02-01",
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CAP-MCWE-GTB",
+      "title": "Capital One World Elite Mastercard guide",
+      "url": "https://ecm.capitalone.com/WCM/card/benefits-guide/20210621-updates-to-wmc-world-and-we/mc-we-gtb_english.pdf",
+      "type": "issuer_benefits_guide",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "CITI-DC",
+      "title": "Citi Double Cash rewards and extended warranty summary",
+      "url": "https://www.citi.com/credit-cards/citi-double-cash-credit-card",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "BOFA-CCR",
+      "title": "Customized Cash Rewards product and public offer",
+      "url": "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "BOFA-TIER",
+      "title": "BofA Rewards credit-card bonus table",
+      "url": "https://www.bankofamerica.com/bofa-rewards/increasing-bofa-rewards-with-credit-cards/",
+      "type": "issuer_membership_terms_summary",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "DISC-IT",
+      "title": "Discover it Cash Back product page",
+      "url": "https://www.discover.com/credit-cards/cash-back/it-card/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "DISC-CAL",
+      "title": "Discover calendar: generic cap only, live categories unavailable",
+      "url": "https://www.discover.com/credit-cards/cash-back/cashback-calendar.html",
+      "type": "issuer_rewards_calendar",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "WF-AC",
+      "title": "Wells Fargo Active Cash product and fee details",
+      "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
+      "type": "issuer_product_page",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "WF-GTB",
+      "title": "Wells Fargo Active Cash Guide to Benefits",
+      "url": "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/",
+      "type": "issuer_benefits_guide",
+      "observed_at": "2026-10-16",
+      "effective_from": "2025-09-15",
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    },
+    {
+      "id": "WF-DEALS",
+      "title": "My Wells Fargo Deals terms",
+      "url": "https://www.wellsfargo.com/assets/pdf/personal/my-wells-fargo-deals/terms-and-conditions-english.pdf",
+      "type": "issuer_offer_terms",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "account_applicability": "must_confirm",
+      "review_scope": "selected relevant fields; not a full legal or account-specific audit"
+    }
+  ],
+  "cards": [
+    {
+      "id": "chase-freedom-unlimited",
+      "issuer": "Chase",
+      "product": "Freedom Unlimited",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "CH-FU"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": null,
+        "knowledge": "unknown",
+        "source_ids": []
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "chase-freedom-unlimited-base",
+          "rate_bps": 150,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CH-FU"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        },
+        {
+          "id": "fu-dining",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CH-FU"
+          ],
+          "match": {
+            "issuer_category": "dining"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        },
+        {
+          "id": "fu-drugstore",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CH-FU"
+          ],
+          "match": {
+            "issuer_category": "drugstore"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        }
+      ],
+      "cap_pools": [],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CH-GTB"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "window_days": 120,
+          "state_window_overrides": {
+            "NY": 90
+          },
+          "limit_minor": 50000,
+          "limit_scope": "per_item",
+          "aggregate_limit_minor": 5000000,
+          "aggregate_period": "account_not_stated_as_annual",
+          "payment_requirement": "partial_eligible_card_or_eligible_rewards",
+          "notice_days_from_event": 90,
+          "documents_days_from_event": 120,
+          "deadline_exception": "as_soon_as_reasonably_possible",
+          "additional_eligibility_rule_pack_required": true
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CH-GTB"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "extension_months": 12,
+          "max_cumulative_underlying_warranty_months": 36,
+          "max_total_months_from_purchase": 48,
+          "limit_minor": 1000000,
+          "limit_scope": "per_item",
+          "payment_requirement": "partial_eligible_card_or_eligible_rewards",
+          "valid_us_manufacturer_warranty_required": true,
+          "refurbished_allowed_only_with_qualifying_warranty": true,
+          "notice_days_from_event": 90,
+          "documents_days_from_event": 120,
+          "additional_eligibility_rule_pack_required": true
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "CH-GTB"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [],
+      "source_ids": [
+        "CH-FU"
+      ],
+      "excluded_optimization_scopes": [
+        "issuer_travel_portal",
+        "welcome_bonus"
+      ]
+    },
+    {
+      "id": "amex-blue-cash-everyday",
+      "issuer": "American Express",
+      "product": "Blue Cash Everyday",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "AMEX-BCE"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": null,
+        "knowledge": "unknown",
+        "source_ids": []
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "amex-blue-cash-everyday-base",
+          "rate_bps": 100,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCE"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        },
+        {
+          "id": "bce-online",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCE-T"
+          ],
+          "match": {
+            "issuer_category": "us_online_retail_physical_goods"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "bce-online-calendar-year"
+        },
+        {
+          "id": "bce-supermarket",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCE-T"
+          ],
+          "match": {
+            "issuer_category": "us_supermarket"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "bce-supermarket-calendar-year"
+        },
+        {
+          "id": "bce-gas",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCE-T"
+          ],
+          "match": {
+            "issuer_category": "us_gas_station"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "bce-gas-calendar-year"
+        }
+      ],
+      "cap_pools": [
+        {
+          "id": "bce-online-calendar-year",
+          "spend_cap_minor": 600000,
+          "period": "calendar_year",
+          "scope": "card_account_including_authorized_users",
+          "shared_categories": [
+            "us_online_retail_physical_goods"
+          ],
+          "remaining_usage_required": true,
+          "posting_date_rule_requires_account_terms": true
+        },
+        {
+          "id": "bce-supermarket-calendar-year",
+          "spend_cap_minor": 600000,
+          "period": "calendar_year",
+          "scope": "card_account_including_authorized_users",
+          "shared_categories": [
+            "us_supermarket"
+          ],
+          "remaining_usage_required": true,
+          "posting_date_rule_requires_account_terms": true
+        },
+        {
+          "id": "bce-gas-calendar-year",
+          "spend_cap_minor": 600000,
+          "period": "calendar_year",
+          "scope": "card_account_including_authorized_users",
+          "shared_categories": [
+            "us_gas_station"
+          ],
+          "remaining_usage_required": true,
+          "posting_date_rule_requires_account_terms": true
+        }
+      ],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "verified_summary",
+          "source_ids": [
+            "AMEX-BCE-B"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "window_days": 90,
+          "limit_minor": 100000,
+          "limit_scope": "per_covered_purchase",
+          "aggregate_limit_minor": 5000000,
+          "aggregate_period": "calendar_year"
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "AMEX-BCE-B"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "AMEX-BCE-B"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [],
+      "source_ids": [
+        "AMEX-BCE"
+      ],
+      "category_exclusions_notes": [
+        "Online retail requires US retailer selling physical goods directly to consumers; travel, entertainment and other services are not automatically eligible.",
+        "Each 3% category has its own annual pool."
+      ]
+    },
+    {
+      "id": "amex-blue-cash-preferred",
+      "issuer": "American Express",
+      "product": "Blue Cash Preferred",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 9500,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "AMEX-BCP"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": 270,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "AMEX-BCP"
+        ]
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "amex-blue-cash-preferred-base",
+          "rate_bps": 100,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCP"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        },
+        {
+          "id": "bcp-supermarket",
+          "rate_bps": 600,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCP"
+          ],
+          "match": {
+            "issuer_category": "us_supermarket"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "bcp-supermarket-calendar-year"
+        },
+        {
+          "id": "bcp-streaming",
+          "rate_bps": 600,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCP"
+          ],
+          "match": {
+            "issuer_category": "select_us_streaming"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        },
+        {
+          "id": "bcp-transit",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCP"
+          ],
+          "match": {
+            "issuer_category": "transit"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        },
+        {
+          "id": "bcp-gas",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCP"
+          ],
+          "match": {
+            "issuer_category": "us_gas_station"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        }
+      ],
+      "cap_pools": [
+        {
+          "id": "bcp-supermarket-calendar-year",
+          "spend_cap_minor": 600000,
+          "period": "calendar_year",
+          "scope": "card_account_including_authorized_users",
+          "shared_categories": [
+            "us_supermarket"
+          ],
+          "remaining_usage_required": true,
+          "posting_date_rule_requires_account_terms": true
+        }
+      ],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "verified_summary",
+          "source_ids": [
+            "AMEX-BCP-B"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "window_days": 90,
+          "limit_minor": 100000,
+          "limit_scope": "per_covered_purchase",
+          "aggregate_limit_minor": 5000000,
+          "aggregate_period": "calendar_year"
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "verified_summary",
+          "source_ids": [
+            "AMEX-BCP"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "extension_months_max": 12,
+          "max_manufacturer_warranty_months": 60,
+          "limit_minor": 1000000,
+          "limit_scope": "per_item",
+          "aggregate_limit_minor": 5000000,
+          "aggregate_period": "calendar_year"
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "AMEX-BCP-B",
+            "AMEX-RP"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "window_days": 90,
+          "limit_minor": 30000,
+          "limit_scope": "per_item",
+          "aggregate_limit_minor": 100000,
+          "aggregate_period": "calendar_year_of_purchase",
+          "payment_requirement": "full_eligible_card",
+          "purchase_geography": "US_and_policy_listed_territories",
+          "item_state_required": "original_working_not_used_defective_or_damaged",
+          "merchant_denial_required_at_claim": true,
+          "equal_or_better_merchant_policy_covering_claim_disqualifies": true,
+          "selected_excluded_categories": [
+            "formal_wear",
+            "jewelry",
+            "watches",
+            "used_or_altered",
+            "software",
+            "tickets",
+            "consumables",
+            "gift_cards"
+          ],
+          "selected_exclusions_are_exhaustive": false,
+          "full_exclusion_predicate_pack_required": true
+        }
+      ],
+      "intro_offers": [
+        {
+          "id": "bcp-public-first-year-fee-waiver",
+          "kind": "annual_fee_waiver",
+          "advertised_value_minor": 9500,
+          "apply_automatically": false,
+          "requires": [
+            "account_offer_confirmed"
+          ],
+          "source_ids": [
+            "AMEX-BCP"
+          ]
+        }
+      ],
+      "source_ids": [
+        "AMEX-BCP"
+      ]
+    },
+    {
+      "id": "capital-one-quicksilver",
+      "issuer": "Capital One",
+      "product": "Quicksilver Rewards",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "CAP-QS"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "CAP-QS-F"
+        ]
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "capital-one-quicksilver-base",
+          "rate_bps": 150,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CAP-QS"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        }
+      ],
+      "cap_pools": [],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CAP-GUIDES"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CAP-GUIDES"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CAP-GUIDES"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [],
+      "source_ids": [
+        "CAP-QS"
+      ],
+      "network_and_tier_required_for_benefits": true,
+      "conditional_benefit_template_ids": [
+        "cap-named-products-discover-20260201",
+        "cap-world-elite-mastercard"
+      ],
+      "excluded_optimization_scopes": [
+        "issuer_travel_portal",
+        "issuer_entertainment_portal",
+        "welcome_bonus"
+      ]
+    },
+    {
+      "id": "capital-one-savor",
+      "issuer": "Capital One",
+      "product": "Savor Rewards",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "CAP-SAVOR"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "CAP-SAVOR"
+        ]
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "capital-one-savor-base",
+          "rate_bps": 100,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CAP-SAVOR"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        },
+        {
+          "id": "savor-grocery_store",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CAP-SAVOR"
+          ],
+          "match": {
+            "issuer_category": "grocery_store"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        },
+        {
+          "id": "savor-dining",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CAP-SAVOR"
+          ],
+          "match": {
+            "issuer_category": "dining"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        },
+        {
+          "id": "savor-entertainment",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CAP-SAVOR"
+          ],
+          "match": {
+            "issuer_category": "entertainment"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        },
+        {
+          "id": "savor-popular_streaming",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CAP-SAVOR"
+          ],
+          "match": {
+            "issuer_category": "popular_streaming"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10
+        }
+      ],
+      "cap_pools": [],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CAP-GUIDES"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CAP-GUIDES"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CAP-GUIDES"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [],
+      "source_ids": [
+        "CAP-SAVOR"
+      ],
+      "network_and_tier_required_for_benefits": true,
+      "conditional_benefit_template_ids": [
+        "cap-named-products-discover-20260201",
+        "cap-world-elite-mastercard"
+      ],
+      "excluded_optimization_scopes": [
+        "issuer_travel_portal",
+        "issuer_entertainment_portal",
+        "welcome_bonus"
+      ]
+    },
+    {
+      "id": "citi-double-cash",
+      "issuer": "Citi",
+      "product": "Double Cash",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "CITI-DC"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": null,
+        "knowledge": "unknown",
+        "source_ids": []
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "citi-double-cash-base",
+          "rate_bps": 100,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "CITI-DC"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        }
+      ],
+      "cap_pools": [],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CITI-DC"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "verified_summary",
+          "source_ids": [
+            "CITI-DC"
+          ],
+          "automatic_item_eligibility_enabled": false,
+          "extension_months": null,
+          "limit_minor": null,
+          "guide_required": true
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "unknown",
+          "source_ids": [
+            "CITI-DC"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [],
+      "source_ids": [
+        "CITI-DC"
+      ],
+      "conditional_rewards": [
+        {
+          "id": "dc-payment-reward",
+          "rate_bps": 100,
+          "basis": "eligible_purchase_principal_repaid_with_corresponding_purchase_tracker",
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "eligible_payment_confirmed",
+            "repayment_assumption_disclosed"
+          ],
+          "source_ids": [
+            "CITI-DC"
+          ],
+          "knowledge": "verified_rule",
+          "show_separately_from_purchase_reward": true
+        }
+      ],
+      "cash_redemption_value_cents_per_point": 1,
+      "excluded_optimization_scopes": [
+        "issuer_travel_portal",
+        "welcome_bonus"
+      ]
+    },
+    {
+      "id": "bofa-customized-cash-rewards",
+      "issuer": "Bank of America",
+      "product": "Customized Cash Rewards",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "BOFA-CCR"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": null,
+        "knowledge": "unknown",
+        "source_ids": []
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "bofa-customized-cash-rewards-base",
+          "rate_bps": 100,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "BOFA-CCR"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        },
+        {
+          "id": "bofa-selected-choice",
+          "rate_bps": 300,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "BOFA-CCR"
+          ],
+          "match": {
+            "issuer_category_equals_account_choice": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "bofa-choice-grocery-wholesale-quarter"
+        },
+        {
+          "id": "bofa-grocery-wholesale",
+          "rate_bps": 200,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "BOFA-CCR"
+          ],
+          "match": {
+            "issuer_category_in": [
+              "grocery_store",
+              "wholesale_club"
+            ]
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed",
+            "issuer_category_or_channel_evidence_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "bofa-choice-grocery-wholesale-quarter"
+        }
+      ],
+      "cap_pools": [
+        {
+          "id": "bofa-choice-grocery-wholesale-quarter",
+          "spend_cap_minor": 250000,
+          "period": "calendar_quarter",
+          "scope": "card_account_including_authorized_users",
+          "shared_categories": [
+            "selected_choice_category",
+            "grocery_store",
+            "wholesale_club"
+          ],
+          "remaining_usage_required": true,
+          "posting_date_rule_requires_account_terms": true
+        }
+      ],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "unknown",
+          "source_ids": [
+            "BOFA-CCR"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "unknown",
+          "source_ids": [
+            "BOFA-CCR"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "unknown",
+          "source_ids": [
+            "BOFA-CCR"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [
+        {
+          "id": "bofa-public-first-year-choice-extra",
+          "kind": "additive_rate_bps",
+          "rate_bps": 300,
+          "match": {
+            "issuer_category_equals_account_choice": true
+          },
+          "cap_pool_id": "bofa-choice-grocery-wholesale-quarter",
+          "requires": [
+            "account_offer_confirmed",
+            "within_account_first_year",
+            "no_unverified_membership_stacking"
+          ],
+          "apply_automatically": false,
+          "source_ids": [
+            "BOFA-CCR"
+          ]
+        }
+      ],
+      "source_ids": [
+        "BOFA-CCR"
+      ],
+      "membership_bonus": {
+        "allowed_bonus_bps": [
+          0,
+          1000,
+          2500,
+          5000,
+          7500
+        ],
+        "basis": "verified_ordinary_reward_not_first_year_intro",
+        "requires": [
+          "account_membership_bonus_confirmed"
+        ],
+        "source_ids": [
+          "BOFA-TIER"
+        ],
+        "stacking_with_intro_verified": false
+      }
+    },
+    {
+      "id": "discover-it-cash-back",
+      "issuer": "Discover product line (Capital One group)",
+      "product": "Discover it Cash Back",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "DISC-IT"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": null,
+        "knowledge": "unknown",
+        "source_ids": []
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "discover-it-cash-back-base",
+          "rate_bps": 100,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "DISC-IT"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        },
+        {
+          "id": "discover-quarterly",
+          "rate_bps": 500,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "DISC-IT",
+            "DISC-CAL"
+          ],
+          "match": {
+            "issuer_category_in_current_quarter": true,
+            "activation": "yes"
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "quarter_category_snapshot_verified",
+            "activation_verified",
+            "remaining_cap_known"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 10,
+          "cap_pool_id": "discover-quarterly-activated",
+          "enabled": false,
+          "disabled_reason": "current_quarter_category_policy_not_verified",
+          "valid_from": null,
+          "valid_to": null
+        }
+      ],
+      "cap_pools": [
+        {
+          "id": "discover-quarterly-activated",
+          "spend_cap_minor": 150000,
+          "period": "calendar_quarter",
+          "scope": "card_account_including_authorized_users",
+          "shared_categories": [
+            "current_quarter_categories"
+          ],
+          "remaining_usage_required": true,
+          "posting_date_rule_requires_account_terms": true
+        }
+      ],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "DISC-IT"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "DISC-IT"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "DISC-IT"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [
+        {
+          "id": "discover-cashback-match-first-year",
+          "kind": "deferred_match",
+          "match_multiplier": 1,
+          "basis": "eligible_cashback_earned_under_account_first_year_offer",
+          "apply_automatically": false,
+          "requires": [
+            "account_offer_confirmed",
+            "first_year_period_known"
+          ],
+          "source_ids": [
+            "DISC-IT"
+          ]
+        }
+      ],
+      "source_ids": [
+        "DISC-IT"
+      ]
+    },
+    {
+      "id": "wells-fargo-active-cash",
+      "issuer": "Wells Fargo",
+      "product": "Active Cash",
+      "market": "US_consumer",
+      "observed_at": "2026-10-16",
+      "effective_from": null,
+      "effective_to": null,
+      "account_applicability": "must_confirm",
+      "readiness": "reward_seed_and_benefit_summary_only",
+      "annual_fee_minor": {
+        "value": 0,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "WF-AC"
+        ]
+      },
+      "foreign_fee_bps": {
+        "value": 300,
+        "knowledge": "verified_summary",
+        "source_ids": [
+          "WF-AC"
+        ]
+      },
+      "reward_currency": "cash_equivalent",
+      "cash_redemption_value_basis": "cash_back_or_verified_cash_equivalent_only",
+      "reward_rules": [
+        {
+          "id": "wells-fargo-active-cash-base",
+          "rate_bps": 200,
+          "rate_semantics": "total_not_additive",
+          "knowledge": "verified_rule",
+          "source_ids": [
+            "WF-AC"
+          ],
+          "match": {
+            "eligible_purchase": true
+          },
+          "requires": [
+            "account_policy_applicability_confirmed",
+            "issuer_eligible_purchase_confirmed"
+          ],
+          "exclusive_group": "ordinary_purchase_rate",
+          "priority": 0
+        }
+      ],
+      "cap_pools": [],
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "WF-GTB"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "extended_warranty",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "WF-GTB"
+          ],
+          "automatic_item_eligibility_enabled": false
+        },
+        {
+          "type": "return_protection",
+          "knowledge": "not_listed",
+          "source_ids": [
+            "WF-GTB"
+          ],
+          "automatic_item_eligibility_enabled": false
+        }
+      ],
+      "intro_offers": [],
+      "source_ids": [
+        "WF-AC"
+      ],
+      "non_purchase_triggered_benefits": [
+        {
+          "type": "cell_phone_bill_protection",
+          "knowledge": "verified_summary",
+          "limit_minor": 60000,
+          "deductible_minor": 2500,
+          "trigger": "pay_qualifying_monthly_wireless_bill",
+          "not_triggered_by": "buying_the_handset",
+          "automatic_item_eligibility_enabled": false,
+          "source_ids": [
+            "WF-AC",
+            "WF-GTB"
+          ]
+        }
+      ]
+    }
+  ],
+  "conditional_benefit_templates": [
+    {
+      "id": "cap-named-products-discover-20260201",
+      "requires": {
+        "issuer": "Capital One",
+        "network": "Discover",
+        "named_product_in": [
+          "Savor",
+          "SavorOne",
+          "Quicksilver",
+          "QuicksilverOne"
+        ],
+        "account_applicability_confirmed": true
+      },
+      "effective_from": "2026-02-01",
+      "source_ids": [
+        "CAP-DISC-GTB"
+      ],
+      "automatic_activation": false,
+      "full_exclusion_predicate_pack_required": true,
+      "benefits": [
+        {
+          "type": "purchase_damage_theft",
+          "window_days": 90,
+          "limit_minor": 100000,
+          "limit_scope": "per_claim_occurrence",
+          "aggregate_limit_minor": 2500000,
+          "aggregate_period": "rolling_12_months",
+          "payment_requirement": "partial_eligible_card_or_eligible_rewards",
+          "notice_days_from_event": 60,
+          "documents_days_from_event": 90
+        },
+        {
+          "type": "extended_warranty",
+          "extension_rule": "double_original_up_to_12_months",
+          "max_original_months": 24,
+          "limit_minor": 1000000,
+          "limit_scope": "per_claim",
+          "aggregate_limit_minor": 5000000,
+          "aggregate_period": "per_cardholder_not_stated_as_annual",
+          "payment_requirement": "partial_eligible_card_or_eligible_rewards"
+        },
+        {
+          "type": "price_protection",
+          "window_days": 120,
+          "limit_minor": 25000,
+          "limit_scope": "per_item",
+          "aggregate_limit_minor": 100000,
+          "aggregate_period": "year_as_defined_in_policy"
+        }
+      ]
+    },
+    {
+      "id": "cap-world-elite-mastercard",
+      "requires": {
+        "issuer": "Capital One",
+        "network": "Mastercard",
+        "tier": "World Elite",
+        "account_applicability_confirmed": true
+      },
+      "effective_from": null,
+      "source_ids": [
+        "CAP-MCWE-GTB"
+      ],
+      "automatic_activation": false,
+      "full_exclusion_predicate_pack_required": true,
+      "benefits": [
+        {
+          "type": "extended_warranty",
+          "extension_rule": "double_original_up_to_24_months",
+          "max_original_months": 24,
+          "limit_minor": 1000000,
+          "limit_scope": "per_claim",
+          "payment_requirement": "full_eligible_card",
+          "refurbished_excluded": true
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    "Complete item eligibility and exclusion packs for all cards",
+    "Account-applicable Citi extended warranty numerical terms",
+    "BofA purchase-benefit guide and intro/membership stacking",
+    "Discover current-quarter category snapshot",
+    "Account-applicable APR, grace, credit and cap balances",
+    "Unverified foreign transaction fees on products with null fees"
+  ]
+}

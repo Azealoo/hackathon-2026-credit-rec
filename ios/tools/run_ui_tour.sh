@@ -5,10 +5,12 @@
 #   ios/tools/run_ui_tour.sh          # live tests, then the tour 4 times
 #   ios/tools/run_ui_tour.sh live     # live tests only
 #   ios/tools/run_ui_tour.sh tour     # the tour only
+#   ios/tools/run_ui_tour.sh icon     # the home-screen app icon, light and dark (HomeIconUITests; no backend, no Photos)
 #
 # Steps: find (or create) the simulator, warm Render, `simctl addmedia` the laptop checkout so it is the newest photo,
 # build once, run. The tour runs light + default size, dark + default size, light + Dynamic Type extra-large (XL) and
 # light + extra-extra-large, writing docs/overnight-shots/{light-default,dark-default,light-xl,light-xxl}/NN-<screen>.png.
+# `icon` writes docs/overnight-shots/brand/home-icon-{light,dark}.png (and -zoom.png crops).
 # Appearance, text size and the status bar are put back (light, large, cleared) on exit.
 #
 # Env: PAYWISE_SIM (simulator name, default "Paywise Dev 18"), PAYWISE_DD (DerivedData), PAYWISE_RESULTS (where the
@@ -44,19 +46,21 @@ restore() {
 }
 trap restore EXIT
 
-# Render's free tier sleeps; the first request can take ~30-60 s.
-for attempt in 1 2 3 4 5 6; do
-  code="$(curl -s -m 60 -o /dev/null -w '%{http_code}' "$api/health" || true)"
-  echo "GET /health → $code (attempt $attempt)"
-  [ "$code" = "200" ] && break
-  sleep 5
-done
+if [ "$mode" != "icon" ]; then
+  # Render's free tier sleeps; the first request can take ~30-60 s.
+  for attempt in 1 2 3 4 5 6; do
+    code="$(curl -s -m 60 -o /dev/null -w '%{http_code}' "$api/health" || true)"
+    echo "GET /health → $code (attempt $attempt)"
+    [ "$code" = "200" ] && break
+    sleep 5
+  done
 
-# The picker shows the newest photo first and the tests pick it. addmedia dates a PNG by its file's modification time,
-# so add a fresh copy (dated now): it sorts ahead of anything already in the simulator's library.
-photo_dir="$(mktemp -d)"
-cp "$repo_dir/fixtures/screenshots/laptop-checkout.png" "$photo_dir/laptop-checkout.png"
-xcrun simctl addmedia "$udid" "$photo_dir/laptop-checkout.png"
+  # The picker shows the newest photo first and the tests pick it. addmedia dates a PNG by its file's modification
+  # time, so add a fresh copy (dated now): it sorts ahead of anything already in the simulator's library.
+  photo_dir="$(mktemp -d)"
+  cp "$repo_dir/fixtures/screenshots/laptop-checkout.png" "$photo_dir/laptop-checkout.png"
+  xcrun simctl addmedia "$udid" "$photo_dir/laptop-checkout.png"
+fi
 xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
 
 # xcodebuild <log> <args…> with a watchdog: interrupt it if it hasn't exited 60 s after the test run ended.
@@ -109,6 +113,15 @@ if [ "$mode" = "all" ] || [ "$mode" = "tour" ]; then
       -resultBundlePath "$results/tour-$3.xcresult" \
       -only-testing:PaywiseUITests/ScreenshotTourUITests/testScreenshotTour test-without-building || failed=1
     echo "  $(ls "$repo_dir/docs/overnight-shots/$3"/*.png 2>/dev/null | wc -l | tr -d ' ') PNGs"
+  done
+fi
+
+if [ "$mode" = "icon" ]; then
+  for appearance in light dark; do
+    echo "Home-screen icon, appearance $appearance → docs/overnight-shots/brand/home-icon-$appearance.png"
+    xcrun simctl ui "$udid" appearance "$appearance"
+    run_xcodebuild "$results/icon-$appearance.log" "${common[@]}" -resultBundlePath "$results/icon-$appearance.xcresult" \
+      -only-testing:PaywiseUITests/HomeIconUITests/testHomeScreenIcon test-without-building || failed=1
   done
 fi
 

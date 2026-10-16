@@ -149,10 +149,12 @@ struct CheckResultView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center, spacing: 12) {
                 cardArt(response.purchaseDraft?.cardId)
+                // Wraps from XL like lines 2–3: at XXL one line can't hold "✓ Saved: Wireless Earbuds · $249" even
+                // at 70%, and the cut would drop the price.
                 Text(saved.line1)
                     .font(.system(size: line1Size, weight: .bold))
                     .tracking(-0.5)
-                    .lineLimit(oneLine ? 1 : 3)
+                    .lineLimit(oneLine && !savedLinesWrap ? 1 : 3)
                     .minimumScaleFactor(0.7)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -218,9 +220,9 @@ struct CheckResultView: View {
 
     // MARK: Parts
 
-    /// Verdict and Saved line 1 stay on one line (shrinking a little) until accessibility sizes.
+    /// The verdict line 1 stays on one line (shrinking a little) until accessibility sizes; Saved line 1 until XL.
     private var oneLine: Bool { !typeSize.isAccessibilitySize }
-    /// Saved lines 2–3 wrap from XL: at XXL one line can't hold "…up to $500 to Feb 14, 2027" even at 85%.
+    /// Saved lines 1–3 wrap from XL: at XXL one line can't hold "…up to $500 to Feb 14, 2027" even at 85%.
     private var savedLinesWrap: Bool { typeSize >= .xLarge }
 
     /// The same expanded art as the island (SPEC §6.4), `art.assetName` from cards.json.
@@ -313,13 +315,13 @@ private struct SpokenLines: ViewModifier {
     }
 }
 
-/// "Paywise" with the shield glyph (design.md §3 header, §5 glyph).
+/// "Paywise" with the logo (design.md §3 header; the mark from brand/08-monoline).
 private struct SnippetHeader: View {
     let replayed: Bool
 
     var body: some View {
         HStack(spacing: 6) {
-            PaywiseGlyphMark(size: 16)
+            PaywiseMark(size: 16)
                 .accessibilityHidden(true)
             Text("Paywise")
                 .font(.system(size: 14, weight: .semibold))

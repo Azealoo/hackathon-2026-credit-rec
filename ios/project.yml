@@ -56,8 +56,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azealoo.paywise
         TARGETED_DEVICE_FAMILY: "1"
-        # Paywise/Assets.xcassets (standard, dark, tinted). Card art, the glyph and `accent` are in
-        # Shared/Assets.xcassets, compiled into the app and the widget. Both made by tools/make_assets.sh.
+        # Paywise/Assets.xcassets: AppIcon (standard, dark, tinted) and the logo `mark`, both logo 08 "Monoline"
+        # (brand/08-monoline). Card art, the Live Activity glyph and `accent` are in Shared/Assets.xcassets, compiled
+        # into the app and the widget. All made by tools/make_assets.sh.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # design.md §2: system controls (tab bar, back buttons, toggles) take the `accent` asset, never system blue.
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: accent

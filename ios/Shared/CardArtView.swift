@@ -38,8 +38,9 @@ struct CardArtImage: View {
     }
 }
 
-/// The Paywise glyph (design.md §5), the template vector asset `glyph`, in the accent color
-/// (`accentDark` wherever the environment is dark, e.g. the island).
+/// The Live Activity's Paywise glyph (design.md §5's shield), the template vector asset `glyph`, in the accent color
+/// (`accentDark` wherever the environment is dark, e.g. the island). App screens show the logo instead (`PaywiseMark`);
+/// the island, minimal, stale and Lock Screen keep the shield, which stays legible at 22 pt.
 struct PaywiseGlyphMark: View {
     var size: CGFloat
 

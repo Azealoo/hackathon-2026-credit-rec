@@ -27,6 +27,15 @@ struct DebugHookTests {
         #expect(!DemoActivity.checking.alerts && !DemoActivity.stale.alerts && DemoActivity.keep.alerts)
     }
 
+    /// `stale` is requested 5 s before it goes stale, so the system flips it (a staleDate already past at request time
+    /// draws nothing in the island); the other demo states never go stale.
+    @Test func onlyTheStaleDemoGoesStaleFiveSecondsAfterTheRequest() {
+        #expect(DemoActivity.stale.staleDelay == 5)
+        for demo in DemoActivity.allCases where demo != .stale {
+            #expect(demo.staleDelay == nil, "\(demo.rawValue)")
+        }
+    }
+
     @Test func galleryArguments() {
         for state in GalleryState.allCases {
             #expect(GalleryState.requested(arguments: ["Paywise", "-gallery", state.rawValue]) == state)
@@ -34,7 +43,7 @@ struct DebugHookTests {
         #expect(GalleryState.requested(arguments: ["Paywise", "-gallery", "nonsense"]) == nil)
         #expect(GalleryState.requested(arguments: ["Paywise"]) == nil)
         #expect(Set(GalleryState.allCases.map(\.rawValue)) == [
-            "result", "resultCashBest", "resultCash", "keepProtected", "saved", "sent", "notSetUp",
+            "result", "resultCashBest", "resultCash", "keepProtected", "saved", "savedEarbuds", "sent", "notSetUp",
         ])
     }
 
@@ -102,6 +111,17 @@ struct DebugHookTests {
         #expect(record.view == .saved)
         #expect(ResultText.saved(record.parsedResponse.purchaseDraft) == .init(
             line1: "✓ Saved: Aero 14 · $1,499",
+            line2: "Theft & damage cover up to $500 to Feb 14, 2027",
+            line3: "Extra warranty year to Oct 17, 2028*",
+            footnote: "*If the maker's warranty is 1 year. Planned: confirm after you pay."
+        ))
+    }
+
+    @Test func gallerySavedEarbuds() throws {
+        let record = try #require(GalleryState.savedEarbuds.record(catalog: .bundled()))
+        #expect(record.view == .saved)
+        #expect(ResultText.saved(record.parsedResponse.purchaseDraft) == .init(
+            line1: "✓ Saved: Wireless Earbuds · $249",
             line2: "Theft & damage cover up to $500 to Feb 14, 2027",
             line3: "Extra warranty year to Oct 17, 2028*",
             footnote: "*If the maker's warranty is 1 year. Planned: confirm after you pay."

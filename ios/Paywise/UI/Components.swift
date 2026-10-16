@@ -22,6 +22,21 @@ extension Font {
     }
 }
 
+/// The Paywise logo (brand/08-monoline, option 08 "Monoline"): the vector image set `mark`, mark.svg on light surfaces
+/// and mark-dark.svg on dark ones, picked by the environment's color scheme. App screens only: the Live Activity keeps
+/// the shield (`PaywiseGlyphMark`), because the logo's stacked lines blur together at the island's 22 pt.
+struct PaywiseMark: View {
+    var size: CGFloat
+
+    var body: some View {
+        Image("mark")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityLabel("Paywise")
+    }
+}
+
 /// design.md §4: 50 pt tall, fully round. Primary is white on `accent`; secondary is label on the system fill.
 struct AppButtonStyle: ButtonStyle {
     var prominent = true

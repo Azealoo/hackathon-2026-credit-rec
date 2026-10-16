@@ -51,7 +51,7 @@ private struct ConsentStep: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 10) {
-                    PaywiseGlyphMark(size: 44)
+                    PaywiseMark(size: 44)
                     Text("Paywise")
                         .font(.app(34, .bold))
                         .tracking(-0.8)

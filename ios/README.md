@@ -46,7 +46,7 @@ iOS Simulator tool's screenshot (`xcrun simctl io … screenshot` omits the isla
 |---|---|
 | `-demoActivity <state>` | Starts that Live Activity with the §6.3 copy for the demo wallet and leaves it running (never stale): `checking`, `keep`, `keepMethod`, `noCheckout`, `couldntCheck`, `switchFallback`, `stale` (staleDate in the past). Result states alert, so the island expands. |
 | `-demoActivity end` | Ends every Paywise activity. |
-| `-gallery <state>` | Opens on the result snippet in that state, full screen: `result`, `resultCashBest`, `resultCash`, `keepProtected`, `saved`, `sent`, `notSetUp`. |
+| `-gallery <state>` | Opens on the result snippet in that state, full screen: `result`, `resultCashBest`, `resultCash`, `keepProtected`, `saved`, `savedEarbuds` (the longer "Wireless Earbuds" Saved line 1), `sent`, `notSetUp`. |
 | `-checkState <state>` | Opens the Check tab on an answer the island shows after a press, as "Check a screenshot" shows it: `keepDefault`, `keepMethod`, `keepItemsUnreadable`, `noCheckoutOnDevice`, `noCheckoutFromBackend`, `alreadyPaid`, `couldntCheck`, `tookTooLong` (use with `-skipOnboarding -tab check`). |
 
 ```bash
@@ -104,19 +104,24 @@ Settings › Debug also has *Start demo state*. The states are built by the same
 8 pt in. The Lock Screen says only "Paywise is checking" / "Paywise checked this screen". `ContentState.cardId` names
 the card whose bundled art the island draws (§9.1).
 
-`tools/make_assets.sh` rebuilds every visual asset from docs/design.md §5–§7 and `data/cards.json` (deterministic;
-commit the output):
+`tools/make_assets.sh` rebuilds every visual asset from docs/design.md §5–§7, `data/cards.json` and the logo in
+`brand/08-monoline` (option 08 "Monoline"; deterministic; commit the output). The standard app icon is the opaque
+1024 PNG already in `AppIcon.appiconset`; `tools/make_assets.sh <png>` replaces it first. Dark and tinted are drawn
+from `brand/08-monoline/app-icon.svg`.
 
 | Asset | Where | Size |
 |---|---|---|
 | `card-<id>` (expanded, snippet) | `Shared/Assets.xcassets` (app + widget) | 156 × 98 px @3x, 104 × 65 @2x |
 | `card-<id>-compact` | `Shared/Assets.xcassets` | 157 × 110 px @3x (letterboxed), 104 × 73 @2x |
-| `glyph` | `Shared/Assets.xcassets` | template SVG, 24 × 24 grid |
+| `glyph` | `Shared/Assets.xcassets` | template SVG, 24 × 24 grid; the Live Activity's shield (island, minimal, stale, Lock Screen) |
 | `accent` | `Shared/Assets.xcassets` | #3f5bf6, dark #5b74ff |
-| `AppIcon` | `Paywise/Assets.xcassets` | 1024 × 1024 standard, dark, tinted; opaque |
+| `AppIcon` | `Paywise/Assets.xcassets` | 1024 × 1024: standard opaque; dark (paper + #5b74ff lines) and tinted (grayscale) on transparent |
+| `mark` | `Paywise/Assets.xcassets` (app only) | the logo, vector: `mark.svg` (Any), `mark-dark.svg` (Dark); onboarding, result header, Checking card |
 | `silent.caf` | `Shared/Sounds` (app + widget bundles) | 10 ms of silence, 16-bit PCM mono 44.1 kHz |
 
-`AssetTests` checks the sizes (never above the slot), both bundles, the glyph, `accent`, the sound and the icon.
+`AssetTests` checks the sizes (never above the slot), both bundles, the glyph, `accent`, the sound, the icon's three
+appearances (and their alpha) and the mark's Any/Dark. `tools/run_ui_tour.sh icon` saves the home-screen icon in light,
+dark and tinted to `docs/overnight-shots/brand/`.
 
 ## Check chain (SPEC §15.5)
 

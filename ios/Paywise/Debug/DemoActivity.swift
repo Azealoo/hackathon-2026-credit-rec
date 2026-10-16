@@ -11,7 +11,8 @@ import os
 ///
 /// Result states are requested and then updated with an alert, as a real press does, so the island expands.
 /// Unlike a real check (staleDate = now + 2 min, §6.2) a demo state never goes stale, so a screenshot taken minutes
-/// later still shows it; `stale` uses a staleDate in the past.
+/// later still shows it. `stale` is requested with a staleDate 5 s ahead (`staleDelay`) and the system flips it to
+/// stale then: an activity requested already stale draws nothing in the island.
 enum DemoActivity: String, CaseIterable, Sendable {
     case checking
     case keep
@@ -48,6 +49,12 @@ enum DemoActivity: String, CaseIterable, Sendable {
         case .switchFallback:
             return island(DemoChecks.laptopSwitch()?.decision)
         }
+    }
+
+    /// Seconds after the request at which the system marks the activity stale: only `stale`, 5 s, so it starts as
+    /// *Checking* and turns into the bare glyph by itself. A staleDate already past at request time draws nothing.
+    var staleDelay: TimeInterval? {
+        self == .stale ? 5 : nil
     }
 
     /// Result states alert (the island expands); *Checking* and stale don't.
@@ -98,7 +105,7 @@ enum DemoActivity: String, CaseIterable, Sendable {
         }
 
         let state = demo.state(deps: deps)
-        let staleDate: Date? = demo == .stale ? .now.addingTimeInterval(-60) : nil
+        let staleDate: Date? = demo.staleDelay.map { Date.now.addingTimeInterval($0) }
         let content = ActivityContent(state: state, staleDate: staleDate)
         let enabled = ActivityAuthorizationInfo().areActivitiesEnabled
         let activity: Activity<PaywiseActivityAttributes>

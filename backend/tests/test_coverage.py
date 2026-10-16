@@ -172,8 +172,8 @@ def test_copy_maker_route(results):
 def test_copy_need_more_info(results):
     data = results[5]
     assert data["headline"] == "Need more info."
-    assert "“involuntary and accidental parting”" in data["why"]
-    assert "simply losing something may not be" in data["why"]
+    assert data["why"] == ("Theft and “involuntary and accidental parting” may be covered within 120 days (90 in NY); "
+                           "simply losing something may not be. See the cited clause.")
 
 
 def test_copy_partial_payment(results):
@@ -400,8 +400,8 @@ def test_theft_r9_never_routes_to_the_maker():
 
 def test_porch_theft_adds_carrier_line():
     data = verdict(body_for(13, incident={"description": "Package taken from my porch."}))
-    assert "For porch theft, claim with the carrier or store first" in data["checklist"]
-    assert "For porch theft, claim with the carrier or store first" not in verdict(body_for(13))["checklist"]
+    assert "Claim with the carrier or store first" in data["checklist"]
+    assert "Claim with the carrier or store first" not in verdict(body_for(13))["checklist"]
 
 
 @pytest.mark.parametrize(

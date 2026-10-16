@@ -168,16 +168,13 @@ struct InAppResultCard: View {
     }
 }
 
-/// §6.3 *Checking*, in the app.
+/// §6.3 *Checking*, in the app: the logo leading and the spinner trailing, as the island pairs its glyph with the
+/// progress ring. (The logo inside a large spinner, as the shield was, collides with the spokes: it is wider.)
 private struct CheckingCard: View {
     var body: some View {
         HStack(spacing: 14) {
-            ZStack {
-                ProgressView()
-                    .controlSize(.large)
-                PaywiseGlyphMark(size: 16)
-            }
-            .frame(width: 44, height: 44)
+            PaywiseMark(size: 32)
+                .frame(width: 44, height: 44)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Reading this screen…")
                     .font(.app(17, .semibold))
@@ -187,6 +184,7 @@ private struct CheckingCard: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
+            ProgressView()
         }
         .padding(20)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 40, style: .continuous))

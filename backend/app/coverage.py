@@ -78,7 +78,7 @@ ROUTES = {"purchase_protection": "card_purchase_protection", "extended_warranty"
 CHECKLIST_BASE = ["Itemized receipt", "Card statement showing the purchase"]
 CHECKLIST_EW = [*CHECKLIST_BASE, "Original warranty", "Repair estimate"]
 POLICE_REPORT = "Police report (made within 48 hours if you can)"
-PORCH_THEFT = "For porch theft, claim with the carrier or store first"
+PORCH_THEFT = "Claim with the carrier or store first"
 REPAIR_ESTIMATE = "Repair estimate"
 PORCH_WORDS = re.compile(r"\b(porch|doorstep|front door|stoop|package|parcel|deliver(?:ed|y)?)\b", re.IGNORECASE)
 
@@ -586,8 +586,9 @@ class _Assessment:
             self.note_state_windows(pp)
             window = f"within {days}, to {fmt_date(w.pp_end)}"
             if cause == "loss":
+                # §5.5's need_more_info copy has no end date: "within 120 days (90 in NY)" only.
                 return self.need_more_info(
-                    f"Theft and “involuntary and accidental parting” may be covered {window}; "
+                    f"Theft and “involuntary and accidental parting” may be covered within {days}; "
                     "simply losing something may not be. See the cited clause.",
                     pp,
                     checklist=CHECKLIST_BASE,

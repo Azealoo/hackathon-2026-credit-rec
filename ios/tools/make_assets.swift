@@ -1,15 +1,21 @@
-// Generates Paywise's visual assets from docs/design.md §5–§7, so they can be rebuilt exactly.
-// Run it through ios/tools/make_assets.sh, which also turns the silence written here into silent.caf (afconvert).
+// Generates Paywise's visual assets from docs/design.md §5–§7 and the logo in brand/08-monoline, so they can be
+// rebuilt exactly. Run it through ios/tools/make_assets.sh, which also turns the silence written here into silent.caf
+// (afconvert).
 //
-//   xcrun swift ios/tools/make_assets.swift <repo-root> <silence.wav to write>
+//   xcrun swift ios/tools/make_assets.swift <repo-root> <silence.wav to write> [<standard app icon, 1024 PNG>]
 //
 // Writes (and overwrites):
-//   ios/Shared/Assets.xcassets   (app + widget): card-<id>, card-<id>-compact, glyph, accent
-//   ios/Paywise/Assets.xcassets  (app only):     AppIcon (standard, dark, tinted)
+//   ios/Shared/Assets.xcassets   (app + widget): card-<id>, card-<id>-compact, glyph (the Live Activity's), accent
+//   ios/Paywise/Assets.xcassets  (app only):     AppIcon (standard, dark, tinted), mark (the logo, Any + Dark)
 //
 // Card IDs and asset names come from data/cards.json; only the art (design.md §6 gradients) lives here.
 // No text, logos, network marks or numbers are drawn on any card.
+//
+// The app icon's standard image is the opaque 1024 PNG already in AppIcon.appiconset (copied there from the logo
+// options' app-icons/08-monoline.png); pass a PNG as the third argument to replace it. Dark and tinted are drawn here
+// from brand/08-monoline/app-icon.svg. The mark is brand/08-monoline/mark.svg and mark-dark.svg.
 
+import AppKit
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -18,12 +24,13 @@ import UniformTypeIdentifiers
 // MARK: - Arguments
 
 let arguments = CommandLine.arguments
-guard arguments.count == 3 else {
-    FileHandle.standardError.write(Data("usage: make_assets.swift <repo-root> <silence.wav>\n".utf8))
+guard arguments.count == 3 || arguments.count == 4 else {
+    FileHandle.standardError.write(Data("usage: make_assets.swift <repo-root> <silence.wav> [<standard-icon.png>]\n".utf8))
     exit(2)
 }
 let root = URL(fileURLWithPath: arguments[1], isDirectory: true)
 let silenceURL = URL(fileURLWithPath: arguments[2])
+let standardIconOverride = arguments.count == 4 ? URL(fileURLWithPath: arguments[3]) : nil
 let sharedCatalog = root.appending(path: "ios/Shared/Assets.xcassets", directoryHint: .isDirectory)
 let appCatalog = root.appending(path: "ios/Paywise/Assets.xcassets", directoryHint: .isDirectory)
 
@@ -182,31 +189,9 @@ func cardImage(style: CardStyle, slot: CGSize, scale: Int) -> CGContext {
 
 // MARK: - Glyph (docs/design.md §5)
 
-/// The shield outline and the three lines on the 24 × 24 grid, mapped by `transform`.
-func glyphPaths(_ transform: CGAffineTransform) -> (shield: CGPath, lines: CGPath) {
-    let t = transform
-    let shield = CGMutablePath()
-    shield.move(to: CGPoint(x: 12, y: 2.6), transform: t)
-    shield.addLine(to: CGPoint(x: 19.4, y: 5.4), transform: t)
-    shield.addLine(to: CGPoint(x: 19.4, y: 11.3), transform: t)
-    shield.addCurve(
-        to: CGPoint(x: 12, y: 21.4), control1: CGPoint(x: 19.4, y: 15.8), control2: CGPoint(x: 16.3, y: 19.4), transform: t
-    )
-    shield.addCurve(
-        to: CGPoint(x: 4.6, y: 11.3), control1: CGPoint(x: 7.7, y: 19.4), control2: CGPoint(x: 4.6, y: 15.8), transform: t
-    )
-    shield.addLine(to: CGPoint(x: 4.6, y: 5.4), transform: t)
-    shield.closeSubpath()
-    let lines = CGMutablePath()
-    for (y, endX) in [(9.4, 15.6), (12.4, 15.6), (15.4, 12.3)] as [(CGFloat, CGFloat)] {
-        lines.move(to: CGPoint(x: 8.4, y: y), transform: t)
-        lines.addLine(to: CGPoint(x: endX, y: y), transform: t)
-    }
-    return (shield, lines)
-}
-
 /// design.md §5 path, verbatim apart from spelling out the implicit commands. Strokes on each path (not inherited)
-/// so the asset compiler's SVG reader sees them.
+/// so the asset compiler's SVG reader sees them. Only the Live Activity draws it now (island, minimal, stale, Lock
+/// Screen): the logo's stacked lines blur at the island's 22 pt, so the app shows `mark` and the island keeps this.
 let glyphSVG = """
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
   <path d="M12 2.6 L19.4 5.4 V11.3 C19.4 15.8 16.3 19.4 12 21.4 C7.7 19.4 4.6 15.8 4.6 11.3 V5.4 L12 2.6 Z" \
@@ -217,7 +202,89 @@ fill="none" stroke="#000000" stroke-width="1.9" stroke-linejoin="round" stroke-l
 
 """
 
-// MARK: - App icon (docs/design.md §5)
+// MARK: - Brand: logo option 08 "Monoline" (brand/08-monoline)
+
+let brandFolder = root.appending(path: "brand/08-monoline", directoryHint: .isDirectory)
+
+func readBrand(_ name: String) -> String {
+    do {
+        return try String(contentsOf: brandFolder.appending(path: name), encoding: .utf8)
+    } catch {
+        fail("can't read brand/08-monoline/\(name): \(error)")
+    }
+}
+
+func regex(_ pattern: String) -> NSRegularExpression {
+    do {
+        return try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
+    } catch {
+        fail("bad pattern \(pattern): \(error)")
+    }
+}
+
+/// `text` with each match of `pattern` replaced by `transform(match, groups)`. Fails unless there are `expected` matches,
+/// so a regenerated SVG with a different structure stops the build instead of drawing something else.
+func rewrite(_ text: String, _ pattern: String, expected: Int, _ transform: (Int, [String]) -> String) -> String {
+    let matches = regex(pattern).matches(in: text, range: NSRange(text.startIndex..., in: text))
+    guard matches.count == expected else { fail("expected \(expected) × \(pattern), found \(matches.count)") }
+    var result = ""
+    var cursor = text.startIndex
+    for (index, match) in matches.enumerated() {
+        let whole = Range(match.range, in: text)!
+        let groups = (0..<match.numberOfRanges).map { Range(match.range(at: $0), in: text).map { String(text[$0]) } ?? "" }
+        result += text[cursor..<whole.lowerBound]
+        result += transform(index, groups)
+        cursor = whole.upperBound
+    }
+    return result + text[cursor...]
+}
+
+/// generate.py's mark and icon SVGs are two stroked groups: the stack (the file of cards), then the drawn card.
+let strokeGroup = #"<g( [^>]*)>(.*?)</g>"#
+
+/// mark.svg / mark-dark.svg for the asset catalog: each group's stroke attributes moved onto its paths (as the glyph
+/// has them, so the asset compiler's SVG reader sees every stroke) and a 24-pt intrinsic size (it is always drawn
+/// resizable; the viewBox and the geometry are unchanged).
+func catalogMark(_ svg: String) -> String {
+    let flattened = rewrite(svg, strokeGroup, expected: 2) { _, groups in
+        groups[2].replacingOccurrences(of: "<path ", with: "<path\(groups[1]) ")
+    }
+    return rewrite(flattened, #"(<svg [^>]*?) width="[^"]*" height="[^"]*""#, expected: 1) { _, groups in
+        "\(groups[1]) width=\"24\" height=\"24\""
+    }
+}
+
+/// app-icon.svg's lines (the home-screen optical size: 4 cards, heavier stroke) with no background: the gradient
+/// <defs> and the full-bleed <rect> removed, the stack stroked `stack` (opaque; the standard icon's 62% was over the
+/// gradient) and the drawn card `card`.
+func iconLines(stack: String, card: String) -> String {
+    var svg = readBrand("app-icon.svg")
+    svg = rewrite(svg, #"<defs>.*?</defs>"#, expected: 1) { _, _ in "" }
+    svg = rewrite(svg, #"<rect [^>]*/>"#, expected: 1) { _, _ in "" }
+    let colors = [stack, card]
+    return rewrite(svg, #"<g( [^>]*)>"#, expected: 2) { index, groups in
+        let restroked = groups[1]
+            .replacingOccurrences(of: ##" stroke="#[0-9a-fA-F]{6}""##, with: " stroke=\"\(colors[index])\"", options: .regularExpression)
+            .replacingOccurrences(of: #" stroke-opacity="[^"]*""#, with: "", options: .regularExpression)
+        guard restroked.contains(" stroke=\"\(colors[index])\"") else { fail("app-icon.svg group \(index) has no stroke color") }
+        return "<g\(restroked)>"
+    }
+}
+
+/// An SVG drawn by AppKit's SVG reader (CoreSVG, the renderer iOS uses for vector assets) into a transparent
+/// side × side bitmap.
+func renderSVG(_ svg: String, side: Int) -> CGContext {
+    guard let image = NSImage(data: Data(svg.utf8)) else { fail("AppKit can't read the SVG") }
+    guard let context = CGContext(
+        data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: 0, space: sRGB,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ) else { fail("no bitmap context \(side)x\(side)") }
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+    image.draw(in: NSRect(x: 0, y: 0, width: side, height: side))
+    NSGraphicsContext.restoreGraphicsState()
+    return context
+}
 
 enum IconVariant: String, CaseIterable {
     case standard, dark, tinted
@@ -231,88 +298,25 @@ enum IconVariant: String, CaseIterable {
     }
 }
 
-/// 1024 × 1024, opaque, full bleed (the system applies the squircle mask).
-func appIcon(_ variant: IconVariant) -> CGContext {
-    let side = 1024
-    let size = CGFloat(side)
-    let canvas = CGRect(x: 0, y: 0, width: size, height: size)
-    let context = makeContext(width: side, height: side, opaque: true)
-
-    // Background.
+/// Dark and tinted, 1024 × 1024 on a transparent background (the system draws the dark or tinted backdrop):
+/// - dark: mark-dark.svg's colors, the stack in paper #f5f5f7 and the drawn card in accentDark #5b74ff;
+/// - tinted: grayscale, which the system tints by luminance: the drawn card white, the stack the standard icon's
+///   62% white as an opaque grey (#9e9e9e), so the card stays the brightest thing on it.
+func derivedIcon(_ variant: IconVariant) -> CGContext {
     switch variant {
-    case .standard:
-        // Indigo, #6d7cff (top) to #2a3fd8 (bottom) at 160°.
-        linearGradient(context, in: canvas, angle: 160, stops: [(color("#6d7cff"), 0), (color("#2a3fd8"), 1)])
-    case .dark:
-        // Proposed: near-black with a trace of the indigo, so the coloured shield carries the brand.
-        linearGradient(context, in: canvas, angle: 160, stops: [(color("#1a1e3a"), 0), (color("#05060d"), 1)])
-    case .tinted:
-        // Proposed: grayscale on black, as the system tints it.
-        context.setFillColor(color("#000000"))
-        context.fill(canvas)
+    case .standard: fail("the standard icon is the committed PNG, not drawn")
+    case .dark: renderSVG(iconLines(stack: "#f5f5f7", card: "#5b74ff"), side: 1024)
+    case .tinted: renderSVG(iconLines(stack: "#9e9e9e", card: "#ffffff"), side: 1024)
     }
+}
 
-    // A soft white highlight from the top-left: ≈35% white fading out by 60% (of the farthest-corner radius).
-    let highlight: CGFloat = switch variant {
-    case .standard: 0.35
-    case .dark: 0.10
-    case .tinted: 0
-    }
-    if highlight > 0 {
-        let radial = CGGradient(
-            colorsSpace: sRGB,
-            colors: [color("#ffffff", highlight), color("#ffffff", 0)] as CFArray,
-            locations: [0, 1]
-        )!
-        context.drawRadialGradient(
-            radial, startCenter: .zero, startRadius: 0, endCenter: .zero, endRadius: 0.6 * size * 2.squareRoot(), options: []
-        )
-        // Inner top edge light and bottom edge shade, for depth.
-        linearGradient(
-            context, in: CGRect(x: 0, y: 0, width: size, height: 0.035 * size), angle: 180,
-            stops: [(color("#ffffff", highlight * 0.8), 0), (color("#ffffff", 0), 1)]
-        )
-        linearGradient(
-            context, in: CGRect(x: 0, y: 0.95 * size, width: size, height: 0.05 * size), angle: 180,
-            stops: [(color("#000000", 0), 0), (color("#000000", 0.16), 1)]
-        )
-    }
-
-    // The filled shield, ≈62% of the icon's height including the 1.9 stroke, centred.
-    let unit = 0.62 * size / (21.4 - 2.6 + 1.9)
-    let transform = CGAffineTransform(translationX: size / 2 - 12 * unit, y: size / 2 - 12 * unit).scaledBy(x: unit, y: unit)
-    let (shield, lines) = glyphPaths(transform)
-
-    context.saveGState()
-    context.beginTransparencyLayer(auxiliaryInfo: nil)
-    // Shield body: the outline filled, plus its round-joined stroke so the silhouette matches the glyph.
-    let outline = shield.copy(strokingWithWidth: 1.9 * unit, lineCap: .round, lineJoin: .round, miterLimit: 10)
-    context.addPath(shield.union(outline))
-    context.clip()
-    switch variant {
-    case .standard:
-        context.setFillColor(color("#ffffff"))
-        context.fill(canvas)
-    case .dark:
-        linearGradient(context, in: shield.boundingBox, angle: 160, stops: [(color("#6d7cff"), 0), (color("#2a3fd8"), 1)])
-    case .tinted:
-        linearGradient(context, in: shield.boundingBox, angle: 180, stops: [(color("#ffffff"), 0), (color("#bdbdbd"), 1)])
-    }
-    context.resetClip()
-    // The three lines of fine print: #2a3fd8 on the standard icon; cut through to the background on the others.
-    context.addPath(lines)
-    context.setLineWidth(1.9 * unit)
-    context.setLineCap(.round)
-    if variant == .standard {
-        context.setStrokeColor(color("#2a3fd8"))
-    } else {
-        context.setBlendMode(.clear)
-    }
-    context.strokePath()
-    context.setBlendMode(.normal)
-    context.endTransparencyLayer()
-    context.restoreGState()
-    return context
+/// The standard icon must be 1024 × 1024 with no alpha channel (the system masks it).
+func checkStandardIcon(_ data: Data, _ label: String) {
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+          let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+    else { fail("\(label) isn't an image") }
+    guard image.width == 1024, image.height == 1024 else { fail("\(label) is \(image.width)×\(image.height), not 1024×1024") }
+    guard [.none, .noneSkipLast, .noneSkipFirst].contains(image.alphaInfo) else { fail("\(label) has an alpha channel") }
 }
 
 // MARK: - Asset catalog files
@@ -437,13 +441,31 @@ do {
     print("accent: #3f5bf6 / dark #5b74ff")
 }
 
-// App icon: standard, dark and tinted, 1024 × 1024, no alpha.
+// App icon (logo 08 "Monoline"), 1024 × 1024: standard is the opaque PNG (kept, or replaced by the third argument);
+// dark and tinted are drawn from brand/08-monoline/app-icon.svg on transparent.
 do {
     let folder = appCatalog.appending(path: "AppIcon.appiconset", directoryHint: .isDirectory)
+    let standardURL = standardIconOverride ?? folder.appending(path: IconVariant.standard.fileName)
+    let standard: Data
+    do {
+        standard = try Data(contentsOf: standardURL)
+    } catch {
+        fail("can't read the standard app icon \(standardURL.path): \(error)")
+    }
+    checkStandardIcon(standard, standardURL.lastPathComponent)
     resetFolder(folder)
     var entries: [[String: Any]] = []
     for variant in IconVariant.allCases {
-        writePNG(appIcon(variant), to: folder.appending(path: variant.fileName))
+        let url = folder.appending(path: variant.fileName)
+        if variant == .standard {
+            do {
+                try standard.write(to: url, options: .atomic)
+            } catch {
+                fail("can't write \(url.path): \(error)")
+            }
+        } else {
+            writePNG(derivedIcon(variant), to: url)
+        }
         var entry: [String: Any] = ["filename": variant.fileName, "idiom": "universal", "platform": "ios", "size": "1024x1024"]
         if variant != .standard {
             entry["appearances"] = [["appearance": "luminosity", "value": variant.rawValue]]
@@ -451,7 +473,29 @@ do {
         entries.append(entry)
     }
     writeJSON(["images": entries, "info": catalogInfo], to: folder.appending(path: "Contents.json"))
-    print("app icon: standard, dark, tinted")
+    print("app icon: standard (\(standardURL.lastPathComponent)), dark, tinted")
+}
+
+// mark: the logo for app screens, mark.svg (Any, light surfaces) and mark-dark.svg (Dark), one vector image set.
+do {
+    let folder = appCatalog.appending(path: "mark.imageset", directoryHint: .isDirectory)
+    resetFolder(folder)
+    for name in ["mark.svg", "mark-dark.svg"] {
+        do {
+            try Data(catalogMark(readBrand(name)).utf8).write(to: folder.appending(path: name), options: .atomic)
+        } catch {
+            fail("can't write \(name): \(error)")
+        }
+    }
+    writeJSON([
+        "images": [
+            ["filename": "mark.svg", "idiom": "universal"],
+            ["appearances": [["appearance": "luminosity", "value": "dark"]], "filename": "mark-dark.svg", "idiom": "universal"],
+        ],
+        "info": catalogInfo,
+        "properties": ["preserves-vector-representation": true, "template-rendering-intent": "original"],
+    ], to: folder.appending(path: "Contents.json"))
+    print("mark: mark.svg / dark mark-dark.svg, vector")
 }
 
 // Silence for silent.caf: 10 ms of zeros, 16-bit mono 44.1 kHz WAV (afconvert makes the CAF).

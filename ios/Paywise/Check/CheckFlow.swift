@@ -148,10 +148,11 @@ struct CheckFlow: Sendable {
             let json = try? JSONValue(data: reply.body)
             let parsed = json.flatMap { try? $0.decode(CheckResponse.self) }
             let kind = parsed?.decision?.kind
-            if (400..<500).contains(reply.status) || kind == .error {
-                // R16: the server refused the request (bad_request, privacy_rejected, 429) or answered with its error
-                // shape. The phone shows its own §6.3 *Couldn't check* copy, never the server's, and doesn't replay:
-                // the server did answer, so this isn't a connection failure.
+            if (400..<500).contains(reply.status) || ((200..<300).contains(reply.status) && kind == .error) {
+                // R16: the server refused the request (bad_request, privacy_rejected, 429), or answered 2xx with its
+                // error shape. The phone shows its own §6.3 *Couldn't check* copy, never the server's, and doesn't
+                // replay: the server did answer, so this isn't a connection failure. A 5xx (even in the error shape,
+                // §15.5) falls through to `.server`: §6.3's "No connection · press again" and the replay lookup.
                 Self.log.error("The server refused the check: HTTP \(reply.status, privacy: .public)")
                 return (Self.rejectedResponse(checkId: checkId, code: parsed?.error?.code), false)
             }
@@ -184,7 +185,7 @@ struct CheckFlow: Sendable {
         )
     }
 
-    /// R16: a 4xx (or the server's error shape) shows *Couldn't check* with "Something went wrong · press again".
+    /// R16: a 4xx (or the server's error shape on a 2xx) shows *Couldn't check* with "Something went wrong · press again".
     /// The stored error code is the server's when it is one the contract knows, else bad_request.
     static func rejectedResponse(checkId: String, code: APIErrorCode?) -> JSONValue {
         let known: APIErrorCode = switch code {

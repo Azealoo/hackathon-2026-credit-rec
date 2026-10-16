@@ -80,6 +80,14 @@ enum DemoChecks {
         return try? json.decode(CheckResponse.self)
     }
 
+    /// *Switch, protection* on the demo earbuds ($249): the bundled replay fixture (fake data), for a longer Saved line 1.
+    static func earbudsSwitch() -> CheckResponse? {
+        guard let data = ReplayStore().response(for: .init(merchantId: "northbay-electronics", totalCents: 24_900)),
+              let json = try? JSONValue(data: data)
+        else { return nil }
+        return try? json.decode(CheckResponse.self)
+    }
+
     /// *Switch, protection, pick also cash-best* (scenario 16, `discover-fu`).
     static func laptopSwitchAlsoCashBest(_ catalog: CardCatalog) -> CheckResponse? {
         guard var response = laptopSwitch(), var decision = response.decision else { return nil }
@@ -178,6 +186,17 @@ enum DemoChecks {
     Pay with Mastercard [CARD]
     Change
     Ship to [ADDRESS]
+    Place order
+    """
+
+    /// The demo earbuds' screen text, as on-device reading would send it (fake data, fixtures/ocr/earbuds-checkout.txt).
+    static let earbudsOCRText = """
+    NORTHBAY Electronics
+    Checkout
+    Wireless Earbuds,  $249.00
+    Noise-Cancelling
+    Pay with  Mastercard [CARD]  Change
+    Total  $249.00
     Place order
     """
 

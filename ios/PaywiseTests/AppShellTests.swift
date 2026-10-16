@@ -92,6 +92,50 @@ struct BackendErrorCopyTests {
         #expect(alert.line2 == "No connection · press again")
     }
 
+    /// The backend's real 500 bodies (main.py `_error(500, …)` → middleware.error_body): the §15.5 error shape with
+    /// decision.kind "error". §6.3 lists a 5xx under *Couldn't check* with "No connection · press again", so R16's
+    /// "Something went wrong" (4xx only) must not apply.
+    nonisolated static func serverErrorShape(_ code: String, _ message: String) -> Data {
+        Data("""
+        {"requestId":"5f0c0000-aaaa-4bbb-8ccc-ddddeeeeffff","decision":{"kind":"error","reason":"error",\
+        "presentation":"island","copy":{"line1":"Couldn't check this time","line2":"Something went wrong · press again",\
+        "line3":null,"instruction":null,"primaryButton":null}},"error":{"code":"\(code)","message":"\(message)"}}
+        """.utf8)
+    }
+
+    @Test(arguments: [
+        BackendErrorCopyTests.serverErrorShape("server_error", "Something went wrong on our side."),
+        BackendErrorCopyTests.serverErrorShape("parse_failed", "Couldn't read this screen."),
+    ])
+    func serverErrorShapeOn500SaysNoConnection(body: Data) async throws {
+        let env = TestEnvironment(
+            reading: try Fixtures.laptopReading(),
+            route: .init(behavior: .respond(status: 500, body: body)),
+            replayEnabled: false
+        )
+        try await env.perform(TestEnvironment.screenshot())
+        let alert = try #require(await env.island.alerts.first)
+        #expect(alert.line1 == "Couldn't check this time")
+        #expect(alert.line2 == "No connection · press again")
+        let record = try #require(env.deps.checkStore.latest(now: Fixtures.demoNow))
+        #expect(record.filledCopy.line2 == "No connection · press again")
+        #expect(record.parsedResponse.error?.code == .serverError)
+    }
+
+    @Test func serverErrorShapeOn500Replays() async throws {
+        let env = TestEnvironment(
+            reading: try Fixtures.laptopReading(),
+            route: .init(behavior: .respond(
+                status: 500, body: Self.serverErrorShape("server_error", "Something went wrong on our side.")
+            )),
+            replayEnabled: true
+        )
+        try await env.perform(TestEnvironment.screenshot())
+        let record = try #require(env.deps.checkStore.latest(now: Fixtures.demoNow))
+        #expect(record.replayed, "a 5xx is a failed check, so the bundled replay answers")
+        #expect(record.parsedResponse.decision?.kind == .switch)
+    }
+
     /// "Pretend today is…" moves the purchase date the backend computes coverage from.
     @Test func dateOverrideIsTheClientDate() async throws {
         let env = TestEnvironment(

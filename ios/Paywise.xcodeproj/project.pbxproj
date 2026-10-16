@@ -88,6 +88,7 @@
 		C6F76795A7B4866CDC65EDE8 /* PaywiseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE11E449EB1EA251B6C44379 /* PaywiseActivityAttributes.swift */; };
 		C7AB825F024EDD2B4F2266F8 /* CheckAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF9AE8DAEEB09EF26D275D6 /* CheckAPIModels.swift */; };
 		C8EBFB1FD68677F7765B52DE /* CheckAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF9AE8DAEEB09EF26D275D6 /* CheckAPIModels.swift */; };
+		CACBC2667DC6D71521E8DAC8 /* HomeIconUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46C76289888872578D362E7 /* HomeIconUITests.swift */; };
 		CF2E99B0B67E99CCF7F5C410 /* ClaimModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B4DD1DEC272AEE06F1B8B1 /* ClaimModel.swift */; };
 		CFBB67DB931BA8A41B1FD7DE /* PurchasesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91B2AAE945F79171E459A6B /* PurchasesView.swift */; };
 		D0001DEC17BA077EFE337CF9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D5191C3BC68341F63DF079EC /* Assets.xcassets */; };
@@ -219,6 +220,7 @@
 		A89C73FE7205CC863A9D7451 /* DemoActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoActivity.swift; sourceTree = "<group>"; };
 		A91B2AAE945F79171E459A6B /* PurchasesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesView.swift; sourceTree = "<group>"; };
 		B305061EB97C0746F86D9FE1 /* TriggerSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerSetupView.swift; sourceTree = "<group>"; };
+		B46C76289888872578D362E7 /* HomeIconUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeIconUITests.swift; sourceTree = "<group>"; };
 		B4D97271815B6D81882D8A2E /* PurchasesModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesModel.swift; sourceTree = "<group>"; };
 		BB95D2A7669DD2E50A192BB7 /* CheckTabDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckTabDemo.swift; sourceTree = "<group>"; };
 		BE009DEEFA108AD89DEF84E3 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
@@ -514,6 +516,7 @@
 			isa = PBXGroup;
 			children = (
 				06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */,
+				B46C76289888872578D362E7 /* HomeIconUITests.swift */,
 				F6832974306CEAB55784FF03 /* ScreenshotTourUITests.swift */,
 				0D6ECDF622C12553E8F34159 /* UITestSupport.swift */,
 			);
@@ -795,6 +798,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C5ACA586BBFFA1B9E3D6783F /* AppShellUITests.swift in Sources */,
+				CACBC2667DC6D71521E8DAC8 /* HomeIconUITests.swift in Sources */,
 				D3AB13DA1FACCE62ADB56AE3 /* ScreenshotTourUITests.swift in Sources */,
 				3CD81D8A57BF225E92DCDCDD /* UITestSupport.swift in Sources */,
 			);

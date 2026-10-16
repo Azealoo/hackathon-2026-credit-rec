@@ -87,7 +87,7 @@ KEY_COPY = {
         "May be eligible: Extended warranty (Freedom Unlimited).",
         "The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028.",
         "Notify by Mar 16, 2028; send documents by Apr 15, 2028, or as soon as reasonably possible.",
-        "What to send", "Itemized receipt", "Card statement showing the purchase",
+        "Checklist", "Itemized receipt", "Card statement showing the purchase",
         "Original warranty", "Repair estimate",
         "Payout cap", "$1,499.00",
         clause_line(FU, "extended_warranty"),
@@ -120,8 +120,8 @@ KEY_COPY = {
 ABSENT_COPY = {
     # §5.5: "...runs to Oct 17, 2028." with nothing after it, and "You file it yourself at {administrator url}".
     1: ["Assumed", "A failure without a drop", "You file it yourself with", EW_CLAIM.administrator],
-    2: ["What to send", "Payout cap", "Notify by", "You file it yourself"],
-    7: ["What to send", "Payout cap", "Notify by", "You file it yourself"],
+    2: ["Checklist", "Payout cap", "Notify by", "You file it yourself"],
+    7: ["Checklist", "Payout cap", "Notify by", "You file it yourself"],
     13: ["Assumed", "You file it yourself with", PP_CLAIM.administrator],
 }
 

@@ -137,23 +137,167 @@ struct AssetTests {
         #expect(primary["CFBundleIconName"] as? String == "AppIcon")
     }
 
-    /// design.md §7: 1024 × 1024, standard + dark + tinted, no transparency.
+    static let appIconFolder = iosFolder.appending(path: "Paywise/Assets.xcassets/AppIcon.appiconset")
+
+    /// Logo 08 "Monoline": the set lists standard, dark and tinted, each a 1024 × 1024 iOS icon.
     @Test(.enabled(if: sourceReachable))
-    func appIconSourcesAreOpaque1024() throws {
-        let folder = Self.iosFolder.appending(path: "Paywise/Assets.xcassets/AppIcon.appiconset")
-        for name in ["AppIcon.png", "AppIcon-dark.png", "AppIcon-tinted.png"] {
-            let url = folder.appending(path: name)
-            #expect(try Self.pixelSize(url) == (1024, 1024))
-            let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
-            let image = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
-            #expect(
-                [.none, .noneSkipLast, .noneSkipFirst].contains(image.alphaInfo),
-                "\(name) has an alpha channel (\(image.alphaInfo.rawValue))"
-            )
+    func appIconSetHasStandardDarkAndTinted() throws {
+        let contents = try Self.json(Self.appIconFolder.appending(path: "Contents.json"))
+        let images = try #require(contents["images"] as? [[String: Any]])
+        var byAppearance: [String: String] = [:]
+        for image in images {
+            #expect(image["size"] as? String == "1024x1024")
+            #expect(image["platform"] as? String == "ios")
+            let appearance = (image["appearances"] as? [[String: String]])?.first
+            if let appearance { #expect(appearance["appearance"] == "luminosity") }
+            byAppearance[appearance?["value"] ?? "standard"] = image["filename"] as? String
+        }
+        #expect(byAppearance == ["standard": "AppIcon.png", "dark": "AppIcon-dark.png", "tinted": "AppIcon-tinted.png"])
+    }
+
+    /// The standard icon is the opaque 1024 PNG (the system applies the mask): no alpha channel at all.
+    @Test(.enabled(if: sourceReachable))
+    func standardAppIconIsOpaque1024() throws {
+        let image = try Self.cgImage(Self.appIconFolder.appending(path: "AppIcon.png"))
+        #expect((image.width, image.height) == (1024, 1024))
+        #expect(
+            [.none, .noneSkipLast, .noneSkipFirst].contains(image.alphaInfo),
+            "AppIcon.png has an alpha channel (\(image.alphaInfo.rawValue))"
+        )
+    }
+
+    /// Dark and tinted are the logo's lines on transparent (the system draws the backdrop): 1024 × 1024 with an alpha
+    /// channel, transparent corners and background, and the lines opaque.
+    @Test(.enabled(if: sourceReachable), arguments: ["AppIcon-dark.png", "AppIcon-tinted.png"])
+    func darkAndTintedAppIconsAreLinesOnTransparent(name: String) throws {
+        let image = try Self.cgImage(Self.appIconFolder.appending(path: name))
+        #expect((image.width, image.height) == (1024, 1024))
+        #expect(![.none, .noneSkipLast, .noneSkipFirst].contains(image.alphaInfo), "\(name) has no alpha channel")
+        let pixels = try Self.rgba(image)
+        for (x, y) in [(0, 0), (1023, 0), (0, 1023), (1023, 1023), (512, 512)] {
+            #expect(pixels.alpha(x, y) == 0, "\(name) is not transparent at \(x),\(y)")
+        }
+        let coverage = Double(pixels.count { $0.alpha > 250 }) / Double(1024 * 1024)
+        #expect(coverage > 0.05 && coverage < 0.3, "\(name): lines cover \(coverage)")
+    }
+
+    /// Tinted is grayscale (the system tints it by luminance) with the drawn card white; dark draws the stack in paper
+    /// and the drawn card in accentDark (#5b74ff), mark-dark.svg's colors.
+    @Test(.enabled(if: sourceReachable))
+    func darkAndTintedAppIconColors() throws {
+        let tinted = try Self.rgba(Self.cgImage(Self.appIconFolder.appending(path: "AppIcon-tinted.png")))
+        #expect(tinted.count { $0.alpha > 0 && (abs($0.red - $0.green) > 1 || abs($0.green - $0.blue) > 1) } == 0)
+        #expect(tinted.count { $0.alpha == 255 && $0.red == 255 } > 10_000, "tinted has no white card")
+        #expect(tinted.count { $0.alpha == 255 && (150...165).contains($0.red) } > 10_000, "tinted has no grey stack")
+
+        let dark = try Self.rgba(Self.cgImage(Self.appIconFolder.appending(path: "AppIcon-dark.png")))
+        #expect(dark.count { $0.alpha == 255 && [$0.red, $0.green, $0.blue] == [0x5b, 0x74, 0xff] } > 10_000)
+        #expect(dark.count { $0.alpha == 255 && [$0.red, $0.green, $0.blue] == [0xf5, 0xf5, 0xf7] } > 10_000)
+    }
+
+    /// The logo for app screens: one vector image set, mark.svg for Any and mark-dark.svg for Dark.
+    @Test(.enabled(if: sourceReachable))
+    func markImageSetHasAnyAndDark() throws {
+        let folder = Self.iosFolder.appending(path: "Paywise/Assets.xcassets/mark.imageset")
+        let contents = try Self.json(folder.appending(path: "Contents.json"))
+        let images = try #require(contents["images"] as? [[String: Any]])
+        #expect(images.count == 2)
+        let any = images.filter { $0["appearances"] == nil }
+        let dark = images.filter {
+            ($0["appearances"] as? [[String: String]]) == [["appearance": "luminosity", "value": "dark"]]
+        }
+        #expect(any.map { $0["filename"] as? String } == ["mark.svg"])
+        #expect(dark.map { $0["filename"] as? String } == ["mark-dark.svg"])
+        let properties = try #require(contents["properties"] as? [String: Any])
+        #expect(properties["preserves-vector-representation"] as? Bool == true)
+        for name in ["mark.svg", "mark-dark.svg"] {
+            #expect(FileManager.default.fileExists(atPath: folder.appending(path: name).path), "\(name) missing")
+        }
+    }
+
+    /// The compiled `mark` draws in both appearances: ink and accent (#3f5bf6) lines on light, paper and accentDark
+    /// (#5b74ff) lines on dark.
+    @Test func compiledMarkDrawsBothAppearances() throws {
+        for (style, stack, card) in [
+            (UIUserInterfaceStyle.light, [0x1d, 0x1d, 0x1f], [0x3f, 0x5b, 0xf6]),
+            (.dark, [0xf5, 0xf5, 0xf7], [0x5b, 0x74, 0xff]),
+        ] {
+            let traits = UITraitCollection(userInterfaceStyle: style)
+            let image = try #require(UIImage(named: "mark", in: .main, compatibleWith: traits), "mark missing (\(style))")
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1
+            format.preferredRange = .standard
+            let side: CGFloat = 512
+            let drawn = UIGraphicsImageRenderer(size: CGSize(width: side, height: side), format: format).image { _ in
+                image.draw(in: CGRect(x: 0, y: 0, width: side, height: side))
+            }
+            let pixels = try Self.rgba(#require(drawn.cgImage))
+            func near(_ pixel: Pixel, _ rgb: [Int]) -> Bool {
+                pixel.alpha == 255 && zip([pixel.red, pixel.green, pixel.blue], rgb).allSatisfy { abs($0 - $1) <= 3 }
+            }
+            #expect(pixels.count { near($0, stack) } > 2_000, "\(style.rawValue): no stack lines")
+            #expect(pixels.count { near($0, card) } > 2_000, "\(style.rawValue): no drawn card")
         }
     }
 
     // MARK: Helpers
+
+    struct Pixel {
+        var red: Int
+        var green: Int
+        var blue: Int
+        var alpha: Int
+    }
+
+    /// Unpremultiplied sRGB pixels, top row first.
+    struct Pixels {
+        let width: Int
+        let bytes: [UInt8]
+
+        func pixel(_ x: Int, _ y: Int) -> Pixel {
+            let i = (y * width + x) * 4
+            let alpha = Int(bytes[i + 3])
+            func channel(_ value: UInt8) -> Int {
+                alpha == 0 ? 0 : min(255, Int((Double(value) * 255 / Double(alpha)).rounded()))
+            }
+            return Pixel(red: channel(bytes[i]), green: channel(bytes[i + 1]), blue: channel(bytes[i + 2]), alpha: alpha)
+        }
+
+        func alpha(_ x: Int, _ y: Int) -> Int { Int(bytes[(y * width + x) * 4 + 3]) }
+
+        func count(where predicate: (Pixel) -> Bool) -> Int {
+            var total = 0
+            for index in 0..<(bytes.count / 4) where predicate(pixel(index % width, index / width)) {
+                total += 1
+            }
+            return total
+        }
+    }
+
+    static func rgba(_ image: CGImage) throws -> Pixels {
+        let width = image.width
+        let height = image.height
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        try #require(drawn)
+        return Pixels(width: width, bytes: bytes)
+    }
+
+    static func cgImage(_ url: URL) throws -> CGImage {
+        let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil), "can't read \(url.lastPathComponent)")
+        return try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+    }
+
+    static func json(_ url: URL) throws -> [String: Any] {
+        try #require(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
+    }
 
     static func pixelSize(_ url: URL) throws -> (width: Int, height: Int) {
         let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))

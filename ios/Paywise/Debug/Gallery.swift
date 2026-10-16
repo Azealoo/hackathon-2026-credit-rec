@@ -19,6 +19,8 @@ enum GalleryState: String, CaseIterable, Sendable {
     case keepProtected
     /// *Saved* after [Paying with Freedom].
     case saved
+    /// *Saved* for the demo earbuds: the longest Saved line 1 in the fixtures ("✓ Saved: Wireless Earbuds · $249").
+    case savedEarbuds
     /// *Sent* after [What we sent].
     case sent
     /// *Not set up*: the intent ran with no image.
@@ -60,6 +62,10 @@ enum GalleryState: String, CaseIterable, Sendable {
         case .saved:
             return DemoChecks.laptopSwitch().flatMap {
                 DemoChecks.record($0, wallet: .demo3Card, catalog: catalog, ocrText: laptopText, view: .saved)
+            }
+        case .savedEarbuds:
+            return DemoChecks.earbudsSwitch().flatMap {
+                DemoChecks.record($0, wallet: .demo3Card, catalog: catalog, ocrText: DemoChecks.earbudsOCRText, view: .saved)
             }
         case .sent:
             return DemoChecks.laptopSwitch().flatMap {

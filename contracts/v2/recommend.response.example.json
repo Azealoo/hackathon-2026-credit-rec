@@ -1,0 +1,169 @@
+{
+  "requestId": "synthetic-request-one",
+  "policyVersion": "us-online-v2-draft",
+  "policySnapshotId": "206a846e3b61279ddddfaf13504e4026f452d6c4bf1455999db046b6df260903",
+  "decision": "switch",
+  "reason": "cash_gain",
+  "selected": {
+    "walletCardId": "synthetic-quicksilver",
+    "paymentPath": "direct_card"
+  },
+  "cashDelta": {
+    "lowMinor": 1250,
+    "highMinor": 1250
+  },
+  "rankingScope": "supported_ordinary_rewards_only",
+  "options": [
+    {
+      "walletCardId": "synthetic-active-cash",
+      "productId": "wells-fargo-active-cash",
+      "paymentPath": "direct_card",
+      "availability": "eligible",
+      "reward": {
+        "lowMinor": 1000,
+        "highMinor": 1000
+      },
+      "conditionalPaymentReward": {
+        "lowMinor": 0,
+        "highMinor": 0
+      },
+      "net": {
+        "lowMinor": -500,
+        "highMinor": -500
+      },
+      "estimated": true,
+      "missingFields": [],
+      "notes": [
+        "benefit_summaries_are_display_only",
+        "excludes_welcome_bonuses_personalized_offers_deferred_matches_and_portals"
+      ],
+      "ruleIds": [
+        "wells-fargo-active-cash-base"
+      ],
+      "sourceIds": [
+        "WF-AC"
+      ],
+      "benefits": [
+        {
+          "benefitType": "purchase_damage_theft",
+          "knowledge": "not_listed",
+          "eligibility": "needs_info",
+          "automaticItemEligibilityEnabled": false,
+          "sourceIds": [
+            "WF-GTB"
+          ]
+        },
+        {
+          "benefitType": "extended_warranty",
+          "knowledge": "not_listed",
+          "eligibility": "needs_info",
+          "automaticItemEligibilityEnabled": false,
+          "sourceIds": [
+            "WF-GTB"
+          ]
+        },
+        {
+          "benefitType": "return_protection",
+          "knowledge": "not_listed",
+          "eligibility": "needs_info",
+          "automaticItemEligibilityEnabled": false,
+          "sourceIds": [
+            "WF-GTB"
+          ]
+        }
+      ]
+    },
+    {
+      "walletCardId": "synthetic-quicksilver",
+      "productId": "capital-one-quicksilver",
+      "paymentPath": "direct_card",
+      "availability": "eligible",
+      "reward": {
+        "lowMinor": 750,
+        "highMinor": 750
+      },
+      "conditionalPaymentReward": {
+        "lowMinor": 0,
+        "highMinor": 0
+      },
+      "net": {
+        "lowMinor": 750,
+        "highMinor": 750
+      },
+      "estimated": true,
+      "missingFields": [],
+      "notes": [
+        "benefit_summaries_are_display_only",
+        "excludes_welcome_bonuses_personalized_offers_deferred_matches_and_portals"
+      ],
+      "ruleIds": [
+        "capital-one-quicksilver-base"
+      ],
+      "sourceIds": [
+        "CAP-QS",
+        "CAP-QS-F"
+      ],
+      "benefits": [
+        {
+          "benefitType": "purchase_damage_theft",
+          "knowledge": "unknown",
+          "eligibility": "needs_info",
+          "automaticItemEligibilityEnabled": false,
+          "sourceIds": [
+            "CAP-GUIDES"
+          ]
+        },
+        {
+          "benefitType": "extended_warranty",
+          "knowledge": "unknown",
+          "eligibility": "needs_info",
+          "automaticItemEligibilityEnabled": false,
+          "sourceIds": [
+            "CAP-GUIDES"
+          ]
+        },
+        {
+          "benefitType": "return_protection",
+          "knowledge": "unknown",
+          "eligibility": "needs_info",
+          "automaticItemEligibilityEnabled": false,
+          "sourceIds": [
+            "CAP-GUIDES"
+          ]
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "CAP-QS",
+      "title": "Quicksilver Rewards cash-back product details",
+      "url": "https://www.capitalone.com/credit-cards/cash-back/quicksilver/",
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "CAP-QS-F",
+      "title": "Quicksilver foreign transaction fee summary",
+      "url": "https://www.capitalone.com/credit-cards/quicksilver/",
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "CAP-GUIDES",
+      "title": "Capital One issuer-specific benefits guide selector",
+      "url": "https://www.capitalone.com/credit-cards/benefits-guide/",
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "WF-AC",
+      "title": "Wells Fargo Active Cash product and fee details",
+      "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "WF-GTB",
+      "title": "Wells Fargo Active Cash Guide to Benefits",
+      "url": "https://www.wellsfargo.com/credit-cards/active-cash/guide-to-benefits/",
+      "observedAt": "2026-10-16"
+    }
+  ]
+}

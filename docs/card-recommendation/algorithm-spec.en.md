@@ -2,7 +2,7 @@
 
 Version: research draft v1, October 16, 2026 (America/Los_Angeles). Audience: product and backend engineers. Scope: US consumer credit cards already held by the user, evaluated for a single online purchase. This is not a ranking of cards to apply for. Companion files: [issuer policy review](issuer-policy-review.en.md), [policy seed](card-policy-seed.json), and [acceptance vectors](acceptance-vectors.json).
 
-**Decision framework: establish card and policy applicability, calculate the transaction's net rewards, then filter against the user's stated protection requirements. Present money and protection separately. Never treat a coverage limit as cash earnings.** This is an algorithm proposal; it has not changed the existing Paywise engine, SPEC, or runtime card catalog.
+**Decision framework: establish card and policy applicability, calculate the transaction's net rewards, then filter against the user's stated protection requirements. Present money and protection separately. Never treat a coverage limit as cash earnings.** This remains the full algorithm proposal. The opt-in implementation covers an initial subset described in [implementation status](implementation.md); the existing Paywise engine, SPEC, and runtime card catalog remain unchanged.
 
 ## 1. Evidence, product decisions, and user preferences
 

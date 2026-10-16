@@ -104,3 +104,4 @@ async def check(request: Request) -> Response:
 
 from app.routes_store import router as store_router, store_files; app.include_router(store_router); app.mount("/store", store_files, name="store")  # noqa: E402, E702  /v1/store/pay + /store/ (§15.5, §9.3)
 from app.routes_coverage import router as coverage_router; app.include_router(coverage_router)  # noqa: E402, E702  /v1/coverage (§15.5, §15.7 12b/12c)
+from app.routes_recommendation_v2 import router as recommendation_v2_router; app.include_router(recommendation_v2_router)  # noqa: E402, E702

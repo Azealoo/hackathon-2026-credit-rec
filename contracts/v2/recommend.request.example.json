@@ -1,0 +1,56 @@
+{
+  "requestId": "synthetic-request-one",
+  "purchase": {
+    "totalMinor": 50000,
+    "currency": "USD",
+    "chargeDate": "2026-10-16",
+    "acceptedNetworks": [
+      "visa",
+      "mastercard"
+    ],
+    "channel": "merchant_web"
+  },
+  "options": [
+    {
+      "walletCardId": "synthetic-active-cash",
+      "productId": "wells-fargo-active-cash",
+      "network": "visa",
+      "paymentPath": "direct_card",
+      "isDefault": true,
+      "active": "yes",
+      "availableCreditMinor": 100000,
+      "pathEligible": "yes",
+      "policyConfirmedThrough": "2026-10-16",
+      "issuerEligiblePurchase": "yes",
+      "issuerCategory": "ordinary_merchandise",
+      "categoryConfirmedThrough": "2026-10-16",
+      "expectedFullRepayment": "yes",
+      "purchaseGracePeriodActive": "yes",
+      "foreignFeeApplies": "yes",
+      "checkoutFeeMinor": 0
+    },
+    {
+      "walletCardId": "synthetic-quicksilver",
+      "productId": "capital-one-quicksilver",
+      "network": "mastercard",
+      "paymentPath": "direct_card",
+      "isDefault": false,
+      "active": "yes",
+      "availableCreditMinor": 100000,
+      "pathEligible": "yes",
+      "policyConfirmedThrough": "2026-10-16",
+      "issuerEligiblePurchase": "yes",
+      "issuerCategory": "ordinary_merchandise",
+      "categoryConfirmedThrough": "2026-10-16",
+      "expectedFullRepayment": "yes",
+      "purchaseGracePeriodActive": "yes",
+      "foreignFeeApplies": "yes",
+      "checkoutFeeMinor": 0
+    }
+  ],
+  "preferences": {
+    "mode": "cash_first",
+    "allowLossOfExistingProtection": true,
+    "switchThresholdMinor": 500
+  }
+}

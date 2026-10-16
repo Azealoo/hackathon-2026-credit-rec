@@ -1,0 +1,556 @@
+{
+  "$defs": {
+    "CapUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "postedMinor": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Postedminor",
+          "type": "integer"
+        },
+        "pendingMinor": {
+          "anyOf": [
+            {
+              "maximum": 1000000000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pendingminor"
+        },
+        "reservedMinor": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Reservedminor",
+          "type": "integer"
+        },
+        "periodStart": {
+          "format": "date",
+          "title": "Periodstart",
+          "type": "string"
+        },
+        "periodEnd": {
+          "format": "date",
+          "title": "Periodend",
+          "type": "string"
+        },
+        "asOf": {
+          "format": "date",
+          "title": "Asof",
+          "type": "string"
+        },
+        "accountScopeConfirmed": {
+          "default": false,
+          "title": "Accountscopeconfirmed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "postedMinor",
+        "pendingMinor",
+        "reservedMinor",
+        "periodStart",
+        "periodEnd",
+        "asOf"
+      ],
+      "title": "CapUsage",
+      "type": "object"
+    },
+    "CardOption": {
+      "additionalProperties": false,
+      "properties": {
+        "walletCardId": {
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,79}$",
+          "title": "Walletcardid",
+          "type": "string"
+        },
+        "productId": {
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,79}$",
+          "title": "Productid",
+          "type": "string"
+        },
+        "paymentPath": {
+          "default": "direct_card",
+          "enum": [
+            "direct_card",
+            "apple_pay",
+            "paypal",
+            "other"
+          ],
+          "title": "Paymentpath",
+          "type": "string"
+        },
+        "isDefault": {
+          "default": false,
+          "title": "Isdefault",
+          "type": "boolean"
+        },
+        "network": {
+          "anyOf": [
+            {
+              "enum": [
+                "visa",
+                "mastercard",
+                "amex",
+                "discover"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Network"
+        },
+        "active": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Active",
+          "type": "string"
+        },
+        "availableCreditMinor": {
+          "anyOf": [
+            {
+              "maximum": 1000000000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Availablecreditminor"
+        },
+        "pathEligible": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Patheligible",
+          "type": "string"
+        },
+        "policyConfirmedThrough": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Policyconfirmedthrough"
+        },
+        "issuerEligiblePurchase": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Issuereligiblepurchase",
+          "type": "string"
+        },
+        "issuerCategory": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Issuercategory"
+        },
+        "categoryConfirmedThrough": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categoryconfirmedthrough"
+        },
+        "categorySelection": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Categoryselection"
+        },
+        "selectionEffectiveAt": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Selectioneffectiveat"
+        },
+        "rewardPeriodDate": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rewardperioddate"
+        },
+        "capUsage": {
+          "additionalProperties": {
+            "$ref": "#/$defs/CapUsage"
+          },
+          "maxProperties": 16,
+          "title": "Capusage",
+          "type": "object"
+        },
+        "membershipBonusBps": {
+          "anyOf": [
+            {
+              "maximum": 10000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Membershipbonusbps"
+        },
+        "confirmedIntroOfferIds": {
+          "items": {
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,79}$",
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Confirmedintroofferids",
+          "type": "array"
+        },
+        "expectedFullRepayment": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Expectedfullrepayment",
+          "type": "string"
+        },
+        "purchaseGracePeriodActive": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Purchasegraceperiodactive",
+          "type": "string"
+        },
+        "purchaseIntroApr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ZeroPurchaseApr"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "eligiblePaymentAndTrackerConfirmed": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Eligiblepaymentandtrackerconfirmed",
+          "type": "string"
+        },
+        "foreignFeeApplies": {
+          "default": "unknown",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ],
+          "title": "Foreignfeeapplies",
+          "type": "string"
+        },
+        "checkoutFeeMinor": {
+          "anyOf": [
+            {
+              "maximum": 1000000000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checkoutfeeminor"
+        }
+      },
+      "required": [
+        "walletCardId",
+        "productId"
+      ],
+      "title": "CardOption",
+      "type": "object"
+    },
+    "Preferences": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "cash_first",
+          "enum": [
+            "cash_first",
+            "protection_target"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "cashSacrificeBudgetMinor": {
+          "anyOf": [
+            {
+              "maximum": 1000000000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cashsacrificebudgetminor"
+        },
+        "protectionTargets": {
+          "items": {
+            "$ref": "#/$defs/ProtectionTarget"
+          },
+          "maxItems": 10,
+          "title": "Protectiontargets",
+          "type": "array"
+        },
+        "allowLossOfExistingProtection": {
+          "default": false,
+          "title": "Allowlossofexistingprotection",
+          "type": "boolean"
+        },
+        "switchThresholdMinor": {
+          "default": 500,
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Switchthresholdminor",
+          "type": "integer"
+        }
+      },
+      "title": "Preferences",
+      "type": "object"
+    },
+    "ProtectionTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "benefitType": {
+          "enum": [
+            "purchase_damage_theft",
+            "extended_warranty",
+            "return_protection",
+            "price_protection"
+          ],
+          "title": "Benefittype",
+          "type": "string"
+        },
+        "minNominalLimitMinor": {
+          "default": 0,
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Minnominallimitminor",
+          "type": "integer"
+        },
+        "minWindowDays": {
+          "default": 0,
+          "maximum": 36500,
+          "minimum": 0,
+          "title": "Minwindowdays",
+          "type": "integer"
+        },
+        "minExtensionMonths": {
+          "default": 0,
+          "maximum": 1200,
+          "minimum": 0,
+          "title": "Minextensionmonths",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "benefitType"
+      ],
+      "title": "ProtectionTarget",
+      "type": "object"
+    },
+    "Purchase": {
+      "additionalProperties": false,
+      "properties": {
+        "totalMinor": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Totalminor",
+          "type": "integer"
+        },
+        "currency": {
+          "const": "USD",
+          "default": "USD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "channel": {
+          "default": "merchant_web",
+          "enum": [
+            "merchant_web",
+            "merchant_app"
+          ],
+          "title": "Channel",
+          "type": "string"
+        },
+        "chargeDate": {
+          "format": "date",
+          "title": "Chargedate",
+          "type": "string"
+        },
+        "acceptedNetworks": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "visa",
+                  "mastercard",
+                  "amex",
+                  "discover"
+                ],
+                "type": "string"
+              },
+              "maxItems": 4,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acceptednetworks"
+        }
+      },
+      "required": [
+        "totalMinor",
+        "chargeDate"
+      ],
+      "title": "Purchase",
+      "type": "object"
+    },
+    "ZeroPurchaseApr": {
+      "additionalProperties": false,
+      "properties": {
+        "aprBps": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Aprbps",
+          "type": "integer"
+        },
+        "validFrom": {
+          "format": "date",
+          "title": "Validfrom",
+          "type": "string"
+        },
+        "validThrough": {
+          "format": "date",
+          "title": "Validthrough",
+          "type": "string"
+        },
+        "repaymentCompleteBy": {
+          "format": "date",
+          "title": "Repaymentcompleteby",
+          "type": "string"
+        },
+        "verified": {
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "aprBps",
+        "validFrom",
+        "validThrough",
+        "repaymentCompleteBy"
+      ],
+      "title": "ZeroPurchaseApr",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]{0,79}$",
+      "title": "Requestid",
+      "type": "string"
+    },
+    "purchase": {
+      "$ref": "#/$defs/Purchase"
+    },
+    "options": {
+      "items": {
+        "$ref": "#/$defs/CardOption"
+      },
+      "maxItems": 30,
+      "minItems": 1,
+      "title": "Options",
+      "type": "array"
+    },
+    "preferences": {
+      "$ref": "#/$defs/Preferences"
+    }
+  },
+  "required": [
+    "requestId",
+    "purchase",
+    "options"
+  ],
+  "title": "RecommendRequest",
+  "type": "object"
+}

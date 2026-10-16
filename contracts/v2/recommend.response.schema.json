@@ -1,0 +1,327 @@
+{
+  "$defs": {
+    "BenefitSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "benefitType": {
+          "enum": [
+            "purchase_damage_theft",
+            "extended_warranty",
+            "return_protection",
+            "price_protection"
+          ],
+          "title": "Benefittype",
+          "type": "string"
+        },
+        "knowledge": {
+          "enum": [
+            "verified_rule",
+            "verified_summary",
+            "unknown",
+            "not_listed",
+            "conflict"
+          ],
+          "title": "Knowledge",
+          "type": "string"
+        },
+        "eligibility": {
+          "const": "needs_info",
+          "default": "needs_info",
+          "title": "Eligibility",
+          "type": "string"
+        },
+        "automaticItemEligibilityEnabled": {
+          "const": false,
+          "default": false,
+          "title": "Automaticitemeligibilityenabled",
+          "type": "boolean"
+        },
+        "sourceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sourceids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "benefitType",
+        "knowledge",
+        "sourceIds"
+      ],
+      "title": "BenefitSummary",
+      "type": "object"
+    },
+    "Interval": {
+      "additionalProperties": false,
+      "properties": {
+        "lowMinor": {
+          "title": "Lowminor",
+          "type": "integer"
+        },
+        "highMinor": {
+          "title": "Highminor",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "lowMinor",
+        "highMinor"
+      ],
+      "title": "Interval",
+      "type": "object"
+    },
+    "OptionEstimate": {
+      "additionalProperties": false,
+      "properties": {
+        "walletCardId": {
+          "title": "Walletcardid",
+          "type": "string"
+        },
+        "productId": {
+          "title": "Productid",
+          "type": "string"
+        },
+        "paymentPath": {
+          "enum": [
+            "direct_card",
+            "apple_pay",
+            "paypal",
+            "other"
+          ],
+          "title": "Paymentpath",
+          "type": "string"
+        },
+        "availability": {
+          "enum": [
+            "eligible",
+            "ineligible",
+            "needs_info"
+          ],
+          "title": "Availability",
+          "type": "string"
+        },
+        "reward": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "conditionalPaymentReward": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "net": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "estimated": {
+          "const": true,
+          "default": true,
+          "title": "Estimated",
+          "type": "boolean"
+        },
+        "missingFields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missingfields",
+          "type": "array"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        },
+        "ruleIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ruleids",
+          "type": "array"
+        },
+        "sourceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sourceids",
+          "type": "array"
+        },
+        "benefits": {
+          "items": {
+            "$ref": "#/$defs/BenefitSummary"
+          },
+          "title": "Benefits",
+          "type": "array"
+        }
+      },
+      "required": [
+        "walletCardId",
+        "productId",
+        "paymentPath",
+        "availability"
+      ],
+      "title": "OptionEstimate",
+      "type": "object"
+    },
+    "Selection": {
+      "additionalProperties": false,
+      "properties": {
+        "walletCardId": {
+          "title": "Walletcardid",
+          "type": "string"
+        },
+        "paymentPath": {
+          "enum": [
+            "direct_card",
+            "apple_pay",
+            "paypal",
+            "other"
+          ],
+          "title": "Paymentpath",
+          "type": "string"
+        }
+      },
+      "required": [
+        "walletCardId",
+        "paymentPath"
+      ],
+      "title": "Selection",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "observedAt": {
+          "format": "date",
+          "title": "Observedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "url",
+        "observedAt"
+      ],
+      "title": "Source",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "title": "Requestid",
+      "type": "string"
+    },
+    "policyVersion": {
+      "title": "Policyversion",
+      "type": "string"
+    },
+    "policySnapshotId": {
+      "title": "Policysnapshotid",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "keep",
+        "switch",
+        "recommend",
+        "needs_info",
+        "choice_required"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "selected": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Selection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "cashDelta": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Interval"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "rankingScope": {
+      "const": "supported_ordinary_rewards_only",
+      "default": "supported_ordinary_rewards_only",
+      "title": "Rankingscope",
+      "type": "string"
+    },
+    "options": {
+      "items": {
+        "$ref": "#/$defs/OptionEstimate"
+      },
+      "title": "Options",
+      "type": "array"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "title": "Sources",
+      "type": "array"
+    }
+  },
+  "required": [
+    "requestId",
+    "policyVersion",
+    "policySnapshotId",
+    "decision",
+    "reason",
+    "options",
+    "sources"
+  ],
+  "title": "RecommendResponse",
+  "type": "object"
+}

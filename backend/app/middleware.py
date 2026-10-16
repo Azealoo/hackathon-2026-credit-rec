@@ -260,7 +260,7 @@ def _limit_from_env() -> int:
 
 LIMITER = SlidingWindowLimiter(_limit_from_env())
 # Routes with a window of their own; any other path's requests share the "other" window.
-RATE_LIMITED_PATHS = frozenset({"/v1/check", "/v1/coverage", "/v1/store/pay"})
+RATE_LIMITED_PATHS = frozenset({"/v1/check", "/v1/coverage", "/v1/store/pay", "/v2/recommend"})
 OTHER_PATHS = "other"
 
 

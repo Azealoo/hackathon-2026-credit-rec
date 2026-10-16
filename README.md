@@ -2,9 +2,9 @@
 
 *The perks buried in your card's fine print, at the moment you pay.*
 
-Press one button at checkout and Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. It saves the purchase with its coverage dates. If the item later breaks or is stolen, it tells you whether you may be able to claim, cites the clause, and lists what to send.
+Double-tap the back of your iPhone at checkout and Paywise tells you which of your cards covers this purchase if it breaks or gets stolen, and what that costs in cash back. It saves the purchase with its coverage dates. If the item later breaks or is stolen, it tells you whether you may be able to claim, cites the clause, and lists what to send.
 
-DubHacks '26 (Oct 17–18) project: a native iOS 27 app with one App Intent, run from the Action Button, plus a small FastAPI backend that reads the cart. The full product spec is [SPEC.md](SPEC.md); §15 is the build plan.
+DubHacks '26 (Oct 17–18) project: a native iOS 27 app with one App Intent, run by Back Tap (or, if you prefer, the Action Button), plus a small FastAPI backend that reads the cart. The full product spec is [SPEC.md](SPEC.md); §15 is the build plan.
 
 ## Status
 
@@ -15,7 +15,7 @@ v1 overnight build on branch `overnight/v1`, as of Oct 15, 2026, 18:30 PDT (comm
 | Backend | Engine, `/v1/check`, `/v1/coverage` (+ HTML verdict), `/v1/store/pay`, rules and LLM parsers. `pytest`: 1312 passed (18:50). Scenarios 22/22 with 0 false switches and 0 protection drops; coverage 13/13. |
 | Live | API **https://paywise-api-n0f9.onrender.com** (`/health`, `/v1/check`, `/v1/coverage`, `/v1/store/pay`, `/store/`), deployed from `overnight/v1`. Demo store **https://paywise-store.onrender.com** (from `main`). |
 | iOS | App, Live Activity, OCR + redaction, Purchases, claim check, setup screen. Green on the iPhone 18 Pro simulator (159 unit tests + 4 live UI tests, 18:02 run). Installed on the owner's iPhone (u), not yet run there. |
-| Gates | G1–G3 (Action Button chain, snippet, capture) are device-only and still open: steps in [docs/spikes.md](docs/spikes.md). **G4 (Visa sandbox) needs the owner to set `DEMO_TEST_CARD_MAP` on Render** (shape in `.env.example`); until then Render pays in mock mode (Render API, 18:50: `PAY_MODE=mock`, `DEMO_TEST_CARD_MAP` not set). G5: card values verified in [docs/benefits-verification.md](docs/benefits-verification.md); a human review is still pending. |
+| Gates | G1–G3 (trigger chain, snippet, capture) are device-only; Oct 16 iPhone results and the steps are in [docs/spikes.md](docs/spikes.md). Back Tap is the main trigger (owner, Oct 16); the Action Button is optional. **G4 (Visa sandbox) fails on Cybersource's side**: the sandbox merchant's processor (`fdiglobal`) has no USD outlet or terminal IDs, so every authorization is a 502. Fix steps are in [docs/overnight-report.md](docs/overnight-report.md); use `PAY_MODE=mock` until then. G5: card values verified in [docs/benefits-verification.md](docs/benefits-verification.md); a human review is still pending. |
 | Metrics | [docs/metrics.md](docs/metrics.md): what is measured, and what still needs the phone or people. |
 
 ## Repo layout
@@ -64,7 +64,7 @@ xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'platform=iOS
 tools/run_ui_tour.sh          # or: tools/run_ui_tour.sh live / tools/run_ui_tour.sh tour
 ```
 
-The UI tests need the network. Device build, install and the debug launch arguments are in [ios/README.md](ios/README.md); the Shortcut and Action Button steps are in [ios/Shortcut/README.md](ios/Shortcut/README.md).
+The UI tests need the network. Device build, install and the debug launch arguments are in [ios/README.md](ios/README.md); the Shortcut, Back Tap and Action Button steps are in [ios/Shortcut/README.md](ios/Shortcut/README.md).
 
 ## Metrics
 

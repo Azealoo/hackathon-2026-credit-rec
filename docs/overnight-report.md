@@ -106,11 +106,33 @@ Round-2 rulings:
 - **R26** The claim description uses a new free-text redaction mode that replaces only the matched span — line mode would blank the cause words — unlabeled names pass.
 - **R27** "Replayed" is shown as a small tag beside the §6.3 lines; the lines themselves are unchanged — §10 requires replay to be labeled — new copy for D.
 
+## Morning with the owner (Oct 16)
+
+**Back Tap is now the main trigger** (owner ruling). The owner pointed out that people won't give up Silent on the Action Button, and ruled out iOS 27's "When a screenshot is saved" automation: it keeps checkout screenshots in Photos and runs on every screenshot. The Action Button stays as an optional "Prefer a button?" card, and our demo phone can still use it.
+
+App changes (530ff6d, plus 3f8050c for the island):
+- **Prompt sheet:** "Check any checkout with a double tap" with [Set Up Back Tap] / [Not Now]. It plays a KeyframeAnimator double-tap demo with a CoreHaptics two-tap in sync; under Reduce Motion it shows still frames and plays no haptics. It shows in onboarding and once more in the Check tab after the 2nd in-app check. Not Now is stored.
+- **Set Up Back Tap** (was "Make it one press"): Get the Shortcut → Turn on Back Tap (an animated Settings breadcrumb) → Try it now. Try it now is an in-app sample checkout; a new check record turns it into "Back Tap works ✓", and the Safari store page is the fallback. There's no Open Settings button, because iOS 27 gives third-party apps no link to the Back Tap page (Found).
+- **Saved:** [What we sent] and [Done] side by side in the app. The system snippet's Done is drawn by iOS below the snippet and can't be moved, so in the snippet [What we sent] is a compact pill.
+- **Island:** a simplified Monoline mark (strokes ≥1.7 pt) replaces the shield, which was still the old design.
+- **Tests:** 259 unit; BackTapSetupTests, BackTapPromptUITests (3); the tour has 67 shots per set (light, dark, XL, XXL).
+
+Rulings:
+- **R28** Back Tap first, Action Button optional — owner, Oct 16 — the SPEC lines below still say Action Button.
+- **R29** Try it now counts any new check record as success, including *No checkout* and *Couldn't check* — any stored record proves the press reached Paywise — a press that fails the on-device gate stores nothing and doesn't count.
+- **R30** The haptic plays only alongside the drawn taps, for the first 3 loops, while the sheet is visible; none under Reduce Motion — no public API reads the System Haptics switch — someone with System Haptics off may still feel up to 3 double taps.
+- **R31** The prompt's second showing waits until the Check tab is back at its start — it never covers an answer being read — a user who never taps Done sees it on the next launch.
+- **R32** The Try it now fallback line avoids the word "sample" — with it, the backend's model called the screen "not a checkout" in 2 of 6 tries; without it, 10/10 Switch — the model varies, so changing this screen's text can bring the miss back.
+
+**SPEC lines that now differ** (SPEC.md is unchanged; the owner edits it): line 19 (v2.0 changelog), 38 (§0 TL;DR "Press the Action Button"), 48 (§0 table), 129 (§4.1 P0-15 "Action Button first"), 142 and 180 (§4.2/§4.5 "Back Tap → Q&A mention only", "Second binding only"), **207–208 (§5.1 steps 3–4: "Make it one press", practice press)**, 216 (§5.2 "Press and hold the Action Button"), **329 and 333 (§6.6 G1/G2 fallbacks worded for Action Button runs)**, 420 (§9.1), **514 (§12.1 demo script: "Press and hold the button above the volume buttons")**, 528, 540, 552, 557 (Q&A, video, what's real, table kit), 571 (§13 metric "would bind the Action Button"), 616 and 1121 (§14.2 G1 chain, G2 spike), 1103 (§15.7 step 14). Lines 115, 181, 1092 and 1145 name the Action Button as one option and still hold. §6.3 Saved/Sent copy is unchanged; the in-app Saved and Sent views gained a [Done].
+
+Device results: `docs/spikes.md` › Results.
+
 ## Morning checklist (about 10 minutes)
 
 1. **Visa sandbox (G4).** The card map is set, but Cybersource must fix the sandbox account's processor (Blocked on me). Until then, set Render `PAY_MODE=mock` so Visa ••1234 orders on the demo store don't show "Payment didn't go through". After Cybersource confirms the fix, set it back to `visa_acceptance` and run one order. To check a failed transaction ID: `cd backend && set -a && source ../.env && set +a && uv run python scripts/visa_txn.py <id>`.
-2. **Shortcut + Action Button, 2 min.** AirDrop `ios/Shortcut/Paywise.shortcut` to the iPhone, or build it with `ios/Shortcut/README.md` §A2. Open Paywise once (it's installed), then Settings › Action Button › Shortcut › Paywise.
-3. **Press test (G1/G2) on cellular, 5 min.** Turn Wi-Fi off. In Safari, open the demo store laptop checkout and press and hold the Action Button. Expected: *Checking* in the island within ~1 s, then the Switch snippet ("Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash").
+2. **Shortcut + Back Tap, 2 min.** AirDrop `ios/Shortcut/Paywise.shortcut` to the iPhone, or build it with `ios/Shortcut/README.md` §A2. Open Paywise once (it's installed), then Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise, then Paywise › Set Up Back Tap › Try it now.
+3. **Press test (G1/G2) on cellular, 5 min.** Turn Wi-Fi off. In Safari, open the demo store laptop checkout and double-tap the back of the iPhone. Expected: *Checking* in the island within ~1 s, then the Switch snippet ("Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash").
    - Tap [Paying with Freedom] → Saved. Do it once with a quick double tap: Paywise › Purchases should still show one row.
    - Press on `…/store/feed.html` → "No checkout total found / Nothing left your phone".
    - If the snippet doesn't appear: Paywise › Settings › Results › Island alert, then press again (§6.6).
@@ -121,7 +143,7 @@ Round-2 rulings:
 ## Blocked on me
 
 - **G4 Visa sandbox, account-side:** email developer@cybersource.com (or Support Center › Support Cases › "MID Configuration Request"). Include the sandbox merchant ID, the failed transaction IDs (7921652385256961203813, 7921651065676047703814, 7921648338676332103812) and the reply text "The following property is either invalid or missing: usd_outlet_id, usd_terminal_id" (processor fdiglobal). Ask them to add the USD outlet and terminal IDs for fdiglobal, or to put the test account on the default Chase Paymentech simulator. Their typical reply time is 1–2 business days, so plan the demo on `PAY_MODE=mock` and remove the Visa Acceptance claim per SPEC §11.2 if it isn't fixed by Saturday. Recommended now: set Render `PAY_MODE=mock`. That's your call; I haven't changed it.
-- **Device-only gates:** G1 (Action Button → Shortcut → screenshot of the app underneath), G2 (snippet appearance, button, silent sound), G3 (capture), on-device OCR time (target ≤400 ms; simulator p50 413 ms) and replay robustness. Checklist step 3; steps in `docs/spikes.md`.
+- **Device-only gates:** G1 (Back Tap → Shortcut → screenshot of the app underneath; results so far in `docs/spikes.md`), G2 (snippet appearance, button, silent sound), G3 (capture), on-device OCR time (target ≤400 ms; simulator p50 413 ms) and replay robustness. Checklist step 3; steps in `docs/spikes.md`.
 - **Shortcut iCloud link:** the setup screen has no install link until someone shares the Shortcut from the phone (Share › Copy iCloud Link).
 - **Decisions for the team (non-blocking):** approve the new copy outside §6.3/§5.5 (R16 line 2, empty states, claim helper text; listed in commit 86dd685's agent notes and `docs/spikes.md`); human review of the G5 benefit data (`docs/benefits-verification.md`); confirm Monoline as the final logo.
 
@@ -134,7 +156,8 @@ Round-2 rulings:
   - OCR and redaction.
   - App shell, Purchases and claim flow, settings, os_signpost.
   - Monoline icon and mark.
-  - Tests: 245 unit + 5 UI (3 live).
+  - Back Tap prompt, Set Up Back Tap and Try it now (morning, owner present).
+  - Tests: 259 unit + 8 UI (3 live) + 6 device-only (DevicePressUITests, SettingsLinkUITests).
   - `ios/tools/run_ui_tour.sh`.
 - **Docs:** this report, `docs/spikes.md`, `docs/metrics.md`, README, `.env.example`, `ios/README.md`, `ios/Shortcut/README.md`, `brand/08-monoline/`, `docs/overnight-shots/`.
 - **Render:** `PARSER_MODE=llm`, `COVERAGE_MODE=llm` (set via the API, ~13:40); one API-triggered deploy; otherwise auto-deploys from pushes. `PAY_MODE` is still `mock`.

@@ -18,7 +18,7 @@ End If
 only field is **Screenshot** (`@Parameter(title: "Screenshot") var image`). The built app's
 `Metadata.appintents/extract.actionsdata` (Oct 15) has the same names.
 
-**(u)** means not yet tried on an iPhone. Nothing here has run on a phone yet. Screen labels come from the
+**(u)** means not yet tried on an iPhone. On Oct 16 the owner's iPhone ran sections A–C (Back Tap 5/5, `docs/spikes.md`); the rest is untested there. Screen labels come from the
 macOS 27.0.1 Shortcuts strings and from iOS 17/18. iOS 27 may name or place a few of them differently.
 
 **Before you start:** install the Paywise build, open it once and add your cards. iOS lists the app's actions only

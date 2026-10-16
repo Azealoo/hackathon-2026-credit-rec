@@ -12,10 +12,10 @@ SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, c
 
 | Gate | Pass rule (§14.2) | Seen on the simulator | Still open (iPhone) | State |
 |---|---|---|---|---|
-| **G1** chain | ≥9/10 Action Button presses capture the right screen and show the island (store in Safari + 2 real apps) | `CheckCheckoutIntent.perform()` with real Vision OCR on the laptop screenshot → Switch (`RealReaderIntentTests`). In-app check against Render: Switch copy 4.17 s after the pick. *Checking* island: `live-activity/01–02`. | The whole press chain: Action Button → Shortcut → Take Screenshot → intent. Which screen gets captured. Back Tap. | Open |
+| **G1** chain | ≥9/10 presses (SPEC says Action Button; Back Tap is now the main trigger, owner Oct 16) capture the right screen and show the island (store in Safari + 2 real apps) | `CheckCheckoutIntent.perform()` with real Vision OCR on the laptop screenshot → Switch (`RealReaderIntentTests`). In-app check against Render: Switch copy 4.17 s after the pick. *Checking* island: `live-activity/01–02`. | The whole press chain: Back Tap (or Action Button) → Shortcut → Take Screenshot → intent. Which screen gets captured. | Open: results below |
 | **G2** surface | Snippet appears ≥9/10 (Safari + ≥1 third-party app); [Paying with …] saves and reloads ≥9/10; island empty 5 min after Done; silent alert expands with no sound | Snippet states render in the app (`*/50–57-gallery-*`). Two racing saves make one purchase (`testSaveIsIdempotent`). Island fallback (`islandModeShowsSwitchFallback`, `live-activity/07–08`). `silent.caf` is silent PCM in both bundles (`AssetTests`). | All four checks. The system snippet only exists after a real press. | Open |
 | **G3** capture | Wired QuickTime or AirPlay shows the island and the snippet | Nothing (the simulator can't show this) | Everything | Open |
-| **G4** Visa | Sandbox returns an approved transaction ID | Code and tests done (`test_store_pay.py`). Mock mode works live (18:35: `/v1/store/pay` → approved, `processor: mock`). The sandbox accepts our signed request: `scripts/visa_smoke.py` at 18:36 → auth probe HTTP 400 `MISSING_FIELD` card number, so the keys and signature work (a wrong secret gave 401 earlier tonight (u: build log)). Only an approval with a card proves G4. | Nothing on the phone | **Blocked:** the owner must set `DEMO_TEST_CARD_MAP` on Render |
+| **G4** Visa | Sandbox returns an approved transaction ID | Code and tests done (`test_store_pay.py`). Mock mode works live (18:35: `/v1/store/pay` → approved, `processor: mock`). The sandbox accepts our signed request: `scripts/visa_smoke.py` at 18:36 → auth probe HTTP 400 `MISSING_FIELD` card number, so the keys and signature work (a wrong secret gave 401 earlier tonight (u: build log)). Only an approval with a card proves G4. | Nothing on the phone | **Blocked, account-side:** card map set (Oct 16), but processor `fdiglobal` lacks USD outlet/terminal IDs; Cybersource support must fix it (results below) |
 | **G5** data | Demo-card protections checked against the Guides to Benefits | `docs/benefits-verification.md` (Oct 14): all four G5 answers verified; the S1 copy holds | A human review by B or D | Data done; review pending |
 
 ## Spikes
@@ -78,19 +78,19 @@ xcrun simctl spawn <udid> log stream --info --signpost --style compact \
 
 **Before you start:** unlock the phone, open Paywise once and tap **Use demo wallet**. Ringer on, volume up. In Paywise › Settings › Results: **Snippet with a Paying with button**, **Silent island alerts** on, **Replay when offline** on. Fill in the table at the end as you go.
 
-### 0. Shortcut and Action Button (S6), ≈2 min
+### 0. Shortcut and Back Tap (S6), ≈2 min
 
-Follow `ios/Shortcut/README.md` sections A–C with a stopwatch: AirDrop `Paywise.shortcut` (or build it by hand), bind **Settings › Action Button › Shortcut › Paywise**, do the practice press, answer **Always Allow**. Write down the time (target ≤2:00) and whether the signed file imported.
+Follow `ios/Shortcut/README.md` sections A–C with a stopwatch: AirDrop `Paywise.shortcut` (or build it by hand), turn on **Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise**, then use Paywise's **Try it now** (or the store page in Safari) and answer **Always Allow**. iOS 27 has no link a third-party app can use to open the Back Tap page (9 forms tried on the phone, Oct 16: `App-prefs:` lands on Settings › Apps, `prefs:` and `settings-navigation://` are refused), so the setup screen shows the path instead. Write down the time (target ≤2:00) and whether the signed file imported.
 
 ### 1. G1 chain and timing, ≈10 min
 
 1. Film the phone with a second phone (Slo-mo or 60 fps) so your finger and the screen are both in shot. A screen recording can't show the press.
 2. In Safari open https://paywise-store.onrender.com/checkout.html?item=laptop.
-3. Press the Action Button 10 times. After each press wait for the answer, then tap **Done**.
+3. Double-tap the back 10 times. After each double tap wait for the answer, then tap **Done**.
 4. Count presses where the island showed *Checking* and the answer was **Use Freedom ••1234**.
 5. Open Paywise › Settings › **What we sent**. Each check shows the text that was read; it must be the store's checkout, not Shortcuts or Paywise.
 6. Do 5 presses on each of 2 real apps' cart or checkout screens (look only; don't buy). Count presses that showed *Checking* and an answer about that screen. Never save those screenshots in the repo.
-7. Back Tap: **Settings › Accessibility › Touch › Back Tap › Double Tap › Paywise**. Do 10 double taps on the store page and count.
+7. Action Button (optional, for people who don't use it for Silent): **Settings › Action Button › Shortcut › Paywise**. Do 10 press-and-holds on the store page and count.
 8. From the video, for each press note the time from the press to *Checking* and to the answer. Targets: press → *Checking* p50 ≤1.0 s; press → answer p50 ≤3.5 s, p90 ≤5 s. Record the signposts during the presses too ([Timing a press](#timing-a-press-os_signpost)): they split each time into the app's links, and the rest is press → intent start.
 
 Fail (<9/10) → report it with What we sent as evidence; try a Wait before Take Screenshot; fall back to the in-app check. Not the iOS 27 screenshot automation in SPEC §6.6 G1 step 1: the owner ruled it out on Oct 16 (it saves checkout screenshots to Photos and runs on every screenshot).

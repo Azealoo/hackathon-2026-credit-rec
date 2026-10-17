@@ -83,6 +83,7 @@ SPEC_WALLETS = {
     "fu-default": [(FU, "1234"), (AC, "4321"), (APPLE, "5678")],
     "discover-fu": [(DISC, "4321"), (FU, "1234")],
     "rise-ac": [(RISE, "1234"), (AC, "4321")],
+    "ac-apple": [(AC, "4321"), (APPLE, "5678")],
 }
 
 # §15.4 scenarios table: id -> (wallet, kind, reason, card the table names or None).
@@ -91,7 +92,7 @@ SPEC_SCENARIOS = {
     2: ("demo-3card", "switch", "cash", AC),
     3: ("demo-3card", "switch", "protection", FU),
     4: ("demo-3card", "keep", "below_threshold", None),
-    5: ("fu-default", "keep", "already_protected", None),
+    5: ("fu-default", "switch", "protection", FU),
     6: ("no-protection", "keep", "default_best", None),
     7: ("apple-ac", "switch", "cash", AC),
     8: ("demo-3card", "keep", "method", None),
@@ -108,7 +109,13 @@ SPEC_SCENARIOS = {
     19: ("demo-3card", "keep", "method", None),
     20: ("demo-3card", "keep", "below_threshold", None),
     21: ("rise-ac", "keep", "already_protected", None),
-    22: ("fu-default", "keep", "already_protected", None),
+    22: ("fu-default", "switch", "protection", FU),
+    23: ("fu-default", "keep", "already_protected", None),
+    24: ("ac-apple", "switch", "cash", AC),
+    25: ("fu-default", "keep", "already_protected", None),
+    26: ("rise-ac", "keep", "already_protected", None),
+    27: ("fu-default", "switch", "cash", AC),
+    28: ("discover-fu", "keep", "below_threshold", None),
 }
 
 # Numbers the §15.4 table states: id -> (expected field, value).
@@ -120,6 +127,11 @@ SPEC_SCENARIO_NUMBERS = {
     9: ("cashDeltaVsCashBest", -1.80),  # "($1.80)": the cash-best gain the default keeps instead
     10: ("cashDeltaVsCashBest", -0.60),  # "−$0.60"
     21: ("cashDeltaVsCashBest", -6.00),  # "AC +$6.00 would otherwise switch"
+    5: ("cashDeltaVsCashBest", -7.49),  # "−$7.49 vs AC"
+    25: ("cashDeltaVsCashBest", -6.00),  # "AC +$6.00 would otherwise switch"
+    26: ("cashDeltaVsCashBest", -7.50),  # "AC +$7.50 would otherwise switch"
+    27: ("cashDeltaVsDefault", 6.00),  # "+$6.00"
+    28: ("cashDeltaVsCashBest", -1.25),  # "FU +$1.25, partial"
 }
 
 # §15.4 scenarios table, "Cart / path" column: id -> (total, item category, item condition, merchant the
@@ -146,10 +158,16 @@ SPEC_CARTS = {
     20: (38.00, "home", "new", "amazon"),
     21: (1200.00, "computers", "new", None),
     22: (1499.00, "computers", "new", None),
+    23: (1499.00, "computers", "new", None),
+    24: (1099.00, "computers", "renewed", None),
+    25: (1200.00, "apparel", "new", "stride-athletics"),
+    26: (1500.00, "home", "new", "target"),
+    27: (1200.00, "grocery", "new", None),
+    28: (249.00, "dining", "new", None),
 }
 APPLE_PAY_VISIBLE = {8, 19, 22}  # the only rows that say "Apple Pay visible"
-SAVED_CARD = {1, 5, 20, 21}  # rows that say "saved card"
-CARD_FORM_ONLY = {9}  # "card form only"
+SAVED_CARD = {1, 5, 20, 21, 23, 24, 25, 26, 27}  # rows that say "saved card" or name a selected card
+CARD_FORM_ONLY = {9, 28}  # "card form only"
 
 # §15.4 screenshot list: name -> (total, condition of its one item).
 SPEC_SCREENSHOT_CARTS = {
@@ -175,6 +193,7 @@ SPEC_CASES = {
     11: ("not_covered", None, None, None),
     12: ("may_be_eligible", None, None, 1000.00),
     13: ("may_be_eligible", "purchase_protection", None, 500.00),
+    14: ("not_covered", "none", None, None),
 }
 
 SCENARIO_KEYS = {"id", "title", "wallet", "paymentPath", "screenshot", "cart", "expected", "workings"}
@@ -210,12 +229,14 @@ def usd(value: float) -> Decimal:
 
 def rate_pct(card: dict, merchant_id: str | None, category: str | None, apple_pay: bool) -> Decimal:
     """§7.2 rule 1: merchant rule > category rule > base, among the rules the payment path allows.
+    `category` is the known merchant's category; a rule that needs activation is never counted.
 
     A rule with neither merchants nor a category (Apple Card's 2% via Apple Pay) is the base rate for
     its payment method, so it beats baseRatePct.
     """
     method = "apple_pay" if apple_pay else "card"
-    rules = [r for r in card["earn"]["rules"] if {"any", method} & set(r["paymentMethods"])]
+    rules = [r for r in card["earn"]["rules"]
+             if {"any", method} & set(r["paymentMethods"]) and not r["needsActivation"]]
     levels = (
         [r for r in rules if merchant_id is not None and merchant_id in (r["merchantIds"] or [])],
         [r for r in rules if r["merchantIds"] is None and r["category"] is not None and r["category"] == category],
@@ -239,7 +260,7 @@ def cash_by_card(cart: dict, wallet: list[str], category: str | None) -> dict[st
 # ---------------------------------------------------------------- wallets
 
 
-def test_seven_wallets_match_the_spec_table():
+def test_eight_wallets_match_the_spec_table():
     assert {wid: [(c["cardId"], c["last4"]) for c in w["cards"]] for wid, w in WALLETS.items()} == SPEC_WALLETS
 
 
@@ -252,8 +273,18 @@ def test_wallet_cards_exist_in_cards_json():
 # ---------------------------------------------------------------- scenarios
 
 
-def test_22_scenarios_in_order():
-    assert [s["id"] for s in SCENARIOS] == list(range(1, 23))
+def test_28_scenarios_in_order():
+    assert [s["id"] for s in SCENARIOS] == list(range(1, 29))
+
+
+def baseline(scenario: dict) -> str:
+    """§7.2 baseline: the selected saved card when exactly one wallet card has its network, else the default."""
+    wallet = [card["cardId"] for card in WALLETS[scenario["wallet"]]["cards"]]
+    selected = scenario["cart"]["selectedPayment"]
+    matches = [card_id for card_id in wallet if CARDS[card_id]["network"] == selected["network"]]
+    if selected["kind"] == "saved_card" and len(matches) == 1:
+        return matches[0]
+    return wallet[0]
 
 
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda s: f"s{s['id']}")
@@ -283,12 +314,11 @@ def test_scenario_cart_is_a_contract_cart(scenario):
 def test_scenario_matches_spec_table(scenario):
     wallet, kind, reason, named_card = SPEC_SCENARIOS[scenario["id"]]
     expected = scenario["expected"]
-    default = WALLETS[wallet]["cards"][0]["cardId"]
     assert (scenario["wallet"], expected["kind"], expected["reason"]) == (wallet, kind, reason)
     if kind == "switch":
         assert expected["recommendedCardId"] == named_card
     elif kind == "keep":
-        assert expected["recommendedCardId"] == default
+        assert expected["recommendedCardId"] == baseline(scenario)
     else:
         assert expected["recommendedCardId"] is None
     if scenario["id"] in SPEC_SCENARIO_NUMBERS:
@@ -358,21 +388,18 @@ def test_scenario_cash_follows_cards_json(scenario):
     cart, expected = scenario["cart"], scenario["expected"]
     wallet = [card["cardId"] for card in WALLETS[scenario["wallet"]]["cards"]]
     merchant_id = cart["merchant"]["merchantId"]
+    # §7.2 rule 1 (v2.5): a category rule counts only at a known merchant, against its catalog category.
     by_merchant = cash_by_card(cart, wallet, MERCHANTS[merchant_id]["category"] if merchant_id else None)
-    # §7.2 doesn't say whether a category rule matches the merchant's category or the items'. Every
-    # fixture must give the same cash both ways; if one doesn't, it needs a ruling first.
-    item_categories = {item["category"] for item in cart["items"]}
-    by_item = cash_by_card(cart, wallet, item_categories.pop() if len(item_categories) == 1 else None)
-    assert by_merchant == by_item, "cash depends on merchant vs item category"
     assert {card_id: usd(value) for card_id, value in expected["cashByCard"].items()} == by_merchant
     best = max(by_merchant.values())
-    # Ties go to the default (the first wallet card), then to wallet order.
-    assert expected["cashBestCardId"] == next(card_id for card_id in wallet if by_merchant[card_id] == best)
+    # Ties go to the baseline, then the default (the first wallet card), then wallet order.
+    order = [baseline(scenario), *wallet]
+    assert expected["cashBestCardId"] == next(card_id for card_id in order if by_merchant[card_id] == best)
 
 
 def test_scenario_specifics():
     by_id = {s["id"]: s for s in SCENARIOS}
-    assert by_id[2]["expected"]["eligibilityNotes"] == ["Renewed, no warranty: no card covers it"]
+    assert by_id[2]["expected"]["eligibilityNotes"] == ["Renewed: no card cover counted"]
     assert [by_id[i]["cart"]["screenType"] for i in (13, 14, 15)] == ["not_checkout", "unreadable", "order_confirmation"]
     unreadable = by_id[18]["cart"]
     assert unreadable["totalUsd"] is not None and unreadable["confidence"]["total"] >= 0.8
@@ -380,7 +407,7 @@ def test_scenario_specifics():
     for sid in (8, 19, 22):  # "Apple Pay visible"
         assert "apple_pay" in by_id[sid]["cart"]["paymentOptionsVisible"]
         assert by_id[sid]["paymentPath"] == "apple_pay"
-    for sid in (1, 3, 10, 16, 17):
+    for sid in (1, 3, 5, 10, 16, 17, 22):
         assert by_id[sid]["expected"]["protectionsGained"] == COUNTED_PROTECTIONS
 
 
@@ -468,8 +495,8 @@ def test_non_checkout_ocr_has_no_readable_total(name):
 # ---------------------------------------------------------------- coverage cases
 
 
-def test_13_coverage_cases_in_order():
-    assert [c["id"] for c in CASES] == list(range(1, 14))
+def test_14_coverage_cases_in_order():
+    assert [c["id"] for c in CASES] == list(range(1, 15))
 
 
 def coverage_request(case: dict) -> dict:
@@ -507,7 +534,7 @@ def test_coverage_case_matches_spec_table(case):
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: f"c{c['id']}")
 def test_coverage_case_cites_a_section_in_cards_json(case):
-    """§13 and §15.7 step 12b: every verdict cites a section and a version date, 13/13."""
+    """§13 and §15.7 step 12b: every verdict cites a section and a version date."""
     section = case["expected"]["citesSection"]
     card = CARDS[case["purchase"]["cardId"]]
     counted = [p["source"] for p in card["protections"] if p["type"] in COUNTED_PROTECTIONS]
@@ -522,7 +549,9 @@ def test_coverage_specifics():
     by_id = {c["id"]: c for c in CASES}
     assert by_id[8]["purchase"]["manufacturerWarrantyMonths"] == 0
     assert by_id[8]["purchase"]["condition"] == "renewed"
-    assert all(c["purchase"]["manufacturerWarrantyMonths"] == 12 for i, c in by_id.items() if i != 8)
+    assert by_id[14]["purchase"]["manufacturerWarrantyMonths"] == 0  # groceries have no maker's warranty
+    assert by_id[14]["purchase"]["category"] == "grocery"
+    assert all(c["purchase"]["manufacturerWarrantyMonths"] == 12 for i, c in by_id.items() if i not in (8, 14))
     assert by_id[12]["purchase"]["paidWith"] == "card_partial"
     assert by_id[12]["purchase"]["amountOnCardUsd"] == 1000.00
     assert all(c["purchase"]["paidWith"] == "card_full" for i, c in by_id.items() if i != 12)

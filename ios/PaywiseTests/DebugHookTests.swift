@@ -81,7 +81,7 @@ struct DebugHookTests {
                 line1: "Use Active Cash ••4321", line2: "$10.99 more cash back than Apple Card",
                 line3: nil, instruction: "Change card to Visa ••4321, then place order"
             ),
-            eligibilityNote: "Renewed, no warranty: no card covers it",
+            eligibilityNote: "Renewed: no card cover counted",
             button: "Paying with Active Cash"
         ),
         .keepProtected: ResultCopy(

@@ -7,8 +7,8 @@ response body. Results go in docs/metrics.md.
     cd backend && set -a && source ../.env && set +a && uv run python scripts/metrics.py --live
 
 Offline:
-    SCENARIOS    pass=x/22 false_switches=n protection_drops=n must_pass_5_21_22=yes|no
-    COVERAGE     pass=x/13 not_covered_right=x/y cites_section_and_date=x/13 cap500_cases_3_13=yes|no
+    SCENARIOS    pass=x/28 false_switches=n protection_drops=n must_pass=yes|no (5, 21, 22, 23, 25, 26)
+    COVERAGE     pass=x/14 not_covered_right=x/y cites_section_and_date=x/14 cap500_cases_3_13=yes|no
     CHECK_LOCAL  POST /v1/check S1 through TestClient, PARSER_MODE=rules, one warm-up left out;
                  parser= counts the parser each timed request really used (rulesxN)
 
@@ -157,7 +157,7 @@ def scenarios_line() -> str:
     false_switches = sum(t.false_switch(s, results[s["id"]]) for s in t.SCENARIOS)
     drops = sum(t.protection_drop(s, results[s["id"]]) for s in t.SCENARIOS)
     return (f"SCENARIOS pass={frac(len(passed), len(t.SCENARIOS))} false_switches={false_switches} "
-            f"protection_drops={drops} must_pass_5_21_22={yes(t.MUST_PASS <= passed)}")
+            f"protection_drops={drops} must_pass={yes(t.MUST_PASS <= passed)}")
 
 
 def coverage_line() -> str:

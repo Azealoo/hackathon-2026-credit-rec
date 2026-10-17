@@ -1,9 +1,17 @@
 # Paywise — Product Spec
 
-**Version:** 2.4 (Oct 16, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
+**Version:** 2.5 (Oct 16, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
 **Status:** Product-form decision after a 7-reviewer product-form review (product manager, interaction designer, form-factor designer, student user, competitive analyst, hackathon/Visa judge, iOS engineering lead), a PM decision and a challenge round. Items marked **(u)** are unverified and must be tested before we rely on them.
 
 ## Changelog
+
+**v2.5 (Oct 16, 2026): advice correctness (product review of Oct 17; team-approved proposal)**
+- **Baseline (§7.1, §7.2):** rules 4–8 compare against the card selected on screen when a saved card is selected and exactly one wallet card has its network; otherwise against the default. A Keep keeps that card; cash-best ties go to it first. A Freedom default with Apple Card's Mastercard on screen now gets "Use Freedom … Change card to Visa", not "✓ Keep Freedom".
+- **Never drop cover (§7.2 rules 3, 4, 6, 9):** a protection *covers* an item when its terms do, at any price; an item *qualifies* for Rule P as before. Rule P's pick keeps every type the baseline covers, and Rule C never switches away from cover the baseline has (a $1,200 jacket keeps Freedom). `allowedCashPicks` uses the same test.
+- **Rates that may apply (§7.2 rule 1, §8.2):** category rules count only at a known merchant. A category read from the items at an unknown store marks the rate partial ("Likely"). Keep copy that compares every card hedges too. Discover's Q4 5% stays a phone-side offer (v2.3 D1).
+- **Card data (§15.3):** Chase's protections exclude dining, grocery, gas, pharmacy, gift_card, services, travel, entertainment and utilities; new `basis` field (Chase purchase protection is secondary, and claim verdicts say so, §5.5).
+- **Renewed note (§6.3, §7.3, §12.1):** "Renewed: no card cover counted", since the engine can't see whether a listing has a warranty.
+- **Fixtures (§13, §15.4):** 28 scenarios (5 and 22 now switch; 23–28 new), wallet `ac-apple`, coverage case 14; the protection-drop metric reads card terms only.
 
 **v2.4 (Oct 16, 2026): the spec matches the code after the product review**
 - **Visa:** G4 failed on Cybersource's side (`docs/spikes.md`), so §11.2 and §12.1–12.3 script the demo payment on `PAY_MODE=mock` and make no Visa-API claim. §11.3 no longer says Visa built the benefit tiers: the demo card's protections are Chase's.
@@ -102,7 +110,7 @@ Nobody we found joins **this purchase → its coverage window → an incident ch
 |---|---|---|
 | S1 | $1,499 laptop, Northbay Electronics (our fictional demo store), saved-card checkout. Wallet: Apple Card (default), Wells Fargo Active Cash, Chase Freedom Unlimited | **Switch → Freedom ••1234:** "Adds a warranty year + $500 theft cover · $7.49 less cash back than Active Cash" |
 | S1-R | Same laptop, listed "Renewed · no warranty", $1,099 | **Switch → Active Cash** (cash): a renewed item with no maker's warranty gets no card cover |
-| S1-K | S1 with Freedom as the default | **Keep Freedom** (already protected); snippet with save |
+| S1-K | S1 with Freedom as the default and its Visa ••1234 selected on the store | **Keep Freedom** (already protected); snippet with save. With the store's preselected Mastercard ••5678 (Apple Card) it's *Use Freedom* (§7.2 baseline) |
 | S2 (engine / Q&A) | $180 shoes at Nike, Apple Pay visible | **Keep Apple Card: use Apple Pay** (3% vs 1% typed) |
 | S3 | $249 earbuds stolen at week 6 | **May be eligible:** purchase protection; police report; deadline |
 | S4 | Laptop shows lines at month 14, never dropped | **May be eligible:** extended warranty, clause cited. Contrast: dropped → **not covered** |
@@ -238,7 +246,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 | ≈6 | Taps Done (or [What we sent], then Done) | Snippet gone; island empty | — |
 | ≈7–10 | Store's Change → "Visa ••1234" → Place order | — | — |
 
-**B. Keep, default already protects the item (S1-K).** Same as A, with the *Keep, protected* copy and no sound.
+**B. Keep, default already protects the item (S1-K: Freedom default, Visa ••1234 selected on the store).** Same as A, with the *Keep, protected* copy and no sound.
 
 **C. Other Keep answers** (an $18 mug, or $180 Nike shoes with Apple Pay visible): press → *Checking* within 1.0 s → at ≈3 s the island **expands via an alerting update** (silent if gate G2 passes) with the *Keep* copy → `perform()` holds 4 s, ends the activity `.immediate`, and returns with no snippet. No tap needed.
 
@@ -269,10 +277,13 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 | Verdict | Example (laptop bought Oct 17, 2026 with Freedom Unlimited) | Screen copy |
 |---|---|---|
 | may_be_eligible | "Lines across the screen. Never dropped." at 14 months | **May be eligible: Extended warranty (Freedom Unlimited).** The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028. **Notify by {incident date + 90 days}; send documents by {incident date + 120 days}, or as soon as reasonably possible** (Chase deadlines, verified in G5). Clause: {document} · {section} · version {date}. Checklist: itemized receipt · card statement showing the purchase · original warranty · repair estimate. You file it yourself at {administrator url}. |
-| may_be_eligible, capped | "Stolen from my bag" at day 30 | **May be eligible: Purchase protection, up to $500 of the $1,499.** Theft is covered within 120 days (to Feb 14, 2027). The checklist adds a police report (made within 48 hours if you can); for porch theft, it adds "claim with the carrier or store first". |
+| may_be_eligible, capped | "Stolen from my bag" at day 30 | **May be eligible: Purchase protection, up to $500 of the $1,499.** Theft is covered within 120 days (to Feb 14, 2027). It's secondary: it pays after any other insurance you have. The checklist adds a police report (made within 48 hours if you can); for porch theft, it adds "claim with the carrier or store first". |
 | not_covered | "Cracked it when I dropped it" at 14 months | **Not covered.** Damage was covered for 120 days (to Feb 14, 2027). The extended warranty covers failures, not drops. |
 | not_covered, maker route | Stops working at month 8 | **Not covered by your card yet: it's still under the maker's warranty.** Contact the manufacturer first. The card's extra year starts Oct 17, 2027. |
-| need_more_info | "Left them on the bus" (earbuds, week 6) | **Need more info.** Theft and "involuntary and accidental parting" may be covered within 120 days; simply losing something may not be. See the cited clause. |
+| need_more_info | "Left them on the bus" (earbuds, week 6) | **Need more info.** Theft and "involuntary and accidental parting" may be covered within 120 days; simply losing something may not be. See the cited clause. It's secondary: it pays after any other insurance you have. |
+| not_covered, excluded category | "My grocery bags were taken from my car" (groceries, day 10) | **Not covered.** Purchase protection doesn't cover grocery items. (Any cause, any date: the benefit's `excludedCategories`.) |
+
+**Secondary cover:** every verdict that names a benefit whose `basis` is `secondary` (Chase purchase protection) adds "It's secondary: it pays after any other insurance you have."
 
 **Payout cap:** the lesser of the repair cost, the replacement cost, the amount charged to the card, and the benefit's cap ($500 per item for purchase protection, $10,000 per item for extended warranty). With `paidWith: card_partial`, the cap is the part paid on the card.
 
@@ -295,7 +306,7 @@ Footer on every verdict: "Only the benefit administrator decides claims. Paywise
 ### 6.2 Rules for every result
 - **The 3-second rule:** line 1 is the verdict, at most 4 words plus `••last4`, next to the card art, starting with a verb. Lines 2 and 3 are ≤44 characters each. The instruction line is ≤48 characters, in secondary style. At most 2 numbers in lines 1–3 (not counting last 4).
 - **Content:** never blend cash and protection into one number. Always state the protection cap when it's verified.
-- **Cost line:** compares against the wallet's cash-best card. If the default ties for cash-best, it names the default. If the pick is also cash-best, it says "Also earns the most cash back here".
+- **Cost line:** compares against the wallet's cash-best card. If the baseline (§7.2) ties for cash-best, it names the baseline. If the pick is also cash-best, it says "Also earns the most cash back here".
 - **Island:** before each `Activity.request`, end every existing Paywise activity with `.immediate`. Every request and update sets `staleDate = now + 2 min`. **The intent always ends its activity before `perform()` returns.** On app launch, end any leftover activities.
 - **Timing:** the backend request times out at **6.0 s**, and *Couldn't check* shows at once. The intent never runs past 30 s.
 
@@ -308,13 +319,13 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 | **Checking** | Intent starts | Island compact (long-press: expanded) | (expanded) Reading this screen… | Only the order summary leaves your phone | — | — | none | Replaced by the result; the intent ends it in every path |
 | **Switch, protection** | Rule P | **Result snippet** | Use Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | $7.49 less cash back than Active Cash · *Change card to Visa ••{last4}, then place order* | [Paying with Freedom] + system Done | snippet presentation only | Done or swipe; the Live Activity is ended before the snippet appears |
 | Switch, protection, pick also cash-best | Rule P | Same | Use Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Also earns the most cash back here · *instruction* | Same | Same | Same |
-| **Switch, cash** | Rule C | Same | Use Active Cash ••{last4} | $10.99 more cash back than Apple Card | Eligibility note if any ("Renewed, no warranty: no card covers it") · *Change card to Visa ••{last4}, then place order* | [Paying with Active Cash] + Done | Same | Same |
+| **Switch, cash** | Rule C | Same | Use Active Cash ••{last4} | $10.99 more cash back than Apple Card | Eligibility note if any ("Renewed: no card cover counted") · *Change card to Visa ••{last4}, then place order* | [Paying with Active Cash] + Done | Same | Same |
 | Switch, Apple Pay path (P1) | Apple Pay button visible | Same | Use Freedom ••{last4} | (gain) | (cost) · *In Apple Pay, swipe to this card* | Same | Same | Same |
-| **Keep, protected** | Guard G, or default protects | **Result snippet** | ✓ Keep Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Save it so you can claim later | [Paying with Freedom] + Done | snippet presentation only | Same as Switch |
+| **Keep, protected** | Guard G, Rule C's cover check, or the baseline protects | **Result snippet** | ✓ Keep Freedom ••{last4} | Adds a warranty year + {ppCap} theft cover | Save it so you can claim later | [Paying with Freedom] + Done | snippet presentation only | Same as Switch |
 | **Saved** (reload) | `SavePurchaseIntent` done | Same snippet | ✓ Saved: Aero 14 · $1,499 | Theft & damage cover up to $500 to Feb 14, 2027 | Extra warranty year to Oct 17, 2028* · *If the maker's warranty is 1 year. Planned: confirm after you pay.* | [What we sent] + Done | none | Done or swipe |
 | **Sent** (reload) | [What we sent] | Same snippet | What left your iPhone | The exact redacted text sent (scrolls; monospaced) | Cards sent as product names only. No screenshot, no last 4. | Done | none | Done or swipe |
-| **Keep, default best** | No rule fires | Island, expanded via alert | ✓ Keep Apple Card ••{last4} | Best of your 3 cards here | — | — | silent `.named` (G2), else `.default` | Held 4 s, then `.immediate` |
-| Keep, under threshold | Cash gain below threshold | Same | ✓ Keep Apple Card ••{last4} | Switching gains under ${threshold} here | — | — | Same | Same |
+| **Keep, default best** | No rule fires | Island, expanded via alert | ✓ Keep Apple Card ••{last4} | Best of your 3 cards here (a card's rate here is partial: "Likely best of your 3 cards here") | — | — | silent `.named` (G2), else `.default` | Held 4 s, then `.immediate` |
+| Keep, under threshold | Cash gain below threshold | Same | ✓ Keep Apple Card ••{last4} | Switching gains under ${threshold} here ("Switching likely gains under …" when a rate is partial) | — | — | Same | Same |
 | Keep, method (S2) | Default earns more via Apple Pay | Same | ✓ Apple Card: use Apple Pay | 3% ($5.40) with Apple Pay vs 1% typed | — | — | Same | Same |
 | Keep, items unreadable | Merchant + total read, items not | Same | ✓ Keep Apple Card ••{last4} | Couldn't read the items, so no switch | — | — | Same | Same |
 | **No checkout, on device** | On-device gate fails (nothing sent) | Island, alert | No checkout total found | Nothing left your phone | Scroll to the total and press again | — | Same | Held 4 s, then `.immediate` |
@@ -358,36 +369,34 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 ## 7. Recommendation and coverage engine
 
 ### 7.1 Inputs
-The `/v1/check` request (§15.5): redacted OCR text, wallet card IDs with the default flag, and the client date. The LLM turns the text into a Cart (merchant, items with category / condition / seller, total, visible payment options, upsells, BNPL). The engine never sees last 4. Card rules come from `data/cards.json` (§8, §15.3).
+The `/v1/check` request (§15.5): redacted OCR text, wallet card IDs with the default flag, and the client date. The LLM turns the text into a Cart (merchant, items with category / condition / seller, total, visible payment options, the card selected on screen (`selectedPayment`: kind and network), upsells, BNPL). The engine never sees last 4. Card rules come from `data/cards.json` (§8, §15.3).
 
 ### 7.2 Rules (v1; `backend/app/engine.py`, thresholds in `backend/app/policy.py`)
 
 **Thresholds:** `PROTECTION_MIN_ITEM_USD = 100` · `CASH_SWITCH_MIN_USD = {apple_pay: 3, saved_card: 5, card_form: 5, unknown: 5}` · `ITEM_CONFIDENCE_MIN = 0.8`.
 
+**Baseline.** The baseline is the wallet card selected on screen when a saved card is selected (`selectedPayment.kind = saved_card`) and exactly one wallet card has its network (from `data/cards.json`). Otherwise (no saved card, network unknown, or a network that fits no wallet card or several) it's the default. Rules 4–8 compare against the baseline, and a Keep keeps the baseline. The phone matching the on-screen last 4 is P1.
+
 **Rules, applied in order:**
 0. **Screen type.** If the screen isn't a checkout, return `no_checkout`: not_checkout → reason `not_checkout`; unreadable → `unreadable`; order_confirmation → `already_paid`.
 1. **Cash per card.** Use `Decimal` throughout.
    - Rate precedence (offers decision D4): the **best applicable rate wins**. An earn rule applies when its payment method and its merchant or category match, its `window` contains `clientDate`, and one of its `channels` is one a phone checkout can be (online / in_app / any; never in_store). The base rate is always a candidate. Ties go to the more specific rule (merchant > category > payment method > base), then file order. On every merchant and category the catalog can produce this equals the old merchant > category > base tiers (`test_earn_precedence.py`); it differs only where a narrower rule pays less, and then it pays more.
+   - A category rule counts only at a known merchant, against its catalog category (issuers decide by merchant code). At a store the catalog doesn't know, a rule that would win only on the items' shared category isn't counted; it leaves the counted rate in place and marks it partial (§8.2: "Likely").
    - Payment-method requirements apply. The path is `apple_pay` if an Apple Pay button is visible (every wallet card is assumed to be in Wallet). Otherwise it's the saved-card or card-form path, and cards earn their "card" rates.
    - Round each card's cash to cents (half-up) before any subtraction.
-   - `cashBest` is the card with the most cash; ties go to the default, then to wallet order.
+   - `cashBest` is the card with the most cash; ties go to the baseline, then the default, then wallet order.
 2. **Items unreadable.** If items are missing or `confidence.items < ITEM_CONFIDENCE_MIN` → `keep / items_unreadable`. No protection switch and no cash switch.
-3. **Eligible protections** per card. Only purchase_protection and extended_warranty count, and only when:
-   - the item condition is allowed (v1: new only);
-   - the item isn't a gift card or a service plan;
-   - the payment requirement is met;
-   - the category isn't excluded;
-   - extended warranty: the category is `warrantyRelevant`; purchase protection: the category is `theftDamageRelevant`.
-
-   An item **qualifies** if its price ≥ `PROTECTION_MIN_ITEM_USD` and its category is relevant to that protection type.
-4. **Rule P (protection gain).** For a qualifying item, find a card that has an eligible protection type the default lacks **and** keeps every eligible protection type the default has. Pick the card with the most such types, breaking ties by cash → `switch / protection`.
-5. **Guard G (protection loss).** For a qualifying item, if the default has an eligible protection type that `cashBest` lacks → `keep / already_protected`. The cash gain isn't shown at checkout (P1 Why sheet).
-6. **Rule C (cash).** If `cashBest ≠ default` and its gain over the default ≥ `CASH_SWITCH_MIN_USD[path]` → `switch / cash`.
-7. **Rule M (method).** If the default earns more via Apple Pay than typed, and an Apple Pay button is visible → `keep / method`.
-8. **Keep.** If the default has an eligible protection on a qualifying item → `keep / already_protected` (presentation: snippet). Else if `cashBest ≠ default` → `keep / below_threshold`. Else → `keep / default_best`.
+3. **Protections** per card. Only purchase_protection and extended_warranty count.
+   - A protection **covers** an item when its terms do, at any price: the item condition is allowed (v1: new only); the item isn't a gift card or a service plan; the payment requirement is met; the category isn't in its `excludedCategories`. Extended warranty also needs a `warrantyRelevant` category, which stands in for "comes with a maker's warranty".
+   - An item **qualifies** for a type if its price ≥ `PROTECTION_MIN_ITEM_USD` and its category is relevant to that type (`theftDamageRelevant` / `warrantyRelevant`). A covered type on a qualifying item is **eligible**.
+4. **Rule P (protection gain).** For a qualifying item, find a card that has an eligible protection type the baseline lacks **and** keeps every type the baseline covers on every item. Pick the card with the most such types, breaking ties by cash → `switch / protection`.
+5. **Guard G (protection loss).** For a qualifying item, if the baseline has an eligible protection type that `cashBest` lacks → `keep / already_protected`. The cash gain isn't shown at checkout (P1 Why sheet).
+6. **Rule C (cash).** If `cashBest ≠ baseline` and its gain over the baseline ≥ `CASH_SWITCH_MIN_USD[path]` → `switch / cash`, unless `cashBest` lacks a type the baseline covers on any item: then `keep / already_protected`. No switch drops cover, so `protectionsLost` stays empty.
+7. **Rule M (method).** If the baseline earns more via Apple Pay than typed, and an Apple Pay button is visible → `keep / method`.
+8. **Keep.** If the baseline has an eligible protection on a qualifying item → `keep / already_protected` (presentation: snippet). Else if `cashBest ≠ baseline` → `keep / below_threshold`. Else → `keep / default_best`.
 9. **Offers are applied on the phone (D1–D4).** Anything capped, activated, targeted, tied to account age or to an issuer event is an `offers[]` entry in `data/cards.json` (§15.3), never an earn rule, and the user's answers about it never leave the phone (the `/v1/check` request is unchanged and rejects extra fields). The response adds a public `offerContext` (the same for every user with this cart: amount, merchant, rule category, path, method, each card's public rate, the cash threshold, `allowedCashPicks`, a purchase draft per allowed card, `deviceMayOverride`). The phone's deterministic `OfferResolver` (Decimal) then:
    - adds the user's answered `device` offers to each card's cash. Rate offers fill **best rate first**: each earns on up to its cap left (never below 0), then the next, then the card's public rate. An unknown cap use counts the whole cap at medium confidence, and copy states no dollar figure;
-   - may move a **cash** decision (switch/cash, keep/default_best, keep/below_threshold, keep/method) to another card in `allowedCashPicks` (cards that keep every protection the default has), with the same thresholds and device copy that names the offer ("With your Q4 5%");
+   - may move a **cash** decision (switch/cash, keep/default_best, keep/below_threshold, keep/method) to another card in `allowedCashPicks` (cards that keep every type the baseline covers on every item, as in rule 6), with the same thresholds and device copy that names the offer ("With your Q4 5%");
    - **never** changes switch/protection, keep/already_protected, items_unreadable, no_checkout or an error;
    - leaves `hint` offers (links, portals, memberships, thresholds) out of cash.
 
@@ -395,7 +404,7 @@ The `/v1/check` request (§15.5): redacted OCR text, wallet card IDs with the de
 
 ### 7.3 Where AI is used (and why it isn't a lookup table)
 1. Reading arbitrary checkout screens into a Cart.
-2. Eligibility from the screen: Renewed / refurbished (P0); third-party seller, gift card, protection plan in the cart, BNPL (P1). Demo beat: the same laptop listed "Renewed · no warranty" flips the pick and says why ("Renewed, no warranty: no card covers it"). Chase does cover refurbished items that come with a warranty (G5), so the demo listing must say "no warranty". For real carts (P1), add a condition value such as `refurbished_with_warranty` so the engine doesn't wrongly refuse cover.
+2. Eligibility from the screen: Renewed / refurbished (P0); third-party seller, gift card, protection plan in the cart, BNPL (P1). Demo beat: the same laptop listed "Renewed · no warranty" flips the pick and says why ("Renewed: no card cover counted"; the engine can't see whether a listing has a warranty, so the note claims neither). Chase does cover refurbished items that come with a warranty (G5), so the demo listing must say "no warranty". For real carts (P1), add a condition value such as `refurbished_with_warranty` so the engine doesn't wrongly refuse cover.
 3. Turning Guide to Benefits text into cited, structured rules **before the event (gate G5)**, reviewed by a human.
 4. Coverage: classifying the incident's cause (the user confirms). The verdict comes from date and window rules in code.
 
@@ -416,12 +425,12 @@ The `/v1/check` response (§15.5): `decision` (kind, reason, presentation, recom
 | `wf-active-cash` | Active Cash | Visa Signature | 2% flat | Cell phone protection only ($600/claim, $25 deductible, 2 claims and $1,200 per 12 months). **No** extended warranty or purchase protection (WF Guide, in effect 09/15/2025) | Verified |
 | `chase-freedom-unlimited` | Freedom | Visa | 1.5% base; 3% dining and drugstores (P2); 5% Chase Travel (not modeled) | Purchase protection: 120 days (90 in NY); **$500 per item**, $50,000 per account; theft, damage, involuntary and accidental parting. Extended warranty: +1 yr on U.S. manufacturer warranties if all warranties total ≤3 yr; ≤4 yr from purchase; $10,000 per item, $50,000 per account. Charging all or part of the price (or using rewards) qualifies. Refurbished items with a warranty are covered. **Notify within 90 days** of the loss or failure; **documents within 120 days** | Verified (Chase Guide BGC11366, in effect 10/1/24) |
 | `chase-freedom-rise` | Freedom Rise | Visa | 1.5% flat | Same guide and terms as Freedom Unlimited | Verified |
-| `discover-it-student-cash-back` | Discover | Discover | 1% base (5% rotating with activation not modeled) | None (removed Feb 28, 2018, per secondary sources) | Earn and absence verified; removal date partial |
+| `discover-it-student-cash-back` | Discover | Discover | 1% base; Q4 2026 5% on restaurants (not DoorDash or Uber Eats), entertainment and utilities up to $1,500 with activation: an `offers[]` entry the phone applies (§7.2 rule 9) | None (removed Feb 28, 2018, per secondary sources) | Earn and absence verified; removal date partial |
 
 Networks matter: Apple Card is Mastercard, so its perks aren't Visa benefits. P1: one verified non-Chase protection card. P2: more cards (Savor Student, Double Cash, …) after verification.
 
 ### 8.2 Card catalog fields
-Everything lives in **one data file**, `data/cards.json`: cards, earn rules, protections with limits and citations, merchants, item categories. The field list and schema are in §15.3. **Display rule:** the copy and the demo state a value as fact only when its `verification.status` is `verified`. The engine may use `partial` values, but responses then carry `confidence: "medium"` and drop the cap from the copy. Per-user data (last 4, default card) stays on the device only.
+Everything lives in **one data file**, `data/cards.json`: cards, earn rules, protections with limits and citations, merchants, item categories. The field list and schema are in §15.3. **Display rule:** the copy and the demo state a value as fact only when its `verification.status` is `verified`. The engine may use `partial` values, but responses then carry `confidence: "medium"` and drop the cap from the copy. Every answer compares the wallet's cards, so any wallet card's partial rate here makes it medium; Keep, default best and Keep, under threshold then say "Likely". Per-user data (last 4, default card) stays on the device only.
 
 ### 8.3 Merchants (v1: ~10)
 - Demo: `northbay-electronics` (electronics); `stride-athletics` (apparel, P1).
@@ -543,7 +552,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | 1:35–1:50 | Contrast: "Cracked when I dropped it" | **Not covered**: damage was covered for 120 days only | Real |
 | 1:50–2:05 | Why Visa / why us: "Card benefits are how cards like this Visa differ, yet cardholders use about 2 of them (J.D. Power 2026). We show them at checkout and turn them into a claim. Free for students, no paid ranking." | One slide or app screen | — |
 | 2:05–2:20 | Close: tagline + one numbers line (measured p50, scenarios including misses, interview stat) | Tagline | Measured |
-| 2:20–2:40 (optional) | **Renewed flip**, only if rehearsals finish by 2:20: tab 2, press | "Use Active Cash ••4321 / $10.99 more cash back than Apple Card / Renewed, no warranty: no card covers it" | Real |
+| 2:20–2:40 (optional) | **Renewed flip**, only if rehearsals finish by 2:20: tab 2, press | "Use Active Cash ••4321 / $10.99 more cash back than Apple Card / Renewed: no card cover counted" | Real |
 | → 3:00 | Buffer / Q&A | — | — |
 
 **Q&A backup cards, in order:**
@@ -598,10 +607,10 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | Stranger trigger | UX | ≥9/10 first-time presses by non-teammates start a check | Same session (D) |
 | Right card used | UX | ≥9/10 trials end with the recommended card selected on the demo store | Same session (D) |
 | Time to "am I covered + what do I send?" | User value | Paywise ≤60 s vs a measured manual baseline | Stopwatch, 3 non-teammates (D) |
-| Correct pick | User value | ≥20/22 scenarios | `pytest` over `fixtures/scenarios.json` (B runs; D wrote it) |
-| **False switches** | Trust | 0/22 scenarios; ≤1/30 real screenshots | Same + accuracy set (A) |
-| **Protection drops** | Trust | 0: never recommend a card that loses a protection the default has on a qualifying item | Scenarios 5, 21, 22 + harness (B) |
-| Coverage verdicts | User value | ≥12/13 correct; every not_covered case right; 13/13 cite section + version date; capped cases show the cap | `pytest` over `fixtures/coverage_cases.json` (B) |
+| Correct pick | User value | ≥26/28 scenarios | `pytest` over `fixtures/scenarios.json` (B runs; D wrote it) |
+| **False switches** | Trust | 0/28 scenarios; ≤1/30 real screenshots | Same + accuracy set (A) |
+| **Protection drops** | Trust | 0: never recommend a card that loses a protection the baseline (§7.2) covers on any item, checked from card terms alone (no relevance table, no $100 minimum) | Scenarios 5, 21, 22, 23, 25, 26 + harness (B) |
+| Coverage verdicts | User value | ≥13/14 correct; every not_covered case right; 14/14 cite section + version date; capped cases show the cap | `pytest` over `fixtures/coverage_cases.json` (B) |
 | Press → *Checking* | Tech | p50 ≤1.0 s | os_signpost, 20 runs (A) |
 | Press → result | Tech | p50 ≤3.5 s, p90 ≤5 s on venue Wi-Fi or hotspot | os_signpost + screen recording (A) |
 | Chain reliability | Tech | ≥19/20 presses capture the right screen and show a result | S1 log + rehearsal (C) |
@@ -740,9 +749,9 @@ contracts/             JSON Schema + example for each of:
   check-record · purchase
 
 fixtures/
-  wallets.json         7 demo wallets; fake last 4 only
-  scenarios.json       22 scenarios (author: D)
-  coverage_cases.json  13 cases (author: D)
+  wallets.json         8 demo wallets; fake last 4 only
+  scenarios.json       28 scenarios (author: D)
+  coverage_cases.json  14 cases (author: D)
   screenshots/*.png    demo-store pages only (fake names, addresses, cards)
   ocr/*.txt            expected redacted OCR text (top strip already cropped)
   carts/*.json         expected parsed Cart per screenshot
@@ -798,15 +807,17 @@ docs/
     - `type` (purchase_protection / extended_warranty / cell_phone_protection), `summary`, `covers[]` (theft / accidental_damage / involuntary_parting / failure), `excludes[]`.
     - Purchase protection: `windowDays`, `windowDaysByState` (e.g. {"NY": 90}).
     - Extended warranty: `extendsByMonths`, `maxOriginalWarrantyMonths`, `maxTotalFromPurchaseMonths`.
+    - `basis` (secondary / primary / null): secondary means it pays after the cardholder's other insurance (§5.5).
     - `limits`: {`perItemUsd`, `perClaimUsd`, `perAccountUsd`, `appliesTo` (item / claim)}. **Required for any protection shown in copy.**
     - `eligibility`: {`conditionsAllowed[]` (new), `paymentRequirement` (some_portion / full), `excludedCategories[]`}.
     - `notice`: {`notifyWithinDays`, `submitDocsWithinDays`} (null until verified).
     - `claim`: {administrator, url, phone}; `source`: {document, section, versionDate, url, quote}; `verification`: {`status` (verified / partial / unverified), checkedBy, checkedOn, note}.
   - `sources[]`.
 - **Merchant fields:** `id`, `names[]`, `domains[]`, `category`, `acceptsApplePay` {value, status}, `isDemo`.
-- **Item category fields:** `id`, `warrantyRelevant`, `theftDamageRelevant`.
+- **Item category fields:** `id`, `warrantyRelevant`, `theftDamageRelevant`. They decide where Rule P may switch (§7.2 rule 3), not what a card covers: its `excludedCategories` do.
   - Both true: electronics, computers, phones, audio, cameras, appliances, tools, bikes, instruments.
   - Both false: apparel, home, dining, grocery, pharmacy, gift_card, services, travel, general, gas, entertainment, utilities.
+  - Chase purchase protection and extended warranty (Freedom, Freedom Rise) exclude dining, grocery, gas, pharmacy, gift_card, services, travel, entertainment and utilities (perishables, consumables, medical equipment, tickets, cash and cards, not an item: Paywise's reading of the guide). They cover apparel, home and general items.
 - **`offers[]`** (evaluated on the phone only, §7.2 rule 9): `id` (one per period, e.g. `discover-5pct-2026q4`), `cardIds[]`, `programId`, `title`, `evaluation` (device: may change cash; hint: shown, never changes cash), `match` {merchantIds, categories, categoryBasis (rule / items), excludeMerchantIds[], paymentMethods[], channels[]}, `reward` {kind (rate / statement_credit / checkout_discount / cashback_match / membership / spend_bonus / count_bonus / partner_credit / price_perk), ratePct, basis (total / extra), amountUsd, matchPct, countsAsCash}, `limits` {minSpendUsd, spendCapUsd, capPeriod (offer_window / calendar_quarter / account_window / per_booking), afterCapRatePct, maxRewardUsd, usesPerPeriod}, `window`, `requires[]` (activation {deadline, retroactive} / enrollment / targeted / account_age {months} / acquisition_offer {openedFrom, openedThrough} / event {eventId} / link_or_portal, which forces hint), `whenUnknown` (exclude / medium), `exclusiveGroup`, `confirmQuestion` (the one-tap question, e.g. "Activated your Q4 5%?"), `display.short`, `status`, `sources[]`. The schema forces memberships, thresholds and link-only offers to `hint`, and a question on any offer that needs the user's answer.
 - **`programs[]`:** personal-offer programs (Chase Offers, Capital One Offers, My Wells Fargo Deals, Apple Card special offers): `cardMatters` (always / in_store_and_in_app_only / never), `applePay` (counts / required / may_not_count / excluded / unknown), `stacking`, `needsAddStep`, `oneTimeDefault`, `layout`, `screenWords[]`, `availableAfterEventId`, `status`, `sources[]`. Their offers are only visible to the cardholder; capturing them comes later (§15.9).
 - **`events[]`:** issuer changes the user confirms for their card (Discover → Capital One, about 2026-10-19; Apple Card → Chase, about 2028): `expectedOn`, `askFrom`, `confirmQuestion`, `effects` {enablesOfferIds, enablesProgramIds, carriesOver, otherChanges}. Offers gated on an event stay off until the user says Yes.
@@ -828,6 +839,7 @@ docs/
 | `fu-default` | chase-freedom-unlimited ••1234, wf-active-cash ••4321, apple-card ••5678 |
 | `discover-fu` | discover-it-student-cash-back ••4321, chase-freedom-unlimited ••1234 |
 | `rise-ac` | chase-freedom-rise ••1234, wf-active-cash ••4321 |
+| `ac-apple` | wf-active-cash ••4321, apple-card ••5678 |
 
 - **Screenshots** (393×852 pt @3x, captured on a phone Thursday night), each with a matching `ocr/*.txt` (top strip cropped) and `carts/*.json`:
   - `laptop-checkout`: Aero 14 Laptop, new, $1,499.00, saved Mastercard ••5678.
@@ -843,10 +855,10 @@ docs/
 | # | Wallet | Cart / path | Expected |
 |---|---|---|---|
 | 1 | demo-3card | laptop $1,499, saved card | switch / protection → FU; −$7.49 vs AC; gains [purchase_protection, extended_warranty] |
-| 2 | demo-3card | renewed laptop $1,099, no warranty | switch / cash → AC; +$10.99 vs Apple Card; note "Renewed, no warranty: no card covers it" |
+| 2 | demo-3card | renewed laptop $1,099, no warranty | switch / cash → AC; +$10.99 vs Apple Card; note "Renewed: no card cover counted" |
 | 3 | demo-3card | earbuds $249 (audio) | switch / protection → FU; −$1.24 vs AC |
 | 4 | demo-3card | mug $18 (home) | keep / below_threshold |
-| 5 | fu-default | laptop $1,499, saved card | **keep / already_protected** (guard; snippet) |
+| 5 | fu-default | laptop $1,499, saved card, Mastercard (Apple Card) selected | **switch / protection → FU**; −$7.49 vs AC (baseline is Apple Card) |
 | 6 | no-protection | laptop | keep / default_best (tie) |
 | 7 | apple-ac | laptop | switch / cash → AC; +$14.99 |
 | 8 | demo-3card | Nike $180 shoes, Apple Pay visible | keep / method |
@@ -863,7 +875,13 @@ docs/
 | 19 | demo-3card | Walgreens $40, Apple Pay visible | keep / method |
 | 20 | demo-3card | Amazon $38 household, saved card | keep / below_threshold |
 | 21 | rise-ac | laptop $1,200, saved card | **keep / already_protected** (guard: AC +$6.00 would otherwise switch) |
-| 22 | fu-default | laptop $1,499, Apple Pay visible | **keep / already_protected** (guard on the Apple Pay path) |
+| 22 | fu-default | laptop $1,499, Apple Pay visible, Mastercard (Apple Card) selected | **switch / protection → FU**; cash-best Apple Card (tie goes to the baseline) |
+| 23 | fu-default | laptop $1,499, saved card, Visa selected (FU or AC: baseline is the default) | **keep / already_protected** (guard; snippet) |
+| 24 | ac-apple | renewed laptop $1,099, saved card, Mastercard (Apple Card) selected | **switch / cash → AC**; +$10.99 vs Apple Card |
+| 25 | fu-default | jacket $1,200 (apparel) at Stride Athletics, saved card, Visa selected | **keep / already_protected** (Rule C keeps cover: AC +$6.00 would otherwise switch) |
+| 26 | rise-ac | sofa $1,500 (home) at Target, saved card, Visa selected | **keep / already_protected** (AC +$7.50 would otherwise switch) |
+| 27 | fu-default | groceries $1,200 (grocery), unknown store, saved card, Visa selected | switch / cash → AC; +$6.00 (grocery excluded: no cover dropped) |
+| 28 | discover-fu | restaurant $249 (dining), unknown store, card form only | keep / below_threshold; FU +$1.25 at a partial rate ("Switching likely gains under $5 here"); the phone may apply Discover's Q4 5% offer |
 
 - **`fixtures/coverage_cases.json`** (D; draft). Each case: `{id, purchase, incident, asOf, expected: {verdict, benefit, route, payoutCapUsd, citesSection}}`.
 
@@ -882,6 +900,7 @@ docs/
 | 11 | FU laptop | failure at month 30 | not_covered (after the extra year ends) |
 | 12 | FU laptop, `paidWith` card_partial | failure at month 14 | may_be_eligible (charging part of the price qualifies, G5); payout capped at the part paid on the card |
 | 13 | FU laptop | stolen at day 30 | may_be_eligible / purchase_protection; **cap $500 of $1,499** |
+| 14 | FU groceries $1,200 | stolen at day 10 | not_covered / none (grocery is in `excludedCategories`) |
 
 ### 15.5 API contracts, on-device records and intents
 
@@ -972,7 +991,7 @@ Response:
 }
 ```
 
-`offerContext` is null for no_checkout. It is a function of the cart and the public catalog only (§7.2 rule 9). `deviceMayOverride` is true only for switch/cash, keep/default_best, keep/below_threshold and keep/method; then `allowedCashPicks` lists the cards that keep every protection the default has, and `purchaseDraftByCard` holds the draft for each.
+`offerContext` is null for no_checkout. It is a function of the cart and the public catalog only (§7.2 rule 9). `deviceMayOverride` is true only for switch/cash, keep/default_best, keep/below_threshold and keep/method; then `allowedCashPicks` lists the cards that keep every type the baseline (§7.2) covers on every item, and `purchaseDraftByCard` holds the draft for each.
 
 **Enum values (every enum field)**
 
@@ -1128,8 +1147,8 @@ Implement §7.2 exactly (rules 0–9, thresholds in `policy.py`). The copy templ
 | 0 | Repo skeleton (§15.2), `.gitignore`, `.env.example`, `THIRD_PARTY.md`, README, `pyproject.toml` | B | 1 | any | `pytest` runs green; `uvicorn app.main:app` serves `/health` → `{"ok": true}` |
 | 1 | Contracts: Schemas + examples (§15.5); pydantic models | B | 1.5 | any | `test_contracts.py`: every example validates, and every enum in §15.5 appears in a schema |
 | 2 | `data/cards.json` + schema (5 cards, ~10 merchants, categories); `catalog.py` | B (+D check) | 3 + 2 (G5) | any | `test_catalog.py` passes; every protection has `limits`, `source` and `verification`; demo-card protections `verified` by Fri 6 PM |
-| 3 | Fixtures (§15.4): 7 wallets, 22 scenarios, 13 cases, demo OCR text + carts, replay files | D | 4 | any | Committed **before** step 4 merges; each expectation hand-computed; `test_privacy.py` finds no real names, addresses or ≥12-digit runs, and no file matching the real-app pattern (`realapp-*`, `*-private*`) |
-| 4 | `engine.py` (§7.2) + `copy.py` (§6.3) + `parser_rules.py` + `POST /v1/check` | B | 5 | any | `test_scenarios.py` ≥20/22 with **0 false switches and 0 protection drops** (5, 21, 22 pass); S1 returns the exact §6.3 copy; ≥12-digit bodies → 400 privacy_rejected; p50 < 50 ms locally |
+| 3 | Fixtures (§15.4): 8 wallets, 28 scenarios, 14 cases, demo OCR text + carts, replay files | D | 4 | any | Committed **before** step 4 merges; each expectation hand-computed; `test_privacy.py` finds no real names, addresses or ≥12-digit runs, and no file matching the real-app pattern (`realapp-*`, `*-private*`) |
+| 4 | `engine.py` (§7.2) + `copy.py` (§6.3) + `parser_rules.py` + `POST /v1/check` | B | 5 | any | `test_scenarios.py` ≥26/28 with **0 false switches and 0 protection drops** (5, 21, 22, 23, 25, 26 pass); S1 returns the exact §6.3 copy; ≥12-digit bodies → 400 privacy_rejected; p50 < 50 ms locally |
 | 5 | Demo store: `checkout.html?item=` laptop / laptop-renewed / earbuds / mug, saved-card selector (Mastercard ••5678 default, Visa ••4321, Visa ••1234), `confirm.html`; static deploy Thu; served by the backend at `/store/` on Fri | D | 3.5 (+B 0.5) | any | Loads over HTTPS on cellular by Thu 11 PM; Change card works; the 7 screenshots captured; page header starts below 80 pt |
 | 6 | iOS **S1 chain**: app + widget extension + App Group; `CheckCheckoutIntent` as in §15.5 with a fake result; Shortcut "Paywise" with the input branch, bound to the Action Button and Back Tap; os_signpost per link | C | 4 | Mac | **G1:** ≥9/10 Back Tap double taps over the deployed store and 2 real apps show the correct underlying screenshot in a debug list and show the island; Action Button tallied; timings in `docs/spikes.md` |
 | 7 | **S2/S3/S6**: Pattern A (`ShowsSnippetIntent` + `CheckResultSnippetIntent` + `SavePurchaseIntent` button + reload) and Pattern B; `.named("silent.caf")` alert; `.transient` probe; island state 5 min after Done; Shortcuts indicator during the 4-s Keep hold; capture via wired QuickTime / AirPlay; Share Sheet branch | C | 3.5 | Mac | `docs/spikes.md` records Y/N + counts for each item; G2/G3 decided per §6.6 |

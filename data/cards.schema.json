@@ -156,6 +156,10 @@
         "extendsByMonths": {"$ref": "#/$defs/monthsOrNull"},
         "maxOriginalWarrantyMonths": {"$ref": "#/$defs/monthsOrNull"},
         "maxTotalFromPurchaseMonths": {"$ref": "#/$defs/monthsOrNull"},
+        "basis": {
+          "enum": ["secondary", "primary", null],
+          "description": "secondary: pays only after the cardholder's other insurance (verdicts say so, §5.5). null or absent: not checked."
+        },
         "limits": {
           "description": "Required for any protection shown in copy.",
           "type": "object",
@@ -302,8 +306,14 @@
       "required": ["id", "warrantyRelevant", "theftDamageRelevant"],
       "properties": {
         "id": {"$ref": "#/$defs/itemCategoryId"},
-        "warrantyRelevant": {"type": "boolean"},
-        "theftDamageRelevant": {"type": "boolean"}
+        "warrantyRelevant": {
+          "type": "boolean",
+          "description": "Items usually come with a maker's repair warranty: extended warranty can cover them, and Rule P may switch for it (§7.2 rule 3)."
+        },
+        "theftDamageRelevant": {
+          "type": "boolean",
+          "description": "Rule P may switch for purchase protection. false doesn't mean uncovered: a card's terms decide that (excludedCategories)."
+        }
       }
     },
     "offer": {

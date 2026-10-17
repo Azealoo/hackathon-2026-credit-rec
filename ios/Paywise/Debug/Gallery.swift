@@ -60,7 +60,10 @@ enum GalleryState: String, CaseIterable, Sendable {
             }
         case .keepProtected:
             return DemoChecks.laptopKeepProtected(catalog).flatMap {
-                DemoChecks.record($0, wallet: DemoChecks.fuDefault, catalog: catalog, ocrText: laptopText)
+                // A Visa on screen (Freedom or Active Cash) keeps the default as the baseline; the store's Mastercard
+                // would be Apple Card, and the engine would say Use Freedom (SPEC §7.2).
+                DemoChecks.record($0, wallet: DemoChecks.fuDefault, catalog: catalog,
+                                  ocrText: laptopText.replacingOccurrences(of: "Mastercard", with: "Visa"))
             }
         case .saved:
             return DemoChecks.laptopSwitch().flatMap {

@@ -621,6 +621,7 @@
           "windowDaysByState": {
             "NY": 90
           },
+          "basis": "secondary",
           "limits": {
             "perItemUsd": 500,
             "perClaimUsd": null,
@@ -632,7 +633,17 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -654,7 +665,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3."
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining, grocery and gas (perishables, consumables), pharmacy (consumables, medical equipment), travel and entertainment (tickets), gift_card (cash and cards), services and utilities (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
           }
         },
         {
@@ -688,7 +699,17 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -710,7 +731,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3."
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, gas, pharmacy, gift_card, services, travel, entertainment and utilities purchases don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
           }
         }
       ],
@@ -733,7 +754,7 @@
         }
       ],
       "notes": [
-        "3% dining and drugstores: Chase decides by merchant category code. Whether Walgreens and DoorDash code that way is partial (no Chase statement found).",
+        "3% dining and drugstores: Chase decides by merchant category code, so the engine counts these rules only at a catalog merchant of that category; at an unknown store the rate stays 1.5% and is marked partial (SPEC §7.2 rule 1). Whether Walgreens and DoorDash code that way is partial (no Chase statement found).",
         "Network tier not checked (pricing terms: Signature or Platinum, by credit review).",
         "Lyft 2% is in the Lyft app only; Paywise can't tell the app from lyft.com, so it applies to any Lyft checkout.",
         "Foreign transaction fee 3%: Chase Freedom Unlimited pricing and terms (LGC61498), Fees, checked 2026-10-16 (https://sites.chase.com/services/creatives/pricingandterms.html/content/dam/pricingandterms/LGC61498.html)."
@@ -840,6 +861,7 @@
           "windowDaysByState": {
             "NY": 90
           },
+          "basis": "secondary",
           "limits": {
             "perItemUsd": 500,
             "perClaimUsd": null,
@@ -851,7 +873,17 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -873,7 +905,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3."
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining, grocery and gas (perishables, consumables), pharmacy (consumables, medical equipment), travel and entertainment (tickets), gift_card (cash and cards), services and utilities (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
           }
         },
         {
@@ -907,7 +939,17 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -929,7 +971,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3."
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, gas, pharmacy, gift_card, services, travel, entertainment and utilities purchases don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
           }
         }
       ],

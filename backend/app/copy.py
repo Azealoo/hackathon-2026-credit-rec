@@ -10,6 +10,8 @@ amount ("Adds a warranty year + theft cover", §6.3 and the §8.2 display rule).
 - `cash_verified=False` (`verified=False` for Keep, method) when a rate behind a cash figure isn't
   verified: the line keeps the comparison but states no dollar amount or rate ("Likely less cash
   back than Active Cash"), since a partial value is never stated as fact (§15.8).
+- `verified=False` for Keep, default best and Keep, under threshold when any wallet card's rate
+  isn't verified, since both compare every card: "Likely best of your 3 cards here".
 
 Card names (`shortName`) and networks come from data/cards.json through the Card objects the
 engine passes in; nothing here holds card data. §6.2 lengths: lines 2 and 3 are at most 44
@@ -161,13 +163,20 @@ def keep_protected(card: Card, kept: list[Protection], *, show_cap: bool = True)
                  "Save it so you can claim later", None, paying_with(card))
 
 
-def keep_default_best(card: Card, wallet_size: int) -> Copy:
-    line2 = f"Best of your {wallet_size} cards here" if wallet_size > 1 else "Your only card here"
+def keep_default_best(card: Card, wallet_size: int, *, verified: bool = True) -> Copy:
+    """`verified=False` when any wallet card's rate here isn't verified: "best of" compares them all."""
+    if wallet_size <= 1:
+        line2 = "Your only card here"
+    else:
+        best = "Best" if verified else "Likely best"
+        line2 = f"{best} of your {wallet_size} cards here"
     return _copy(f"{CHECK} Keep {card.short_name} {DOTS}{last4(card)}", line2)
 
 
-def keep_below_threshold(card: Card, threshold: Decimal) -> Copy:
-    return _copy(f"{CHECK} Keep {card.short_name} {DOTS}{last4(card)}", f"Switching gains under {usd(threshold)} here")
+def keep_below_threshold(card: Card, threshold: Decimal, *, verified: bool = True) -> Copy:
+    gains = "gains" if verified else "likely gains"
+    return _copy(f"{CHECK} Keep {card.short_name} {DOTS}{last4(card)}",
+                 f"Switching {gains} under {usd(threshold)} here")
 
 
 def keep_method(card: Card, apple_pay_rate: Decimal, apple_pay_cash: Decimal, typed_rate: Decimal,

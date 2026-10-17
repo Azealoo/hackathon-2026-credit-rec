@@ -58,13 +58,13 @@
     "protectionsGained": [],
     "protectionsLost": [],
     "eligibilityNotes": [
-      "Renewed, no warranty: no card covers it"
+      "Renewed: no card cover counted"
     ],
     "confidence": "high",
     "copy": {
       "line1": "Use Active Cash ••{last4:wf-active-cash}",
       "line2": "$10.99 more cash back than Apple Card",
-      "line3": "Renewed, no warranty: no card covers it",
+      "line3": "Renewed: no card cover counted",
       "instruction": "Change card to Visa ••{last4:wf-active-cash}, then place order",
       "primaryButton": "Paying with Active Cash"
     }

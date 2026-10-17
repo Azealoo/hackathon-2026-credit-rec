@@ -369,7 +369,7 @@ struct ResultTextTests {
     /// though the engine attaches notes to Keep results too (the renewed laptop on a wallet whose default is best).
     @MainActor @Test func eligibilityNoteFillsLine3OnlyOnSwitchCash() throws {
         let catalog = CardCatalog.bundled()
-        let note = "Renewed, no warranty: no card covers it"
+        let note = "Renewed: no card cover counted"
         let cash = try #require(GalleryState.resultCash.record(catalog: catalog))
         #expect(cash.filledCopy.line3 == nil)
         #expect(CheckResultView.displayedCopy(cash).line3 == note)

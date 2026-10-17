@@ -1,6 +1,6 @@
 """POST /v1/coverage (SPEC v2.1 §5.5, §7.3, §15.5; §15.7 step 12b).
 
-Runs the 13 cases in fixtures/coverage_cases.json (D's hand-computed expectations, written before
+Runs the 14 cases in fixtures/coverage_cases.json (D's hand-computed expectations, written before
 this code) through the route, checks every response against contracts/coverage.response.schema.json,
 and covers the window rules, copy, deadlines, COVERAGE_MODE and the privacy guard. Card values in
 expectations are read from data/cards.json, never typed in here.
@@ -85,19 +85,19 @@ def results() -> dict[int, dict]:
     return {case["id"]: verdict(body_for(case["id"])) for case in CASES}
 
 
-# --------------------------------------------------------------------- the 13 fixture cases
+# --------------------------------------------------------------------- the 14 fixture cases
 
 
 def test_coverage_scoreboard(results, capsys):
-    """§15.7 step 12b: ≥12/13; every not_covered case right; cases 3 and 13 cap at $500;
+    """§15.7 step 12b: ≥13/14; every not_covered case right; cases 3 and 13 cap at $500;
     every verdict cites a section and a version date."""
     passed = [c["id"] for c in CASES if not mismatches(c, results[c["id"]])]
     not_covered = [c for c in CASES if c["expected"]["verdict"] == "not_covered"]
     not_covered_right = [c for c in not_covered if not mismatches(c, results[c["id"]])]
     with capsys.disabled():
         print(f"\nCOVERAGE pass={len(passed)}/{len(CASES)} not_covered_right={len(not_covered_right)}/{len(not_covered)}")
-    assert len(CASES) == 13
-    assert len(passed) >= 12
+    assert len(CASES) == 14
+    assert len(passed) >= 13
     assert len(not_covered_right) == len(not_covered)
     assert results[3]["limit"]["payoutCapUsd"] == 500
     assert results[13]["limit"]["payoutCapUsd"] == 500
@@ -149,7 +149,9 @@ def test_copy_purchase_protection_capped(results):
     for case_id in (3, 13):
         assert results[case_id]["headline"] == "May be eligible: Purchase protection, up to $500 of the $1,499."
         assert "120 days (90 in NY), to Feb 14, 2027" in results[case_id]["why"]
-    assert results[13]["why"] == "Theft is covered within 120 days (90 in NY), to Feb 14, 2027."
+    # §5.5 v2.5: Chase's purchase protection is secondary (basis in data/cards.json).
+    assert results[13]["why"] == ("Theft is covered within 120 days (90 in NY), to Feb 14, 2027. "
+                                  "It's secondary: it pays after any other insurance you have.")
     assert any("Police report" in item and "48 hours" in item for item in results[13]["checklist"])
     # Uncapped: the full $249 fits under $500, so the headline names the card instead.
     assert results[4]["headline"] == "May be eligible: Purchase protection (Freedom Unlimited)."
@@ -173,7 +175,8 @@ def test_copy_need_more_info(results):
     data = results[5]
     assert data["headline"] == "Need more info."
     assert data["why"] == ("Theft and “involuntary and accidental parting” may be covered within 120 days (90 in NY); "
-                           "simply losing something may not be. See the cited clause.")
+                           "simply losing something may not be. See the cited clause. "
+                           "It's secondary: it pays after any other insurance you have.")
 
 
 def test_copy_partial_payment(results):

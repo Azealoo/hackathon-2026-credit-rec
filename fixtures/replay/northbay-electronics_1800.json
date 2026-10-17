@@ -131,7 +131,13 @@
         "priceUsd": 18.0,
         "purchaseDate": "2026-10-17",
         "cardId": "chase-freedom-unlimited",
-        "coverage": []
+        "coverage": [
+          {
+            "type": "purchase_protection",
+            "until": "2027-02-14",
+            "limitUsd": 500.0
+          }
+        ]
       }
     },
     "deviceMayOverride": true

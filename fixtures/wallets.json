@@ -51,6 +51,13 @@
         {"cardId": "chase-freedom-rise", "last4": "1234"},
         {"cardId": "wf-active-cash", "last4": "4321"}
       ]
+    },
+    {
+      "id": "ac-apple",
+      "cards": [
+        {"cardId": "wf-active-cash", "last4": "4321"},
+        {"cardId": "apple-card", "last4": "5678"}
+      ]
     }
   ]
 }

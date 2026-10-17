@@ -138,6 +138,7 @@ class Protection(_Model):
     extends_by_months: int | None = None
     max_original_warranty_months: int | None = None
     max_total_from_purchase_months: int | None = None
+    basis: Literal["secondary", "primary"] | None = None  # None: not checked
     limits: Limits
     eligibility: Eligibility
     notice: Notice

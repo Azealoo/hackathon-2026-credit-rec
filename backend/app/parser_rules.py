@@ -52,6 +52,10 @@ APPLE_PAY = re.compile(r"\bapple\s?pay\b|\s?pay\b", re.I)
 NETWORK = re.compile(r"\b(visa|master\s?card|amex|american express|discover)\b", re.I)
 CARD_ON_FILE = re.compile(r"\[CARD\]|\bend(?:ing|s) in\b|[•*]{2,}", re.I)
 PAY_CONTEXT = re.compile(r"\b(?:pay(?:ing)? with|payment|card)\b", re.I)
+# Marks the saved card a page has selected: a check or filled radio, or "Selected". "Default" (the account's usual
+# card) counts only when nothing else is marked.
+SELECTED = re.compile(r"\bselected\b|[✓✔●◉☑]", re.I)
+DEFAULT_CARD = re.compile(r"\bdefault\b", re.I)
 CARD_FORM = re.compile(r"\bcard number\b|\bname on card\b|\bexpir(?:ation|y|es)\b|\bMM\s?/\s?YY\b|\bCVV\b|\bCVC\b"
                        r"|\bsecurity code\b", re.I)
 BNPL = re.compile(r"\b(?:afterpay|klarna|affirm|sezzle|pay in 4|pay later|zip pay)\b", re.I)
@@ -174,7 +178,10 @@ def _header(lines: list[str]) -> list[str]:
 
 
 def _merchant(lines: list[str], text: str) -> tuple[CartMerchant, float]:
-    for line in lines:  # 1. a line that is exactly a catalog merchant name ("NORTHBAY Electronics")
+    header = _header(lines)
+    # 1. a header line that is exactly a catalog merchant name ("NORTHBAY Electronics"); a brand line under an
+    # item ("Apple" below a MacBook at Gadget Hut) is not the store.
+    for line in header:
         merchant = catalog.merchant_by_name(line)
         if merchant:
             return CartMerchant(name=merchant.names[0], merchant_id=merchant.id), CONFIDENCE_MERCHANT_CATALOG
@@ -182,7 +189,6 @@ def _merchant(lines: list[str], text: str) -> tuple[CartMerchant, float]:
         merchant = catalog.merchant_by_domain(domain)
         if merchant:
             return CartMerchant(name=merchant.names[0], merchant_id=merchant.id), CONFIDENCE_MERCHANT_CATALOG
-    header = _header(lines)
     scrubbed = NOT_A_STORE.sub(" ", "\n".join(header))  # 3. a catalog name inside the header, earliest first
     hits = []
     for merchant in catalog.CATALOG.merchants:
@@ -315,9 +321,22 @@ def _read_quantities(priced: list[tuple[Item, Decimal]], targets: list[Decimal])
     return as_line, line_fits and unit_fits
 
 
+def _selected_network(card_lines: list[tuple[str, int]]) -> str | None:
+    """The saved card the page has selected, from (network, mark) per card line (2 selected, 1 "Default", 0 none):
+    the first line with the strongest mark, else the network every line shows, else "unknown" (lines disagree and
+    none is marked). None: no card line."""
+    if not card_lines:
+        return None
+    strongest = max(mark for _, mark in card_lines)
+    if strongest:
+        return next(network for network, mark in card_lines if mark == strongest)
+    networks = {network for network, _ in card_lines}
+    return networks.pop() if len(networks) == 1 else "unknown"
+
+
 def _payment(lines: list[str], text: str, confirmation: bool) -> tuple[list[str], SelectedPayment, bool]:
     bnpl = bool(BNPL.search(text))
-    saved_network = None
+    card_lines: list[tuple[str, int]] = []
     paid_network = None
     card_form = False
     for line in lines:
@@ -330,7 +349,8 @@ def _payment(lines: list[str], text: str, confirmation: bool) -> tuple[list[str]
             if re.search(r"\bpaid with\b", line, re.I):
                 paid_network = paid_network or net
             else:
-                saved_network = saved_network or net
+                card_lines.append((net, 2 if SELECTED.search(line) else 1 if DEFAULT_CARD.search(line) else 0))
+    saved_network = _selected_network(card_lines)
     if confirmation:
         if paid_network or saved_network:
             return [], SelectedPayment(kind="saved_card", network=paid_network or saved_network), False

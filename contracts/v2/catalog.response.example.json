@@ -1,0 +1,130 @@
+{
+  "policyVersion": "us-online-v2-draft",
+  "products": [
+    {
+      "id": "chase-freedom-unlimited",
+      "issuer": "Chase",
+      "product": "Freedom Unlimited",
+      "categoryOptions": [
+        "dining",
+        "drugstore"
+      ],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "amex-blue-cash-everyday",
+      "issuer": "American Express",
+      "product": "Blue Cash Everyday",
+      "categoryOptions": [
+        "us_gas_station",
+        "us_online_retail_physical_goods",
+        "us_supermarket"
+      ],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "amex-blue-cash-preferred",
+      "issuer": "American Express",
+      "product": "Blue Cash Preferred",
+      "categoryOptions": [
+        "select_us_streaming",
+        "transit",
+        "us_gas_station",
+        "us_supermarket"
+      ],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "capital-one-quicksilver",
+      "issuer": "Capital One",
+      "product": "Quicksilver Rewards",
+      "categoryOptions": [],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://www.capitalone.com/credit-cards/cash-back/quicksilver/"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "capital-one-savor",
+      "issuer": "Capital One",
+      "product": "Savor Rewards",
+      "categoryOptions": [
+        "dining",
+        "entertainment",
+        "grocery_store",
+        "popular_streaming"
+      ],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://www.capitalone.com/credit-cards/savor/"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "citi-double-cash",
+      "issuer": "Citi",
+      "product": "Double Cash",
+      "categoryOptions": [],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://www.citi.com/credit-cards/citi-double-cash-credit-card"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "bofa-customized-cash-rewards",
+      "issuer": "Bank of America",
+      "product": "Customized Cash Rewards",
+      "categoryOptions": [
+        "grocery_store",
+        "wholesale_club"
+      ],
+      "membershipBonusOptionsBps": [
+        0,
+        1000,
+        2500,
+        5000,
+        7500
+      ],
+      "termsUrls": [
+        "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "discover-it-cash-back",
+      "issuer": "Discover product line (Capital One group)",
+      "product": "Discover it Cash Back",
+      "categoryOptions": [],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://www.discover.com/credit-cards/cash-back/it-card/"
+      ],
+      "observedAt": "2026-10-16"
+    },
+    {
+      "id": "wells-fargo-active-cash",
+      "issuer": "Wells Fargo",
+      "product": "Active Cash",
+      "categoryOptions": [],
+      "membershipBonusOptionsBps": [],
+      "termsUrls": [
+        "https://creditcards.wellsfargo.com/active-cash-credit-card/"
+      ],
+      "observedAt": "2026-10-16"
+    }
+  ]
+}

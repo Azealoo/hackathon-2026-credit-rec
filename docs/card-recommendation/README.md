@@ -18,4 +18,4 @@ This directory contains a proposed extension to [the current product specificati
 
 The seed is not a production policy bundle. Account applicability must be confirmed, and full item eligibility and exclusion rules remain incomplete. Automatic item eligibility and conditional benefit activation remain disabled. Unknown or unlisted benefits must not be interpreted as guaranteed coverage or as proof that no benefit exists. Issuer terms and account offers require verification before operational use.
 
-The implementation retains the existing engine and introduces `us-online-v2-draft` behind a disabled-by-default feature flag. Automatic item protection eligibility remains gated pending complete executable rules. The app's checkout flow has not been switched to v2.
+The implementation retains the existing screenshot engine and introduces `us-online-v2-draft` behind a disabled-by-default feature flag. Automatic item protection eligibility remains gated pending complete executable rules. An explicit in-app **Compare with my preferences** flow now calls v2 after the user confirms purchase/account facts; screenshot and background snippet recommendations retain v1.

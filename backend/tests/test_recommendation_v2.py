@@ -15,7 +15,7 @@ from app import middleware
 from app.recommendation_v2.engine import (Coverage, Evaluated, ProtectionProfile, difference,
                                          evaluate, protection_guard, recommend, select)
 from app.recommendation_v2.models import (CardOption, Interval, OptionEstimate, Preferences,
-                                         Purchase, RecommendRequest, RecommendResponse)
+                                         ProductCatalog, Purchase, RecommendRequest, RecommendResponse)
 from app.recommendation_v2.policy import PolicyError, SEED_PATH, load_snapshot, read_snapshot
 
 REPO = Path(__file__).resolve().parents[2]
@@ -329,6 +329,26 @@ def test_api_disabled_by_default(monkeypatch):
     monkeypatch.delenv("RECOMMENDATION_V2_ENABLED", raising=False)
     response = TestClient(app).post("/v2/recommend", json=example_request())
     assert response.status_code == 404
+    assert TestClient(app).get("/v2/catalog").status_code == 404
+
+
+def test_product_metadata_and_contract_support_checkout_form(monkeypatch):
+    monkeypatch.setenv("RECOMMENDATION_V2_ENABLED", "1")
+    response = TestClient(app).get("/v2/catalog")
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body["products"]) == 9
+    products = {p["id"]: p for p in body["products"]}
+    assert len(products) == 9
+    assert "us_online_retail_physical_goods" in products["amex-blue-cash-everyday"]["categoryOptions"]
+    assert products["discover-it-cash-back"]["categoryOptions"] == []
+    assert 7500 in products["bofa-customized-cash-rewards"]["membershipBonusOptionsBps"]
+    assert all(p["termsUrls"] and all(url.startswith("https://") for url in p["termsUrls"]) for p in products.values())
+    assert response.headers["cache-control"] == "no-store"
+    schema = json.loads((REPO / "contracts/v2/catalog.response.schema.json").read_text())
+    assert schema == ProductCatalog.model_json_schema(by_alias=True)
+    Draft202012Validator(schema, format_checker=Draft202012Validator.FORMAT_CHECKER).validate(body)
+    assert body == json.loads((REPO / "contracts/v2/catalog.response.example.json").read_text())
 
 
 def test_api_policy_failure_is_a_generic_503(monkeypatch):

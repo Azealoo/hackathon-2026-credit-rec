@@ -31,6 +31,7 @@ struct PaywiseSettings: Sendable {
         static let silentAlerts = "silentAlerts"
         static let replayEnabled = "replayEnabled"
         static let wallet = "wallet"
+        static let recommendationPreferences = "recommendationPreferences"
         /// The first-launch onboarding (§5.1) finished or was skipped.
         static let onboarded = "onboarded"
         /// "Pretend today is…" (§12.1 "14 months later"): on/off and the day, yyyy-MM-dd.

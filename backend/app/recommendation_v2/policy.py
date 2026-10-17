@@ -22,6 +22,10 @@ class Snapshot:
     _cards: dict
     sources: tuple[dict, ...]
 
+    @property
+    def product_ids(self) -> tuple[str, ...]:
+        return tuple(self._cards)
+
     def card(self, product_id: str) -> dict:
         if product_id not in self._cards:
             raise ValueError("unknown product id")

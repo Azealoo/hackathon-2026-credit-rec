@@ -180,6 +180,21 @@ class Source(Model):
     observed_at: date
 
 
+class ProductSummary(Model):
+    id: str
+    issuer: str
+    product: str
+    category_options: list[str]
+    membership_bonus_options_bps: list[int]
+    terms_urls: list[str]
+    observed_at: date
+
+
+class ProductCatalog(Model):
+    policy_version: str
+    products: list[ProductSummary]
+
+
 class RecommendResponse(Model):
     request_id: str
     policy_version: str

@@ -8,7 +8,7 @@ enum CheckRoute: Hashable {
 /// The Back Tap prompt, or the setup it leads to, as a sheet over the Check tab. Both follow the system appearance
 /// (R18), unlike the tab, which is pinned light.
 enum CheckSheet: String, Identifiable {
-    case prompt, setup
+    case prompt, setup, comparison
     var id: String { rawValue }
 }
 
@@ -24,6 +24,7 @@ struct CheckTabView: View {
     @State private var checkCount: Int
     @State private var triggerSetupDone: Bool
     @State private var sheet: CheckSheet?
+    @State private var comparisonRecord: CheckRecord?
     @Environment(\.scenePhase) private var scenePhase
     private let settings: PaywiseSettings
     private let catalog: CardCatalog
@@ -76,6 +77,17 @@ struct CheckTabView: View {
                             .accessibilityIdentifier("check.lastPress")
                     }
                     InAppResultCard(check: check, catalog: catalog, done: { check.reset() })
+                    if let record = check.record, record.view == .result,
+                       record.parsedResponse.screenType == .checkout {
+                        Button {
+                            comparisonRecord = record
+                            sheet = .comparison
+                        } label: {
+                            Label("Compare with my preferences", systemImage: "slider.horizontal.3")
+                        }
+                        .buttonStyle(AppButtonStyle(prominent: false))
+                        .accessibilityIdentifier("check.comparePreferences")
+                    }
                     #if DEBUG
                     if CheckTabDemo.doubleSave {
                         // `-doubleSave`: what each save returned, read by the UI test (not drawn).
@@ -157,6 +169,15 @@ struct CheckTabView: View {
                         TriggerSetupView(mode: .standalone, settings: settings, checkStore: check.deps.checkStore) {
                             triggerSetupDone = settings.triggerSetupDone
                         }
+                    }
+                case .comparison:
+                    NavigationStack {
+                        CheckoutRecommendationView(deps: check.deps, record: comparisonRecord)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Done") { sheet = nil }
+                                }
+                            }
                     }
                 }
             }

@@ -28,7 +28,7 @@ v1 overnight build on branch `overnight/v1`, as of Oct 15, 2026, 18:30 PDT (comm
 | `fixtures/` | Demo wallets, scenarios and coverage cases (§15.4). All data obviously fake. |
 | `demo-store/` | The fictional "Northbay Electronics" checkout pages (§9.3) |
 | `docs/` | Spike and gate results (`spikes.md`), metrics (`metrics.md`), design, hosting, Visa sandbox, benefits verification; screenshots of every screen in `overnight-shots/` (local only: not in git yet) |
-| [`docs/card-recommendation/`](docs/card-recommendation/README.md) | V2 recommendation specification, issuer policy research, and [opt-in structured API](docs/card-recommendation/implementation.md); the app's checkout flow still uses v1. |
+| [`docs/card-recommendation/`](docs/card-recommendation/README.md) | V2 recommendation specification, issuer policy research, and [opt-in checkout comparison](docs/card-recommendation/implementation.md); the initial screenshot result still uses v1. |
 | `ios/` | The app, its Live Activity extension, unit and UI tests, and the "Paywise" Shortcut (Xcode 27, iOS 27). How to build, test and install: [ios/README.md](ios/README.md) |
 
 ## Run the backend

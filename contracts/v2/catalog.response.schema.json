@@ -1,0 +1,78 @@
+{
+  "$defs": {
+    "ProductSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "issuer": {
+          "title": "Issuer",
+          "type": "string"
+        },
+        "product": {
+          "title": "Product",
+          "type": "string"
+        },
+        "categoryOptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Categoryoptions",
+          "type": "array"
+        },
+        "membershipBonusOptionsBps": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Membershipbonusoptionsbps",
+          "type": "array"
+        },
+        "termsUrls": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Termsurls",
+          "type": "array"
+        },
+        "observedAt": {
+          "format": "date",
+          "title": "Observedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "issuer",
+        "product",
+        "categoryOptions",
+        "membershipBonusOptionsBps",
+        "termsUrls",
+        "observedAt"
+      ],
+      "title": "ProductSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "policyVersion": {
+      "title": "Policyversion",
+      "type": "string"
+    },
+    "products": {
+      "items": {
+        "$ref": "#/$defs/ProductSummary"
+      },
+      "title": "Products",
+      "type": "array"
+    }
+  },
+  "required": [
+    "policyVersion",
+    "products"
+  ],
+  "title": "ProductCatalog",
+  "type": "object"
+}

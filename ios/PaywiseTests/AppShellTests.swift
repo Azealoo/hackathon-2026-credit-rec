@@ -587,7 +587,7 @@ struct AppCopyTests {
         #expect(!PrivacyCopy.consent.contains("\n"))
         #expect(PrivacyCopy.retention == "Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider, Anthropic, may keep the redacted order text for up to 30 days, and longer if its safety systems flag it. It isn't used for model training.")
         let disclaimer = PrivacyCopy.disclaimer(catalog: .bundled())
-        #expect(disclaimer.contains("(last checked Oct 15, 2026)"))
+        #expect(disclaimer.contains("(last checked Oct 16, 2026)"))
         #expect(!disclaimer.contains("[date]"))
         #expect(disclaimer.hasSuffix("Not affiliated with or paid by any issuer."))
     }

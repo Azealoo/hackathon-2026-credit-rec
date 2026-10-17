@@ -209,6 +209,7 @@ struct TestEnvironment {
                 baseURL: URL(string: "https://\(host)")!,
                 session: PaywiseAPI.makeSession(timeout: CoverageAPI.defaultTimeout, protocolClasses: [StubURLProtocol.self])
             ),
+            offers: OfferStore(containerURL: directory),
             now: { Fixtures.demoNow },
             timeZone: Fixtures.seattle,
             islandHold: .zero,

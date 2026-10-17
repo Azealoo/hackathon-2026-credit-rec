@@ -330,19 +330,45 @@ struct CheckResponse: Codable, Sendable, Equatable {
         var message: String?
     }
 
+    /// A card's public earn rate at this checkout (offers design D4).
+    struct PublicRate: Codable, Sendable, Equatable {
+        var ratePct: Double?
+        var status: VerificationStatus?
+        var ruleId: String?
+    }
+
+    /// `offerContext` (offers design D1): the public inputs `OfferResolver` needs. The same for every user with this
+    /// cart; the phone applies the user's own offer answers to it and never sends them.
+    struct OfferContext: Codable, Sendable, Equatable {
+        var catalogVersion: String?
+        var amountUsd: Double?
+        var merchantId: String?
+        var ruleCategory: String?
+        var itemCategories: [String]?
+        var paymentPath: PaymentPath?
+        /// "apple_pay" or "card".
+        var method: String?
+        var thresholdUsd: Double?
+        var publicRates: [String: PublicRate]?
+        var allowedCashPicks: [String]?
+        var purchaseDraftByCard: [String: PurchaseDraft]?
+        var deviceMayOverride: Bool?
+    }
+
     var requestId: String?
     var screenType: ScreenType?
     var cart: Cart?
     var decision: Decision?
     var purchaseDraft: PurchaseDraft?
     var sources: [Source]?
+    var offerContext: OfferContext?
     var timingMs: TimingMs?
     var error: ErrorBody?
 
     init(
         requestId: String? = nil, screenType: ScreenType? = nil, cart: Cart? = nil, decision: Decision? = nil,
-        purchaseDraft: PurchaseDraft? = nil, sources: [Source]? = nil, timingMs: TimingMs? = nil,
-        error: ErrorBody? = nil
+        purchaseDraft: PurchaseDraft? = nil, sources: [Source]? = nil, offerContext: OfferContext? = nil,
+        timingMs: TimingMs? = nil, error: ErrorBody? = nil
     ) {
         self.requestId = requestId
         self.screenType = screenType
@@ -350,6 +376,7 @@ struct CheckResponse: Codable, Sendable, Equatable {
         self.decision = decision
         self.purchaseDraft = purchaseDraft
         self.sources = sources
+        self.offerContext = offerContext
         self.timingMs = timingMs
         self.error = error
     }
@@ -363,6 +390,7 @@ struct CheckResponse: Codable, Sendable, Equatable {
         decision = c.tolerant(Decision.self, .decision)
         purchaseDraft = c.tolerant(PurchaseDraft.self, .purchaseDraft)
         sources = c.tolerant([Source].self, .sources)
+        offerContext = c.tolerant(OfferContext.self, .offerContext)
         timingMs = c.tolerant(TimingMs.self, .timingMs)
         error = c.tolerant(ErrorBody.self, .error)
     }

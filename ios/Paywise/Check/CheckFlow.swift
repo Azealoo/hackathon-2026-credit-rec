@@ -74,13 +74,18 @@ struct CheckFlow: Sendable {
         )
         trace.end(.post)
 
-        // 6. Write the CheckRecord.
+        // 6. Apply the user's offers on the phone (D1: nothing about them was sent), then write the CheckRecord.
         trace.begin(.record)
         let response = (try? responseJSON.decode(CheckResponse.self)) ?? CheckResponse()
+        let adjustment = OfferResolver.resolve(
+            response: response, catalog: deps.catalog, records: deps.offers.load(), wallet: wallet,
+            today: prepared.request.clientDate
+        )
+        let decision = adjustment?.decision ?? response.decision
         let filled = CopyFill.fill(
-            response.decision?.copy,
+            decision?.copy,
             wallet: wallet,
-            ppCap: CopyFill.ppCap(decision: response.decision, catalog: deps.catalog)
+            ppCap: CopyFill.ppCap(decision: decision, catalog: deps.catalog)
         )
         let record = CheckRecord(
             checkId: checkId,
@@ -88,7 +93,8 @@ struct CheckFlow: Sendable {
             sentPayload: (try? JSONValue(data: prepared.body)) ?? .null,
             response: responseJSON,
             filledCopy: filled,
-            replayed: replayed
+            replayed: replayed,
+            offerAdjustment: adjustment
         )
         var stored = true
         do {
@@ -100,7 +106,7 @@ struct CheckFlow: Sendable {
         trace.end(.record)
 
         // 7 (decided here, shown by the intent).
-        return present(record: record, decision: response.decision, wallet: wallet, stored: stored)
+        return present(record: record, decision: decision, wallet: wallet, stored: stored)
     }
 
     /// A checkout read on the phone, turned into a body that passed the privacy check.

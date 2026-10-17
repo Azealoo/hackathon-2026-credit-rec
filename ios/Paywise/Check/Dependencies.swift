@@ -13,6 +13,8 @@ struct AppDependencies: Sendable {
     var island: any IslandPresenting
     /// `POST /v1/coverage` for the claim screens (§5.5).
     var coverage: CoverageAPI = .live()
+    /// The user's offer answers (offers design D1): device only, read by `OfferResolver` after each check.
+    var offers: OfferStore = .appGroup
     var now: @Sendable () -> Date = { .now }
     var timeZone: TimeZone = .current
     /// How long an island alert is held before `.immediate` end (§6.3: 4 s).

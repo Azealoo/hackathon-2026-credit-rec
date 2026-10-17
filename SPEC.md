@@ -1,9 +1,16 @@
 # Paywise — Product Spec
 
-**Version:** 2.2 (Oct 16, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
+**Version:** 2.3 (Oct 16, 2026) · **Event:** DubHacks '26, UW Seattle, Oct 17–18 · **Track:** Visa: Reimagine Shopping (sponsored side track; prompt and rubric in §11.0)
 **Status:** Product-form decision after a 7-reviewer product-form review (product manager, interaction designer, form-factor designer, student user, competitive analyst, hackathon/Visa judge, iOS engineering lead), a PM decision and a challenge round. Items marked **(u)** are unverified and must be tested before we rely on them.
 
 ## Changelog
+
+**v2.3 (Oct 16, 2026): the spec matches the code after the product review**
+- **Visa:** G4 failed on Cybersource's side (`docs/spikes.md`), so §11.2 and §12.1–12.3 script the demo payment on `PAY_MODE=mock` and make no Visa-API claim. §11.3 no longer says Visa built the benefit tiers: the demo card's protections are Chase's.
+- **G1 fallback:** the iOS 27 screenshot automation is rejected (owner, Oct 16). §4.2 P1-14, §4.5 and §6.6 now say so; the first fallback is a Wait before Take Screenshot.
+- **Contracts (§15.5):** now match `contracts/` and the engine: glyph `paywise` (R2), optional `amountOnCardUsd` (R3), Live Activity `line3` (R4) and `cardId` (R14), the coverage response's `incident` (R17), and the extended-warranty limit of $10,000 per item. `LLM_PROVIDER` and `PUBLIC_BASE_URL` are gone: nothing reads them.
+- **Tracks (§14.3):** the 9:30 PM default is one title track plus Visa.
+- **Team (§14.2):** the roster is settled at 4. **Interviews (§1):** the placeholder now says no results are in the repo yet.
 
 **v2.2 (Oct 16, 2026): Back Tap is the main trigger (owner ruling)**
 - **Trigger:** double-tap the back of the iPhone (Back Tap). The Action Button is an optional "Prefer a button?" alternative, because people keep it on Silent. Onboarding shows a Back Tap prompt, then Set Up Back Tap with an in-app "Try it now" (§5.1). §0, §3, §4.1, §4.5, §5.1, §5.2, §6.6, §9.1, §12.1–12.4, §13, §14.2, §14.4, §15.7 and §16 now match. §6.3 copy is unchanged.
@@ -59,7 +66,7 @@ Your cards come with theft cover and extra warranty years buried in the fine pri
 - Card protections go so unused that Discover dropped extended warranty and purchase protection on Feb 28, 2018, citing "prolonged low usage".
 - Smartphones drove 56.4% of 2025 holiday online sales (Adobe, Jan 2026). Many student checkouts happen inside shopping apps, where browser extensions can't run.
 - iOS 27's Apple Pay sheet lets you swipe between cards and, for eligible cards, surfaces "rewards, balances, debit account balance, pay later options" (Apple). It doesn't recommend a card, says nothing about protections, and doesn't appear in saved-card checkouts.
-- Our interviews: *[fill in after Friday: n, card products held → protections, awareness counts]*.
+- Our interviews (P0-16): no results are in the repo yet. Aggregates go in `docs/metrics.md`; the pitch uses an interview stat only once they are recorded and X ≥ 4 (§13).
 
 **Our wedge:** per-purchase protection. That means the card that covers *this* item, the purchase saved when you pay, and an honest claim check later. The one-press trigger is how we get there, not the moat.
 
@@ -161,7 +168,7 @@ Budget: ≈20–40 person-hours (ph) before Sat 12:30 PM plus ≈50–60 ph at t
 | P1-11 | One verified **non-Chase** protection card in the catalog | 2 |
 | P1-12 | Settings-screenshot onboarding (on-device OCR of Settings › Wallet & Apple Pay) | 4 |
 | P1-13 | VDBP sandbox call shown as the production path for benefit data (labeled test data) | 3 |
-| P1-14 | Screenshot-automation / Share Sheet trigger option (branched Shortcut) | 1 |
+| P1-14 | Share Sheet trigger option (branched Shortcut) | 1 |
 | P1-15 | Read-only footage of a real shopping app (masked on the phone) | 1 |
 | P1-16 | "Other card" (not in the catalog): "We don't know this card's fine print yet" | 1 |
 
@@ -183,7 +190,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 | Action Button as primary / demo trigger | Optional ("Prefer a button?") | People keep the Action Button on Silent and won't give that up (owner, Oct 16). It runs the same Shortcut. Back Tap's costs, accepted: buried in Accessibility settings (Set Up Back Tap shows the path); misfire and case-damping reports (anecdotal); no haptic feedback. |
 | Action Button bound to an App Shortcut or Control that runs the intent directly | Rejected | Controls and App Shortcuts run an intent with no screen input, so the bare intent gets no screenshot. We do **not** register `CheckCheckoutIntent` in `AppShortcutsProvider`. |
 | Screenshot → share sheet as primary | P1 option | 4–5 steps per checkout. Needs the Shortcut's input branch (§9.1). |
-| iOS 27 screenshot automation as primary | First fallback if G1 fails; P1 option | Exists in iOS 27 ("runs when a screenshot is saved"). Unknown: runs without a prompt? which image? privacy of processing every screenshot. |
+| iOS 27 screenshot automation | Rejected (owner, Oct 16) | Exists in iOS 27 ("runs when a screenshot is saved"), but it saves every checkout screenshot to Photos and runs on every screenshot (`docs/spikes.md`, G1 step). Not a G1 fallback. |
 | Visual Intelligence | P2, gated fallback | Screenshot → highlight to search → choose our app; Apple decides the provider order; the result is a short row over a screenshot copy. CardPointers 8 already ships it. |
 | Camera Control | Rejected | Camera / VI-camera only; doesn't read an in-app checkout. |
 | Safari Web Extension | Rejected | Safari only, blind inside shopping apps, per-site permission. Kudos and CardPointers already ship one. |
@@ -330,9 +337,11 @@ The phone fills `{last4:<cardId>}` from the wallet; with no stored last 4 it dro
 
 ### 6.6 Fallbacks decided in advance (applied when a gate in §14.2 fails)
 - **G1 fails** (Take Screenshot from Back Tap / the Action Button doesn't capture the app underneath in ≥9/10 runs):
-  1. That evening, try the iOS 27 screenshot automation.
+  1. That evening, add a Wait before Take Screenshot in the Shortcut and re-run the presses.
   2. If that fails, use the branched Shortcut in the Share Sheet plus the in-app check; the demo opens on "screenshot → share → answer".
   3. Only if both fail: Visual Intelligence moves from P2 to P1.
+
+  Never the iOS 27 screenshot automation: the owner ruled it out on Oct 16 (§4.5).
 - **G2 fails on appearance** (the snippet doesn't appear over Safari and ≥1 third-party app in ≥9/10 Back Tap runs): Switch and Keep-protected become alerting island updates with the `.default` sound, held 8 s. Users save later with "I bought this".
 - **G2 fails on the button** ([Paying with …] doesn't save and reload in ≥9/10): try Pattern B (`requestConfirmation` with a custom verb, §15.5). If that fails too, show a static snippet and save via "I bought this".
 - **G2 fails on sound** (`.named("silent.caf")` makes a sound or doesn't expand): use `.default` for every alert.
@@ -487,13 +496,14 @@ Press + Shortcut start + screenshot + intent launch ~0.5–1.0 s · crop + OCR +
 Decision (which card covers this) → checkout (change card / pay) → post-purchase (saved purchase, coverage check). Generative AI does the reading, the eligibility judgment and the cause classification.
 
 ### 11.2 Visa APIs
-- **P0 (gated by G4):** a Visa Acceptance (Cybersource) sandbox authorization runs the demo merchant's payment; the confirmation shows the transaction ID. Sign-up, keys, test cards and the stall plan are in `docs/visa-sandbox.md`. It's an authorization only (`capture: false`, no money moves). Hard stop: if the account can't log in and make a key by Fri Oct 16, 12 PM, set `PAY_MODE=mock` and remove every Visa-API claim.
+- **G4 failed (Oct 16), so this P0 is off:** the sandbox merchant's processor (`fdiglobal`) has no USD outlet or terminal IDs, and only Cybersource support can add them (`docs/spikes.md`, `docs/overnight-report.md`). The demo runs on `PAY_MODE=mock` and makes no Visa-API claim. The client stays in the code (`PAY_MODE=visa_acceptance`) in case the account is fixed.
+- **Planned P0 (gated by G4):** a Visa Acceptance (Cybersource) sandbox authorization runs the demo merchant's payment; the confirmation shows the transaction ID. Sign-up, keys, test cards and the stall plan are in `docs/visa-sandbox.md`. It's an authorization only (`capture: false`, no money moves). Hard stop: if the account can't log in and make a key by Fri Oct 16, 12 PM, set `PAY_MODE=mock` and remove every Visa-API claim.
 - **P1:** the Visa Digital Benefits Platform (VDBP) sandbox, shown as the production path for benefit data (test data, labeled).
 - Skip the VDBP Card Account endpoints (they need the full card number and PCI scope).
-- Never say "Visa-verified". Devpost line: "Visa Acceptance runs the demo merchant's payment. In production, benefit data would come from Visa's benefits APIs (VDBP; sandbox shown if P1 ships)."
+- Never say "Visa-verified". Devpost line (mock payment): "The demo store's payment is a mock; no money moves. In production, benefit data would come from Visa's benefits APIs (VDBP; sandbox shown if P1 ships)."
 
 ### 11.3 Neutrality framing
-The engine recommends whatever is truly best. The demo's winning card is a Visa (Freedom Unlimited vs Active Cash, both Visa; tiers to re-verify): "same network, different fine print." Protections are issuer-optional, so we say: "Visa built the benefit tiers; Paywise shows them at the moment you buy."
+The engine recommends whatever is truly best. The demo's winning card is a Visa (Freedom Unlimited vs Active Cash, both Visa; tiers to re-verify): "same network, different fine print." The protections are the issuer's: Freedom Unlimited's come from Chase's Guide to Benefits (`docs/benefits-verification.md`), so we never credit them to Visa.
 
 ### 11.4 Why Visa benefits
 Benefits get used (engagement), fewer misfiled claims, and an inclusive story: free for students, no paid ranking.
@@ -516,10 +526,10 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | 0:00–0:15 | Hook: "This $1,499 laptop: cash back says Active Cash. The fine print says something else." Hand the judge the phone. | Northbay Electronics checkout, "Pay with Mastercard ••5678 [Change]" | Store is ours (fictional) |
 | 0:15–0:30 | Coach: "Double-tap the back of the phone." **Judge double-taps.** | *Checking* → snippet: Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash | Real: screenshot, on-device OCR + redaction, cloud parse, engine |
 | 0:30–0:45 | Judge taps **[Paying with Freedom]** → Saved. Presenter taps **[What we sent]**: "That's all that left the phone." Done. | Saved: dates + "up to $500". Sent: the redacted summary | Real |
-| 0:45–1:05 | Presenter: Change → Visa ••1234 → Place order | "Approved · Visa Acceptance sandbox · txn {id}" | Real sandbox call; test card; no money moves |
+| 0:45–1:05 | Presenter: Change → Visa ••1234 → Place order | "Approved · Mock payment, no money moved · txn MOCK-…" | Simulated: mock payment (`PAY_MODE=mock`; G4 failed); fake saved card; no money moves |
 | 1:05–1:35 | "14 months later" (said aloud as staged): Purchases → Aero 14 (Planned) → Something happened → paid with Freedom? Yes → maker's warranty 1 year → "Lines across the screen. Never dropped." | **May be eligible: Extended warranty** + clause + version date + checklist + notify-by | Date override simulated; verdict is real engine output |
 | 1:35–1:50 | Contrast: "Cracked when I dropped it" | **Not covered**: damage was covered for 120 days only | Real |
-| 1:50–2:05 | Why Visa / why us: "Card benefits are how cards like this Visa differ, yet cardholders use about 2 of them (J.D. Power 2026). We show them at checkout and turn them into a claim. Visa Acceptance ran this merchant's payment. Free for students, no paid ranking." | One slide or app screen | — |
+| 1:50–2:05 | Why Visa / why us: "Card benefits are how cards like this Visa differ, yet cardholders use about 2 of them (J.D. Power 2026). We show them at checkout and turn them into a claim. Free for students, no paid ranking." | One slide or app screen | — |
 | 2:05–2:20 | Close: tagline + one numbers line (measured p50, scenarios including misses, interview stat) | Tagline | Measured |
 | 2:20–2:40 (optional) | **Renewed flip**, only if rehearsals finish by 2:20: tab 2, press | "Use Active Cash ••4321 / $10.99 more cash back than Apple Card / Renewed, no warranty: no card covers it" | Real |
 | → 3:00 | Buffer / Q&A | — | — |
@@ -542,7 +552,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | 0:00 | Hook |
 | 0:08 | Back Tap double tap (hand in picture-in-picture, timer on screen) → snippet |
 | 0:20 | [Paying with Freedom] → Saved → [What we sent] |
-| 0:32 | Change card → Place order → Visa Acceptance sandbox approval |
+| 0:32 | Change card → Place order → mock approval ("Mock payment, no money moved") |
 | 0:45 | "14 months later" → may be eligible + clause |
 | 1:05 | Drop → not covered |
 | 1:15 | Renewed flip |
@@ -552,8 +562,8 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 
 ### 12.3 Real vs simulated (say it on Devpost and in the video)
-- **Real:** the Back Tap double tap and Shortcut screenshot; on-device crop, OCR and redaction; the cloud cart parse and engine; the snippet and island; the saved (planned) purchase; the coverage verdict from stored clause data; the Visa Acceptance **sandbox** authorization of the demo merchant's payment.
-- **Simulated or staged:** the store (a fictional merchant we built); the cards (fake saved cards with fake last 4; the processor's test card numbers live only on the server); no money moves; "14 months later" is a date override; no claim is ever submitted; replay mode, if used, is labeled "replayed" in What we sent.
+- **Real:** the Back Tap double tap and Shortcut screenshot; on-device crop, OCR and redaction; the cloud cart parse and engine; the snippet and island; the saved (planned) purchase; the coverage verdict from stored clause data.
+- **Simulated or staged:** the store (a fictional merchant we built); the payment (`PAY_MODE=mock`: the confirmation says "Mock payment, no money moved"; the Visa Acceptance sandbox, gate G4, failed on Cybersource's side, so we make no Visa-API claim); the cards (fake saved cards with fake last 4; the processor's test card numbers live only on the server); no money moves; "14 months later" is a date override; no claim is ever submitted; replay mode, if used, is labeled "replayed" in What we sent.
 - **Where the disclosure goes:** Devpost, the video and the live demo say what is real and what is simulated. The app's own screens, including the HTML verdict page, don't call themselves a concept. `docs/design.md` §8 says the verdict page "states it is a concept"; that applies to the demo and video only.
 
 ### 12.4 Table kit
@@ -631,7 +641,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 **Single-Mac plan (if we have only one Mac):** C owns the Mac. A writes redaction and replay-key logic as portable regexes with tests on any machine, then ports them in two Mac slots (Thu 9–11 PM, Fri 12–3 PM). The P0-10 tile picker is cut (seeded wallet only) and P0-15 moves to P1. The coverage verdict is HTML (no Mac); only its SwiftUI input screen needs the Mac (1.5 h).
 
 **Also before Saturday:**
-- **Roster:** the README lists 5 GitHub handles. Max team size is 4 (Devpost rules); the roster of 4 is the maximum, so no extra member. Settle the 4.
+- **Roster:** settled at 4, the maximum (Devpost rules): @Azealoo, @Carolzhxxx, @Michelle111213, @xiuyuan114514 (owner, Oct 16; README).
 - **Signing:** done (paid Apple Developer account). Install Xcode 27; enable Developer Mode on the demo iPhones.
 - **Accounts:** Visa Acceptance sandbox (`docs/visa-sandbox.md`) and the Anthropic API key tonight; Render for hosting; Stripe only for P1.
 - **Discord questions** (full list in `docs/dubhacks-2026-rules.md`): where the '26 Hacker Guide is (its Devpost link is broken); the rubric point breakdowns, and whether Visa uses the same four criteria; is Visa judged in person or by video, and do Visa judges visit tables; final deadline (Devpost overview 10:00 AM vs schedules 10:30 AM; treat 10:00 as hard); video length and format; are "Chef's Kitchen" (Devpost) and "Chef's Choice" (dh26) the same track; are external APIs and sandboxes allowed; are power and Wi-Fi guaranteed at tables for a phone + Mac demo.
@@ -647,7 +657,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 | 5:00 PM | Purchases + "I bought this"; `/v1/coverage` ≥11/13; HTML verdict in the web view | `COVERAGE_MODE=rules` (user picks the cause) |
 | 7:30 PM | Full arc end to end; first footage | Snippet unreliable → island alerts (§6.6) |
 | 8:00–9:00 PM | Comprehension, stranger-trigger, right-card and setup tests with 10 non-teammates (D) | — |
-| 9:30 PM | Track decision | Default: Visa only |
+| 9:30 PM | Track decision | Default: one title track (Cook Smarter, §11.0's suggested fit) + Visa |
 | **10:00 PM** | **Devpost draft submitted** (D; B backup); all members accepted invites | **Gate: Sat 10:30 PM draft** (published): declare tracks (one title track + Visa) and add all 4 members with their Discords. No draft means no judging on Sunday. |
 | 10:00 PM–1:00 AM | P1 window, **only if the arc ran 5/5 clean** | — |
 | 1:00 AM | P0 freeze | — |
@@ -663,7 +673,7 @@ First footage at 7:30 PM Sat; final takes by 3:00 AM Sun.
 ### 14.4 Cut order (first → last)
 1. Anything P2.
 2. P1 items in reverse order (P1-16 first … P1-1 last).
-3. Visa Acceptance live call → mocked confirmation; remove every Visa-API claim.
+3. Visa Acceptance live call → mocked confirmation; remove every Visa-API claim. (Applied Oct 16: G4 failed.)
 4. The "Prefer a button?" Action Button card.
 5. The [What we sent] snippet button (keep the in-app screen and redaction).
 6. Claim checklist and deadline styling (keep the verdict and the clause).
@@ -911,7 +921,7 @@ Response:
       {"type": "purchase_protection", "windowDays": 120,
        "limit": {"amountUsd": 500, "appliesTo": "item"}, "verification": "verified"},
       {"type": "extended_warranty", "extendsByMonths": 12,
-       "limit": {"amountUsd": null, "appliesTo": "claim"}, "verification": "verified"}
+       "limit": {"amountUsd": 10000, "appliesTo": "item"}, "verification": "verified"}
     ],
     "protectionsLost": [],
     "eligibilityNotes": [],
@@ -1006,7 +1016,7 @@ Response:
 - The snippet's buttons are `Button(intent: SavePurchaseIntent(checkId:))` and `Button(intent: ShowSentIntent(checkId:))`. **Done is the system button.**
 - **Pattern B** (only if G2's button test fails): inside `CheckCheckoutIntent`, `try await requestConfirmation(actionName: <custom "Paying with Freedom">, snippetIntent: CheckResultSnippetIntent(checkId:))`. On confirm: save, then return the Saved result. On cancel: return.
 
-**Live Activity** (Swift `Codable`, well under 4 KB). `phase`: checking / keep / no_checkout / error / switch_fallback. `glyph`: fp / check / warning / card. `staleDate` = start + 2 min on every request and update.
+**Live Activity** (Swift `Codable`, well under 4 KB). `phase`: checking / keep / no_checkout / error / switch_fallback. `glyph`: paywise / check / warning / card. `cardId` (optional, R14) names the card whose bundled art the island draws (§9.1); `line3` (optional, R4) is the third line of the switch fallback and of the on-device No checkout. `staleDate` = start + 2 min on every request and update.
 ```json
 // ActivityAttributes (static)
 {"checkId": "5f0c…uuid"}
@@ -1014,10 +1024,12 @@ Response:
 {
   "phase": "keep",
   "glyph": "check",
+  "cardId": "apple-card",
   "cardShortName": "Apple Card",
   "last4": "5678",
   "line1": "✓ Keep Apple Card ••5678",
   "line2": "Best of your 3 cards here",
+  "line3": null,
   "lockScreenText": "Paywise checked this screen"
 }
 ```
@@ -1037,7 +1049,7 @@ Request:
   "asOf": "2027-12-18"
 }
 ```
-`manufacturerWarrantySource`: user / assumed ("Don't know" → 12 months, assumed). `paidWith`: card_full / card_partial / bnpl / unknown. `cause`: failure / accidental_damage / theft / loss / cosmetic / unknown; null means the server classifies it. `causeSource`: user_confirmed / llm.
+`manufacturerWarrantySource`: user / assumed ("Don't know" → 12 months, assumed). `paidWith`: card_full / card_partial / bnpl / unknown. `amountOnCardUsd` (optional, R3): the part of the price charged to the card, for `card_partial`; null or absent means unknown, and with `card_full` the amount charged is `priceUsd`. `cause`: failure / accidental_damage / theft / loss / cosmetic / unknown; null means the server classifies it. `causeSource`: user_confirmed / llm.
 
 Response (`?format=json`; `?format=html` renders the same data through `templates/verdict.html`):
 ```json
@@ -1045,19 +1057,20 @@ Response (`?format=json`; `?format=html` renders the same data through `template
   "verdict": "may_be_eligible",
   "benefit": "extended_warranty",
   "route": "card_extended_warranty",
-  "headline": "May be eligible: Extended warranty (Freedom Unlimited)",
-  "why": "The maker's 1-year warranty ended Oct 17, 2027. The extra year runs to Oct 17, 2028. A failure without a drop fits this benefit.",
-  "limit": {"perItemUsd": null, "perClaimUsd": null, "perAccountUsd": null, "payoutCapUsd": null, "appliesTo": "claim"},
+  "headline": "May be eligible: Extended warranty (Freedom Unlimited).",
+  "why": "The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028.",
+  "limit": {"perItemUsd": 10000, "perClaimUsd": null, "perAccountUsd": 50000, "payoutCapUsd": 1499, "appliesTo": "item"},
   "assumptions": [],
   "citations": [{"document": "…Guide to Benefits", "section": "Extended Warranty Protection",
                  "versionDate": "…", "quote": "…", "verification": "verified"}],
-  "checklist": ["Itemized receipt", "Card statement showing the purchase", "Original manufacturer warranty", "Repair estimate"],
-  "deadline": {"type": "unknown", "date": null, "note": "Check the notice deadline in your Guide to Benefits"},
+  "checklist": ["Itemized receipt", "Card statement showing the purchase", "Original warranty", "Repair estimate"],
+  "deadline": {"type": "notify_by", "date": "2028-03-16", "note": "Notify by Mar 16, 2028; send documents by Apr 15, 2028, or as soon as reasonably possible."},
   "contact": {"administrator": "…", "url": "…"},
-  "disclaimer": "Only the benefit administrator decides claims. Paywise never files for you."
+  "disclaimer": "Only the benefit administrator decides claims. Paywise never files for you.",
+  "incident": {"cause": "failure", "causeSource": "user_confirmed"}
 }
 ```
-`verdict`: may_be_eligible / not_covered / need_more_info. `benefit`: purchase_protection / extended_warranty / none. `route`: card_extended_warranty / card_purchase_protection / manufacturer / none. `deadline.type`: notify_by / file_by / unknown. For case 13: `"limit": {"perItemUsd": 500, "payoutCapUsd": 500, "appliesTo": "item"}`, and the headline adds "up to $500 of the $1,499". `payoutCapUsd` is the lesser of the benefit cap and the amount charged to the card, so with `card_partial` (case 12) it is at most the part paid on the card (§5.5). Date and window math happens in code; the LLM only classifies the cause (the user confirms) and drafts `why`.
+`verdict`: may_be_eligible / not_covered / need_more_info. `benefit`: purchase_protection / extended_warranty / none. `route`: card_extended_warranty / card_purchase_protection / manufacturer / none. `deadline.type`: notify_by / file_by / unknown. `incident` (R17) echoes the cause the verdict used and where it came from, so the claim screen can pre-select the LLM's chip; the backend always sends it (optional in the schema), and with a null cause `causeSource` is null too. `payoutCapUsd` here is the $1,499 price, under the $10,000 per-item cap. For case 13: `"limit": {"perItemUsd": 500, "payoutCapUsd": 500, "appliesTo": "item"}`, and the headline adds "up to $500 of the $1,499". `payoutCapUsd` is the lesser of the benefit cap and the amount charged to the card, so with `card_partial` (case 12) it is at most the part paid on the card, `amountOnCardUsd` (§5.5). Date and window math happens in code; the LLM only classifies the cause (the user confirms) and drafts `why`.
 
 **`POST /v1/store/pay`** (demo store only)
 - Request: `{"orderId": "NB-100234", "savedCardId": "demo-visa-1234", "amountUsd": 1499.00}`
@@ -1066,7 +1079,6 @@ Response (`?format=json`; `?format=html` renders the same data through `template
 
 **`.env.example`** (placeholders only):
 ```
-LLM_PROVIDER=anthropic
 LLM_API_KEY=changeme
 LLM_MODEL=changeme
 PARSER_MODE=rules|llm
@@ -1076,7 +1088,6 @@ VISA_ACCEPTANCE_MERCHANT_ID=changeme
 VISA_ACCEPTANCE_KEY_ID=changeme
 VISA_ACCEPTANCE_SECRET_KEY=changeme
 DEMO_TEST_CARD_MAP=changeme
-PUBLIC_BASE_URL=https://changeme
 ```
 
 ### 15.6 Engine

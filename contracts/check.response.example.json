@@ -27,7 +27,7 @@
       {"type": "purchase_protection", "windowDays": 120,
        "limit": {"amountUsd": 500, "appliesTo": "item"}, "verification": "verified"},
       {"type": "extended_warranty", "extendsByMonths": 12,
-       "limit": {"amountUsd": null, "appliesTo": "claim"}, "verification": "verified"}
+       "limit": {"amountUsd": 10000, "appliesTo": "item"}, "verification": "verified"}
     ],
     "protectionsLost": [],
     "eligibilityNotes": [],

@@ -45,7 +45,7 @@ Friday morning, for the backend (needs a card):
 5. **New → Web Service** → same repo, branch `main`. Runtime **Python 3**. Region **Oregon** (closest to Seattle (u)). **Instance type Starter**, never Free.
 6. Build command: `pip install ./backend`. Start command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Health check path `/health`. (Adjust if the skeleton's `pyproject.toml` layout differs; Claude can fix this.)
 7. **Environment**, add each yourself (Claude never sees the values):
-   `PYTHON_VERSION=3.12.7` (any 3.12.x), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE`, `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`, `PUBLIC_BASE_URL=https://<name>.onrender.com`. (Names per `.env.example`, §15.5; the LLM key name may differ.)
+   `PYTHON_VERSION=3.12.7` (any 3.12.x), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE`, `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`. (Names per `.env.example`.)
 8. Turn **Auto-Deploy** on for `main` until Fri 10 PM, then **off** (a surprise deploy during the event is the main outage risk).
 9. Give Claude the service URL. Optionally create a Render API key for deploy checks. Skip it if you'd rather click.
 
@@ -56,7 +56,7 @@ Sat morning: Render dashboard → service → Metrics; confirm the instance type
 1. Confirm `docs`/skeleton paths: `demo-store/` at repo root; `backend/app/main:app`.
 2. In `backend/app/main.py`, mount the store: `app.mount("/store", StaticFiles(directory=ROOT / "demo-store", html=True), name="store")` (ROOT resolved from `__file__`, since the process cwd differs). Add `/health` → `{"ok": true}` (already §15.7 step 0). Do not log request bodies.
 3. Commit the proposed config below as `render.yaml` once the skeleton exists (optional; the dashboard route above works without it).
-4. Add `PUBLIC_BASE_URL` handling and a smoke script `scripts/smoke.sh` that curls `/health`, `/store/`, and a fake `POST /v1/check`, printing HTTP code and `time_total`.
+4. Add a smoke script `scripts/smoke.sh` that curls `/health`, `/store/`, and a fake `POST /v1/check`, printing HTTP code and `time_total`.
 5. Fri 6 PM and Sat 8:30 AM: run the smoke script against the live URL.
 6. **Keep-warm (belt and braces):** if anything is idle for long, ping `/health` every 5 min from a Mac `launchd`/cron job or a free uptime monitor (the monitor is a third-party account; the user's call). Not needed for a paid Starter instance as documented, but cheap insurance against an unannounced restart.
 7. Measure cold-ish latency: after a manual restart in the dashboard, time the first `/v1/check`. If it exceeds about 3 s, tell the team so the replay path (§15.8) covers it.
@@ -86,8 +86,6 @@ services:
         value: llm
       - key: PAY_MODE
         value: mock
-      - key: PUBLIC_BASE_URL
-        sync: false
       - key: LLM_API_KEY
         sync: false
       - key: VISA_ACCEPTANCE_SECRET_KEY

@@ -16,20 +16,30 @@ enum Expected {
     static let saveButton = "Paying with Freedom"
     /// §6.3 *Saved* line 1.
     static let savedLine1 = "✓ Saved: Aero 14 · $1,499"
-    /// §15.7 step 12a, word for word, for a purchase checked on Oct 17, 2026.
-    static let purchaseLine =
-        "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028"
-    /// §5.5 claim input, question 1.
-    static let paidQuestion = "Did you pay with Freedom ••1234 on Oct 17?"
+    /// §15.7 step 12a, word for word, for a purchase checked on `day`. A check's `clientDate` is the phone's real date
+    /// (never `-dateOverride`), and the backend dates the cover from it: theft & damage for 120 days, the warranty year
+    /// to 24 months (the assumed 12-month maker's warranty + Freedom's 12). Checked on Oct 17, 2026 (SPEC §5.5), it reads
+    /// "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028".
+    static func purchaseLine(checkedOn day: Date) -> String {
+        let theft = TestDay.medium(TestDay.adding(days: 120, to: day))
+        let warranty = TestDay.medium(TestDay.adding(months: 24, to: day))
+        return "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to \(theft) · warranty year to \(warranty)"
+    }
+    /// §5.5 claim input, question 1, for a purchase checked on `day` ("… on Oct 17?" for Oct 17).
+    static func paidQuestion(checkedOn day: Date) -> String {
+        "Did you pay with Freedom ••1234 on \(TestDay.monthDay(day))?"
+    }
     static let case1Text = "Lines across the screen. Never dropped."
     static let case2Text = "Cracked it when I dropped it"
 }
 
 enum Launch {
-    /// The day the S1 purchase is checked and saved (SPEC §5.5's "laptop bought Oct 17, 2026").
-    static let purchaseDay = "2026-10-17"
-    /// "14 months later" (SPEC §12.1): the claim demo's day.
-    static let claimDay = "2027-12-18"
+    /// "14 months later" (SPEC §12.1) than a purchase checked on `day`, for `-dateOverride`: the claim demo's day,
+    /// after the 120-day theft & damage cover and inside the extra warranty year (months 12–24). A purchase checked
+    /// on Oct 17, 2026 gives the spec's 2027-12-18.
+    static func claimDay(after day: Date) -> String {
+        TestDay.string(TestDay.adding(days: 1, to: TestDay.adding(months: 14, to: day)))
+    }
 
     @MainActor
     static func app(_ arguments: [String]) -> XCUIApplication {
@@ -151,6 +161,41 @@ extension XCUIElement {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         return !exists
+    }
+}
+
+/// Calendar days in the simulator's time zone (the test runner's and the app's), written as the app writes them.
+enum TestDay {
+    private static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar
+    }
+
+    /// Noon on `date`'s day, `months` then `days` later. Months clamp to the month's last day, as the backend's
+    /// add_months does (Jan 31 + 1 month = Feb 28 or 29); noon, so a DST change never moves the day.
+    static func adding(days: Int = 0, months: Int = 0, to date: Date) -> Date {
+        let noon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date)!
+        let shifted = calendar.date(byAdding: .month, value: months, to: noon)!
+        return calendar.date(byAdding: .day, value: days, to: shifted)!
+    }
+
+    /// yyyy-MM-dd, as `-dateOverride` takes it.
+    static func string(_ date: Date) -> String { format(date, "yyyy-MM-dd") }
+
+    /// "Feb 14, 2027" (§15.7 step 12a).
+    static func medium(_ date: Date) -> String { format(date, "MMM d, yyyy") }
+
+    /// "Oct 17" (§5.5).
+    static func monthDay(_ date: Date) -> String { format(date, "MMM d") }
+
+    private static func format(_ date: Date, _ pattern: String) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = pattern
+        return formatter.string(from: date)
     }
 }
 

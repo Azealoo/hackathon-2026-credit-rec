@@ -60,7 +60,7 @@ struct BundledCatalogTests {
     @Test func cardsJSONIsBundled() throws {
         let url = try #require(Bundle.main.url(forResource: "cards", withExtension: "json"))
         let object = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any])
-        #expect(object["schemaVersion"] as? Int == 1)
+        #expect(object["schemaVersion"] as? Int == 2)
         #expect((object["cards"] as? [Any])?.isEmpty == false)
     }
 

@@ -8,8 +8,12 @@ Rulings applied here (see the module docstrings and the track report):
 - R7: Freedom Unlimited's 3% dining/pharmacy rules are catalog earn rules like any other.
 - R10: a category earn rule matches the merchant's catalog category when the merchant is known,
   else the items' category (only when every item shares it).
-- Earn precedence: merchant rule > category rule > a payment-method rule with neither
-  (e.g. Apple Card's 2% via Apple Pay) > base rate; the best rate wins within a tier.
+- Earn precedence (D4): the best applicable rate wins. A rule applies when its payment method,
+  merchant or category match, its window contains clientDate and a phone checkout can use one of
+  its channels; the base rate is always a candidate. Ties go to the more specific rule (merchant >
+  category > payment method, e.g. Apple Card's 2% via Apple Pay > base), then file order.
+- offerContext: the public inputs the phone's offer resolver needs (D1). It depends only on the
+  cart and the catalog, so every user gets the same block for the same cart.
 - §8.2 display rule: confidence is worked out before the copy. A "medium" answer drops the cap
   (copy line 2 and the draft's limitUsd); a cash figure from a rate that isn't verified is stated
   without its number; the draft saves no dates for a protection that isn't verified.
@@ -23,7 +27,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from app import copy as copy_text
 from app import policy
-from app.catalog import CATALOG, Card, Catalog, ItemCategory, Protection
+from app.catalog import CATALOG, Card, Catalog, EarnRule, ItemCategory, Protection
 from app.models import (
     Cart,
     Cash,
@@ -31,9 +35,11 @@ from app.models import (
     CoverageEntry,
     Decision,
     Item,
+    OfferContext,
     PaymentPath,
     ProtectionChange,
     ProtectionLimit,
+    PublicRate,
     PurchaseDraft,
     ScreenType,
     Source,
@@ -62,12 +68,14 @@ class EngineResult:
     decision: Decision
     purchase_draft: PurchaseDraft | None
     sources: list[Source]
+    offer_context: OfferContext | None = None
 
 
 @dataclass(frozen=True)
 class Rate:
     pct: Decimal
     status: str  # verified / partial / unverified
+    rule_id: str | None = None  # None: the card's base rate
 
 
 def cents(amount: Decimal) -> Decimal:
@@ -118,20 +126,46 @@ def payment_path(cart: Cart) -> PaymentPath:
     return "unknown"
 
 
-def earn_rate(card: Card, merchant_id: str | None, rule_category: str | None, method: str) -> Rate:
-    """The card's rate for this merchant / category / payment method ("apple_pay" or "card")."""
-    usable = [r for r in card.earn.rules
-              if not r.needs_activation and ("any" in r.payment_methods or method in r.payment_methods)]
-    merchant_rules = [r for r in usable if r.merchant_ids and merchant_id in r.merchant_ids
-                      and (r.category is None or r.category == rule_category)]
-    category_rules = [r for r in usable if not r.merchant_ids and r.category is not None
-                      and r.category == rule_category]
-    method_rules = [r for r in usable if not r.merchant_ids and r.category is None]
-    for tier in (merchant_rules, category_rules, method_rules):
-        if tier:
-            best = max(tier, key=lambda r: r.rate_pct)
-            return Rate(best.rate_pct, best.status)
-    return Rate(card.earn.base_rate_pct, card.earn.base_rate_status)
+# A Paywise check reads a phone screen: the purchase is online or in an app, never in a store.
+CHECK_CHANNELS = frozenset({"online", "in_app", "any"})
+
+
+def _tier(rule: EarnRule, merchant_id: str | None, rule_category: str | None) -> int | None:
+    """How specific a matching rule is (3 merchant, 2 category, 1 payment method); None if it doesn't match."""
+    if rule.merchant_ids:
+        return 3 if merchant_id in rule.merchant_ids and rule.category in (None, rule_category) else None
+    if rule.category is not None:
+        return 2 if rule.category == rule_category else None
+    return 1
+
+
+def applicable_rules(card: Card, merchant_id: str | None, rule_category: str | None, method: str,
+                     on: dt.date | None = None) -> list[tuple[int, EarnRule]]:
+    """(tier, rule) for each earn rule that applies, in file order. `on` is clientDate; None skips windows."""
+    found = []
+    for rule in card.earn.rules:
+        if rule.needs_activation or not ("any" in rule.payment_methods or method in rule.payment_methods):
+            continue
+        if on is not None and rule.window is not None and not rule.window.contains(on):
+            continue
+        if CHECK_CHANNELS.isdisjoint(rule.channels):
+            continue
+        tier = _tier(rule, merchant_id, rule_category)
+        if tier is not None:
+            found.append((tier, rule))
+    return found
+
+
+def earn_rate(card: Card, merchant_id: str | None, rule_category: str | None, method: str,
+              on: dt.date | None = None) -> Rate:
+    """The card's public rate for this merchant / category / payment method ("apple_pay" or "card") on day `on`
+    (D4: the best applicable rate; ties to the more specific rule, then file order; the base rate always counts)."""
+    best = Rate(card.earn.base_rate_pct, card.earn.base_rate_status)
+    best_key = (best.pct, 0)
+    for tier, rule in applicable_rules(card, merchant_id, rule_category, method, on):
+        if (rule.rate_pct, tier) > best_key:
+            best, best_key = Rate(rule.rate_pct, rule.status, rule.id), (rule.rate_pct, tier)
+    return best
 
 
 def cash_for(amount: Decimal, rate: Rate) -> Decimal:
@@ -260,14 +294,15 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
     merchant = _merchant(cat, cart)
     merchant_id = merchant.id if merchant else None
     rule_category = merchant.category if merchant else _shared_category(cart)
-    rates = {c.id: earn_rate(c, merchant_id, rule_category, method) for c in cards}
+    rates = {c.id: earn_rate(c, merchant_id, rule_category, method, client_date) for c in cards}
     cash = {c.id: cash_for(amount, rates[c.id]) for c in cards}
     best_cash = max(cash.values())
     tied = [c for c in cards if cash[c.id] == best_cash]
     cash_best = default if default in tied else tied[0]
 
     rules = _Rules(cat, cart, path)
-    ctx = _Context(cat, cart, path, cards, default, cash_best, cash, rates, rules, client_date)
+    ctx = _Context(cat, cart, path, cards, default, cash_best, cash, rates, rules, client_date,
+                   amount, merchant_id, rule_category, method)
 
     # Rule 2: items unreadable.
     if not cart.items or cart.confidence.items < policy.ITEM_CONFIDENCE_MIN:
@@ -277,6 +312,9 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
     qualifying = [item for item in cart.items if rules.qualifying_types(item)]
     eligible = {c.id: [rules.eligible(c, item) for item in qualifying] for c in cards}
     default_types = [set(e) for e in eligible[default.id]]
+    # Rule G for every card: the cards a cash decision may pick without losing any cover the default has.
+    ctx.allowed_cash_picks = [c for c in cards if all(set(mine) >= theirs
+                                                      for mine, theirs in zip(eligible[c.id], default_types))]
 
     # Rule 4 (P): a card that adds a type the default lacks and keeps every type it has.
     candidates = []
@@ -318,8 +356,8 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
 
     # Rule 7 (M): the default earns more via Apple Pay than typed, and the button is visible.
     if path == "apple_pay":
-        apple_pay_rate = earn_rate(default, merchant_id, rule_category, "apple_pay")
-        typed_rate = earn_rate(default, merchant_id, rule_category, "card")
+        apple_pay_rate = earn_rate(default, merchant_id, rule_category, "apple_pay", client_date)
+        typed_rate = earn_rate(default, merchant_id, rule_category, "card", client_date)
         apple_pay_cash = cash_for(amount, apple_pay_rate)
         if apple_pay_cash > cash_for(amount, typed_rate):
             return ctx.keep("method", copy_text.keep_method(
@@ -379,6 +417,29 @@ class _Context:
     rates: dict[str, Rate]
     rules: _Rules
     client_date: dt.date
+    amount: Decimal
+    merchant_id: str | None
+    rule_category: str | None
+    method: str
+    allowed_cash_picks: list[Card] | None = None  # None until rule 3 ran (rule 2 returns before it)
+
+    def offer_context(self, decision: Decision) -> OfferContext:
+        """offerContext (D1): public, per cart. The phone may move a cash decision to another card in
+        allowedCashPicks; it may never override protection, items_unreadable or no_checkout."""
+        may_override = (decision.kind, decision.reason) in {
+            ("switch", "cash"), ("keep", "default_best"), ("keep", "below_threshold"), ("keep", "method")}
+        allowed = self.allowed_cash_picks if may_override and self.allowed_cash_picks else [self.default]
+        try:
+            drafts = {c.id: self._draft(c, self.confidence(c)) for c in allowed} if may_override else {}
+        except DateOutOfRange:  # clientDate near the calendar's end: keep the server's decision
+            drafts, allowed, may_override = {}, [self.default], False
+        return OfferContext(
+            catalog_version=self.cat.catalog_version, amount_usd=float(self.amount), merchant_id=self.merchant_id,
+            rule_category=self.rule_category, item_categories=list(dict.fromkeys(i.category for i in self.cart.items)),
+            payment_path=self.path, method=self.method, threshold_usd=float(policy.CASH_SWITCH_MIN_USD[self.path]),
+            public_rates={c.id: PublicRate(rate_pct=float(self.rates[c.id].pct), status=self.rates[c.id].status,
+                                           rule_id=self.rates[c.id].rule_id) for c in self.cards},
+            allowed_cash_picks=[c.id for c in allowed], purchase_draft_by_card=drafts, device_may_override=may_override)
 
     def notes(self) -> list[str]:
         """Why an item that would qualify gets no card cover (only when its condition blocks a
@@ -491,14 +552,15 @@ class _Context:
         notes = self.notes() if notes is None else notes
         decision = self._decision("switch", reason, picked, gained, copy, notes, confidence)
         return EngineResult(decision, self._draft(picked, confidence, {p.type for p in gained}),
-                            self._sources(picked, gained, cash_copy=reason == "cash"))
+                            self._sources(picked, gained, cash_copy=reason == "cash"), self.offer_context(decision))
 
     def keep(self, reason: str, copy, confidence: Confidence, kept: list[Protection] | None = None) -> EngineResult:
         kept = kept or []
         notes = [] if reason == "items_unreadable" else self.notes()
         decision = self._decision("keep", reason, self.default, [], copy, notes, confidence)
         draft = self._draft(self.default, confidence) if reason == "already_protected" else None
-        return EngineResult(decision, draft, self._sources(self.default, kept, cash_copy=reason == "method"))
+        return EngineResult(decision, draft, self._sources(self.default, kept, cash_copy=reason == "method"),
+                            self.offer_context(decision))
 
 
 def _float(value: Decimal | None) -> float | None:

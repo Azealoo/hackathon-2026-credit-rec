@@ -27,16 +27,20 @@ struct CheckRecord: Codable, Sendable, Equatable, Identifiable {
     var replayed: Bool
     var savedPurchaseId: String?
     var view: Screen
+    /// What `OfferResolver` changed using the user's offer answers (offers design D1). Device only, never sent;
+    /// nil when no offer applied. `response` stays exactly as received.
+    var offerAdjustment: OfferAdjustment?
 
     var id: String { checkId }
 
     private enum CodingKeys: String, CodingKey {
-        case checkId, createdAt, sentPayload, response, filledCopy, replayed, savedPurchaseId, view
+        case checkId, createdAt, sentPayload, response, filledCopy, replayed, savedPurchaseId, view, offerAdjustment
     }
 
     init(
         checkId: String, createdAt: String, sentPayload: JSONValue, response: JSONValue,
-        filledCopy: FilledCopy, replayed: Bool, savedPurchaseId: String? = nil, view: Screen = .result
+        filledCopy: FilledCopy, replayed: Bool, savedPurchaseId: String? = nil, view: Screen = .result,
+        offerAdjustment: OfferAdjustment? = nil
     ) {
         self.checkId = checkId
         self.createdAt = createdAt
@@ -46,6 +50,7 @@ struct CheckRecord: Codable, Sendable, Equatable, Identifiable {
         self.replayed = replayed
         self.savedPurchaseId = savedPurchaseId
         self.view = view
+        self.offerAdjustment = offerAdjustment
     }
 
     // `savedPurchaseId` is a required key that may be null.
@@ -59,6 +64,42 @@ struct CheckRecord: Codable, Sendable, Equatable, Identifiable {
         try container.encode(replayed, forKey: .replayed)
         try container.encode(savedPurchaseId, forKey: .savedPurchaseId)
         try container.encode(view, forKey: .view)
+        try container.encodeIfPresent(offerAdjustment, forKey: .offerAdjustment)
+    }
+}
+
+/// `check-record.schema.json#/$defs/offerAdjustment`: the decision and purchase the phone shows after applying the
+/// user's offers, and what each offer added.
+struct OfferAdjustment: Codable, Sendable, Equatable {
+    struct Applied: Codable, Sendable, Equatable {
+        var offerId: String
+        var cardId: String
+        /// Cash the offer added on that card, over the card's public rate (cents).
+        var extraUsd: Double
+    }
+
+    var decision: CheckResponse.Decision
+    var purchaseDraft: CheckResponse.PurchaseDraft?
+    var appliedOffers: [Applied]
+    var changedDecision: Bool
+
+    private enum CodingKeys: String, CodingKey { case decision, purchaseDraft, appliedOffers, changedDecision }
+
+    init(decision: CheckResponse.Decision, purchaseDraft: CheckResponse.PurchaseDraft?, appliedOffers: [Applied],
+         changedDecision: Bool) {
+        self.decision = decision
+        self.purchaseDraft = purchaseDraft
+        self.appliedOffers = appliedOffers
+        self.changedDecision = changedDecision
+    }
+
+    // `purchaseDraft` is a required key that may be null.
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(decision, forKey: .decision)
+        try container.encode(purchaseDraft, forKey: .purchaseDraft)
+        try container.encode(appliedOffers, forKey: .appliedOffers)
+        try container.encode(changedDecision, forKey: .changedDecision)
     }
 }
 
@@ -66,8 +107,19 @@ extension CheckRecord {
     /// The request as a typed model (nil only if the stored JSON was edited by hand).
     var request: CheckRequest? { try? sentPayload.decode(CheckRequest.self) }
 
-    /// The response as a typed, tolerant model.
-    var parsedResponse: CheckResponse { (try? response.decode(CheckResponse.self)) ?? CheckResponse() }
+    /// The response as a typed, tolerant model, with the phone's offer adjustment (if any) in place of the server's
+    /// decision and purchase draft: what the snippet shows and [Paying with …] saves.
+    var parsedResponse: CheckResponse {
+        var parsed = serverResponse
+        if let offerAdjustment {
+            parsed.decision = offerAdjustment.decision
+            parsed.purchaseDraft = offerAdjustment.purchaseDraft
+        }
+        return parsed
+    }
+
+    /// The response exactly as received (or replayed).
+    var serverResponse: CheckResponse { (try? response.decode(CheckResponse.self)) ?? CheckResponse() }
 
     /// The exact redacted text that was sent (§6.3 *Sent*).
     var sentText: String { sentPayload["screen"]?["ocrText"]?.stringValue ?? "" }

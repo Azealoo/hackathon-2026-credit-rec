@@ -98,6 +98,7 @@ def check_response(request: CheckRequest, parsed, parse_ms: int) -> tuple[dict, 
         decision=result.decision,
         purchase_draft=result.purchase_draft,
         sources=result.sources,
+        offer_context=result.offer_context,
         timing_ms=TimingMs(parse=parse_ms, engine=engine_ms),
     )
     body = response.model_dump(mode="json", by_alias=True, exclude_unset=True)

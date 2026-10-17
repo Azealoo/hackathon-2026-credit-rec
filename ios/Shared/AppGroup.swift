@@ -93,7 +93,8 @@ struct PaywiseSettings: Sendable {
     }
 
     /// The day the app treats as today when "Pretend today is…" is on and holds a valid day; nil otherwise.
-    /// Used for the check's `clientDate` (so the purchase and its coverage dates follow it) and the claim's `asOf`.
+    /// Used for claim dates (`asOf`, the incident) and for which cover Purchases shows as ended; never for a check's
+    /// `clientDate`, so purchases checked while it is on keep their real date.
     var dateOverrideDay: String? {
         guard dateOverrideEnabled else { return nil }
         let day = dateOverrideValue ?? Self.defaultDateOverride

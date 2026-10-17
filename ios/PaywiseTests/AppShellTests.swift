@@ -19,13 +19,13 @@ private func laptopPurchase(status: Purchase.Status = .planned, id: String = "p_
 /// §15.7 step 12a: the Purchases row, word for word.
 struct PurchaseLineTests {
     @Test func step12aLineWordForWord() throws {
-        let line = PurchaseText.line(try laptopPurchase(), wallet: .demo3Card, catalog: .bundled())
+        let line = PurchaseText.line(try laptopPurchase(), wallet: .demo3Card, catalog: .bundled(), today: "2026-10-17")
         #expect(line == "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028")
     }
 
     @Test func confirmedAndNoStoredLast4() throws {
         let wallet = Wallet(cards: [.init(cardId: "chase-freedom-unlimited", isDefault: true, last4: nil)])
-        let line = PurchaseText.line(try laptopPurchase(status: .confirmed), wallet: wallet, catalog: .bundled())
+        let line = PurchaseText.line(try laptopPurchase(status: .confirmed), wallet: wallet, catalog: .bundled(), today: "2026-10-17")
         #expect(line == "Aero 14 · Freedom · Confirmed · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028")
     }
 
@@ -33,17 +33,37 @@ struct PurchaseLineTests {
         var purchase = try laptopPurchase()
         purchase.coverage = []
         purchase.cardId = "apple-card"
-        #expect(PurchaseText.line(purchase, wallet: .demo3Card, catalog: .bundled()) == "Aero 14 · Apple Card ••5678 · Planned")
+        #expect(PurchaseText.line(purchase, wallet: .demo3Card, catalog: .bundled(), today: "2026-10-17") == "Aero 14 · Apple Card ••5678 · Planned")
     }
 
     @Test func detailLinesUseTheSavedSnippetWords() throws {
         let purchase = try laptopPurchase()
-        #expect(PurchaseText.coverageLines(purchase) == [
+        #expect(PurchaseText.coverageLines(purchase, today: "2026-10-17").map(\.text) == [
             "Theft & damage cover up to $500 to Feb 14, 2027",
             "Extra warranty year to Oct 17, 2028*",
         ])
         #expect(PurchaseText.warrantyFootnote(purchase) == "*If the maker's warranty is 1 year.")
         #expect(PurchaseText.price(1499) == "$1,499.00")
+    }
+
+    /// §12.1 "14 months later" (Dec 18, 2027): theft & damage ended Feb 14, 2027, so it isn't drawn as live cover; the
+    /// warranty year still runs.
+    @Test func endedCoverShowsAsEnded() throws {
+        let lines = PurchaseText.coverageLines(try laptopPurchase(), today: "2027-12-18")
+        #expect(lines.map(\.text) == ["Theft & damage cover ended Feb 14, 2027", "Extra warranty year to Oct 17, 2028*"])
+        #expect(lines.map(\.ended) == [true, false])
+    }
+
+    @Test func coverEndsAfterItsLastDay() throws {
+        let purchase = try laptopPurchase()
+        #expect(PurchaseText.coverageLines(purchase, today: "2027-02-14").map(\.ended) == [false, false])
+        #expect(PurchaseText.coverageLines(purchase, today: "2027-02-15").map(\.ended) == [true, false])
+        #expect(PurchaseText.coverageLines(purchase, today: "2028-10-18").map(\.ended) == [true, true])
+    }
+
+    @Test func rowSaysWhenCoverEnded() throws {
+        let line = PurchaseText.line(try laptopPurchase(), wallet: .demo3Card, catalog: .bundled(), today: "2027-12-18")
+        #expect(line == "Aero 14 · Freedom ••1234 · Planned · theft & damage ended Feb 14, 2027 · warranty year to Oct 17, 2028")
     }
 }
 
@@ -156,8 +176,10 @@ struct BackendErrorCopyTests {
         #expect(record.parsedResponse.decision?.kind == .switch)
     }
 
-    /// "Pretend today is…" moves the purchase date the backend computes coverage from.
-    @Test func dateOverrideIsTheClientDate() async throws {
+    /// "Pretend today is…" is for claim dates only; a check is dated by the phone's clock. With the override as
+    /// `clientDate`, a purchase checked while it was on was saved as bought on the pretend day, so its "14 months later"
+    /// claim fell inside the maker's warranty and read Not covered instead of May be eligible.
+    @Test func dateOverrideNeverMovesTheClientDate() async throws {
         let env = TestEnvironment(
             reading: try Fixtures.laptopReading(),
             route: .init(behavior: .respond(status: 200, body: try Fixtures.responseExample()))
@@ -166,7 +188,7 @@ struct BackendErrorCopyTests {
         env.deps.settings.dateOverrideValue = "2027-12-18"
         try await env.perform(TestEnvironment.screenshot())
         let body = try #require(env.requests.first)
-        #expect(try JSONDecoder().decode(CheckRequest.self, from: body).clientDate == "2027-12-18")
+        #expect(try JSONDecoder().decode(CheckRequest.self, from: body).clientDate == "2026-10-17")
     }
 }
 
@@ -417,6 +439,58 @@ struct ClaimModelTests {
         #expect(incident["causeSource"] is NSNull)
     }
 
+    /// An edit after the server's suggestion clears it: "Cracked when I dropped it" with the old "Stopped working" chip
+    /// still on gave Extended warranty May be eligible.
+    @Test func editingClearsTheSuggestedCause() async throws {
+        let reply = Data(#"{"verdict":"may_be_eligible","incident":{"cause":"failure","causeSource":"llm"}}"#.utf8)
+        let env = TestEnvironment(reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply)))
+        let model = try model(env, status: .confirmed)
+        model.warranty = .oneYear
+        model.description = "Lines across the screen. Never dropped."
+        await model.classify(model.trimmedDescription)
+        #expect(model.cause == .failure)
+        #expect(model.canCheck)
+
+        model.classifyDelay = .seconds(60)
+        model.description = "Cracked when I dropped it"
+        model.descriptionChanged()
+        #expect(model.cause == nil, "the old suggestion no longer describes what happened")
+        #expect(model.suggestedCause == nil)
+        #expect(!model.canCheck)
+    }
+
+    @Test func aPickedCauseSurvivesAnEdit() throws {
+        let env = TestEnvironment(reading: .laptopCheckout)
+        let model = try model(env, status: .confirmed)
+        model.warranty = .oneYear
+        model.description = "Stolen from my bag"
+        model.pick(.theft)
+        model.description = "Stolen from my bag on the bus"
+        model.descriptionChanged()
+        #expect(model.cause == .theft)
+        #expect(model.canCheck)
+    }
+
+    @Test func checkWaitsForTheClassification() async throws {
+        let reply = Data(#"{"verdict":"may_be_eligible","incident":{"cause":"failure","causeSource":"llm"}}"#.utf8)
+        let env = TestEnvironment(
+            reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply), delay: 0.4)
+        )
+        let model = try model(env, status: .confirmed)
+        model.warranty = .oneYear
+        model.description = "Lines across the screen. Never dropped."
+        await model.classify(model.trimmedDescription)
+        #expect(model.canCheck)
+
+        let again = Task { await model.classify(model.trimmedDescription) }
+        let deadline = ContinuousClock.now + .seconds(2)
+        while !model.classifying && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(model.classifying)
+        #expect(!model.canCheck, "[Check] waits for the classification")
+        await again.value
+        #expect(model.canCheck)
+    }
+
     @Test func classificationWithoutACauseLeavesTheChips() async throws {
         let reply = Data(#"{"verdict":"may_be_eligible","benefit":"extended_warranty"}"#.utf8)
         let env = TestEnvironment(reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply)))
@@ -586,6 +660,17 @@ struct LaunchOptionsTests {
         #expect(env.deps.walletStore.load() == .demo3Card)
         #expect(settings.dateOverrideDay == "2027-12-18")
         #expect(Day.today(settings: settings, now: Fixtures.demoNow, timeZone: Fixtures.seattle) == "2027-12-18")
+    }
+
+    /// Outside Settings, the only sign the override is on is this pill, shown over every tab.
+    @Test func dateOverridePillShowsOnlyWhileOn() {
+        let settings = PaywiseSettings(suiteName: "paywise.tests.\(UUID().uuidString)")
+        #expect(DateOverridePill.label(settings: settings) == nil)
+        settings.dateOverrideEnabled = true
+        settings.dateOverrideValue = "2027-12-18"
+        #expect(DateOverridePill.label(settings: settings) == "Pretend today: Dec 18, 2027")
+        settings.dateOverrideEnabled = false
+        #expect(DateOverridePill.label(settings: settings) == nil)
     }
 
     @Test func dateOverrideIsOffByDefault() {

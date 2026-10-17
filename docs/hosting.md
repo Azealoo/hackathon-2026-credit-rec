@@ -48,7 +48,7 @@ Friday morning, for the backend (needs a card):
    - The build installs uv itself because Render adds uv only when `uv.lock` is in the service's root directory **(c, render.com/docs/uv-version, 2026-10-16)**; ours is in `backend/`, and the store in `demo-store/` must stay inside the service. The build takes the newest uv; CI pins 0.12.17.
    - `uv run --no-sync` starts uvicorn from the virtualenv `uv sync` built, without touching the lockfile or installing anything at start.
 7. **Environment**, add each yourself (Claude never sees the values):
-   `PYTHON_VERSION=3.12.7` (any 3.12.x; Render's default for new services is 3.14 **(c, render.com/docs/python-version)**, and `backend/.python-version` isn't at the repo root, so Render doesn't read it), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE=mock` (`visa_acceptance` only while showing the Visa sandbox live), `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`, `PUBLIC_BASE_URL=https://<name>.onrender.com`. Optional: `LLM_DAILY_CAP`, `LLM_CLIENT_DAILY_CAP`, `RATE_LIMIT_PER_MIN` (defaults in `.env.example`). (Names per `.env.example`, §15.5.)
+   `PYTHON_VERSION=3.12.7` (any 3.12.x; Render's default for new services is 3.14 **(c, render.com/docs/python-version)**, and `backend/.python-version` isn't at the repo root, so Render doesn't read it), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE=mock` (`visa_acceptance` only while showing the Visa sandbox live), `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`. Optional: `LLM_DAILY_CAP`, `LLM_CLIENT_DAILY_CAP`, `RATE_LIMIT_PER_MIN` (defaults in `.env.example`). (Names per `.env.example`, §15.5.)
    - Render sets `RENDER=true` and `RENDER_GIT_COMMIT` itself, at build and run time **(c, render.com/docs/environment-variables)**. With `RENDER=true` the backend turns off `/docs`, `/redoc` and `/openapi.json`. `/health` returns `{"ok": true, "commit": "<RENDER_GIT_COMMIT>", "modes": {"parser", "coverage", "pay"}}`, so a glance shows what is live, and startup logs the same plus a warning for any mode value it doesn't know.
 8. Turn **Auto-Deploy** on for `main` until Fri 10 PM, then **off** (a surprise deploy during the event is the main outage risk).
 9. Give Claude the service URL. Optionally create a Render API key for deploy checks. Skip it if you'd rather click.
@@ -60,7 +60,7 @@ Sat morning: Render dashboard → service → Metrics; confirm the instance type
 1. Confirm `docs`/skeleton paths: `demo-store/` at repo root; `backend/app/main:app`.
 2. In `backend/app/main.py`, mount the store: `app.mount("/store", StaticFiles(directory=ROOT / "demo-store", html=True), name="store")` (ROOT resolved from `__file__`, since the process cwd differs). Add `/health` → `{"ok": true}` (already §15.7 step 0). Do not log request bodies.
 3. Commit the proposed config below as `render.yaml` once the skeleton exists (optional; the dashboard route above works without it).
-4. Add `PUBLIC_BASE_URL` handling and a smoke script `scripts/smoke.sh` that curls `/health`, `/store/`, and a fake `POST /v1/check`, printing HTTP code and `time_total`.
+4. Add a smoke script `scripts/smoke.sh` that curls `/health`, `/store/`, and a fake `POST /v1/check`, printing HTTP code and `time_total`.
 5. Fri 6 PM and Sat 8:30 AM: run the smoke script against the live URL.
 6. **Keep-warm (belt and braces):** the backend imports the LLM SDK at startup, so the first LLM request after a deploy no longer pays the ~1 s import; `/health` doesn't warm the LLM connection itself. If anything is idle for long, ping `/health` every 5 min from a Mac `launchd`/cron job or a free uptime monitor (the monitor is a third-party account; the user's call). Not needed for a paid Starter instance as documented, but cheap insurance against an unannounced restart.
 7. Measure cold-ish latency: after a manual restart in the dashboard, time the first `/v1/check`. If it exceeds about 3 s, tell the team so the replay path (§15.8) covers it.
@@ -89,8 +89,6 @@ services:
         value: llm
       - key: PAY_MODE
         value: mock
-      - key: PUBLIC_BASE_URL
-        sync: false
       - key: LLM_API_KEY
         sync: false
       - key: VISA_ACCEPTANCE_SECRET_KEY

@@ -475,7 +475,7 @@
         "citesSection": "Purchase Protection, pp. 9-11",
         "checklistIncludes": []
       },
-      "workings": "Purchase 2026-10-17. Incident 2026-10-27 (day 10) is inside the 120-day window, and theft is a covered cause, but Chase's purchase protection excludes perishables and consumables, which data/cards.json maps to excludedCategories grocery (SPEC v2.4). Not covered, whatever the cause or date. Cites the purchase protection clause."
+      "workings": "Purchase 2026-10-17. Incident 2026-10-27 (day 10) is inside the 120-day window, and theft is a covered cause, but Chase's purchase protection excludes perishables and consumables, which data/cards.json maps to excludedCategories grocery (SPEC v2.5). Not covered, whatever the cause or date. Cites the purchase protection clause."
     }
   ]
 }

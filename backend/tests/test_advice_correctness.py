@@ -1,4 +1,4 @@
-"""Advice correctness fixes from the Oct 17, 2026 product review (SPEC v2.4 §7.2, §5.5).
+"""Advice correctness fixes from the Oct 17, 2026 product review (SPEC v2.5 §7.2, §5.5).
 
 One block per review item. Each test reproduced its issue on 6960a66 before the fix.
 """

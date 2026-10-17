@@ -4,8 +4,6 @@
 
 "Drawn" has two meanings here: the card is drawn out of the file, and the whole mark is drawn with one pen. Every line uses the same stroke with round caps. Where a card passes behind another, its line stops one stroke-width short instead of being clipped, so every line end is a true round cap.
 
-Open `preview.html` from a local server (for example `python3 -m http.server`) to see every file on light and dark.
-
 ## Files
 
 | File | What it is |
@@ -15,7 +13,6 @@ Open `preview.html` from a local server (for example `python3 -m http.server`) t
 | `mark-island.svg` / `mark-island-dark.svg` | The symbol at the Dynamic Island's 22 pt: two cards behind instead of six, heavier stroke, solid chip. The iOS Live Activity's glyph |
 | `app-icon.svg` | 1024 × 1024, full bleed, square corners, opaque |
 | `lockup.svg` / `lockup-dark.svg` | Symbol plus the "Paywise" wordmark, with the text outlined |
-| `preview.html` | Everything on light and dark, plus the icon masked at 180, 60 and 29 px |
 | `generate.py` | Regenerates every SVG. Standard library only: `python3 generate.py` |
 | `ttf.py` | A small TrueType reader (glyf + gvar) used to outline the wordmark from the Mac's own SF Pro |
 
@@ -30,7 +27,7 @@ Open `preview.html` from a local server (for example `python3 -m http.server`) t
 | App icon background | `#6d7cff` → `#2a3fd8`, diagonal (brand icon gradient) |
 | App icon lines | `#ffffff`; stack at 62% opacity over the opaque gradient |
 
-All colours come from `video/src/theme.ts`. Nothing new was added.
+All colours are the brand palette in `docs/design.md` §2. Nothing new was added.
 
 ## Type
 
@@ -53,4 +50,3 @@ The wordmark is SF Pro Display at weight 520 (between Regular and Medium), optic
 - **"Pulled out" reads as "taken off the front", not "pulled from the middle".** The version where the card is pulled from the middle looked like a camera or a briefcase in testing, so I dropped it.
 - **It depends on colour.** The story ("this one") is clearest in two tones. For a one-colour version, set both stroke groups to ink. The card still stands out because it is the only closed shape with a chip.
 - **SF Pro licence: not confirmed.** I believe Apple's SF Pro licence covers mock-ups of Apple-platform UI, which may not include a logo wordmark. I couldn't check the licence text from here. Check it, or swap the wordmark to a licensed face, before the logo is used outside the app.
-- `preview.html` approximates the iOS icon mask with CSS `border-radius: 22.37%`, not Apple's exact continuous-corner shape.

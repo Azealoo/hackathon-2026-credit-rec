@@ -388,7 +388,7 @@ def test_scenario_cash_follows_cards_json(scenario):
     cart, expected = scenario["cart"], scenario["expected"]
     wallet = [card["cardId"] for card in WALLETS[scenario["wallet"]]["cards"]]
     merchant_id = cart["merchant"]["merchantId"]
-    # §7.2 rule 1 (v2.4): a category rule counts only at a known merchant, against its catalog category.
+    # §7.2 rule 1 (v2.5): a category rule counts only at a known merchant, against its catalog category.
     by_merchant = cash_by_card(cart, wallet, MERCHANTS[merchant_id]["category"] if merchant_id else None)
     assert {card_id: usd(value) for card_id, value in expected["cashByCard"].items()} == by_merchant
     best = max(by_merchant.values())

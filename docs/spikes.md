@@ -1,11 +1,13 @@
 # Spikes and gates
 
-SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, commit `86dd685` (corrected 18:55).
+SPEC §14.2 (gates), §15.7 steps 6–7.
 
-- **Simulator:** iPhone 18 Pro, iOS 27.0, Xcode 27.0. Evidence: the 18:02 full run (`xcodebuild test`: 159 unit tests in 29 suites + 4 UI tests, `TEST SUCCEEDED`; all 4 UI tests ran against live Render) and the screenshots in `docs/overnight-shots/`.
+> **Dated snapshot.** The simulator columns are the state on **Oct 15, 2026, 18:35 PDT** (commit `86dd685`, on the `overnight/v1` branch, since merged into `main` and deleted); the iPhone results below were added on Oct 16. Not updated since. Current state: [README Status](../README.md#status).
+
+- **Simulator:** iPhone 18 Pro, iOS 27.0, Xcode 27.0. Evidence at the time: the Oct 15 18:02 full run (`xcodebuild test`: 159 unit tests in 29 suites + 4 UI tests, `TEST SUCCEEDED`; all 4 UI tests ran against live Render) and the screenshots in `docs/overnight-shots/`. `main` now has 289 unit tests in 52 suites (passed Oct 16, 21:55 PDT).
   - The run's log is in a temporary session folder (`/private/tmp/claude-501/…/scratchpad/fulltest-1802.log`) that will be deleted. Its summary lines are copied in [metrics.md](metrics.md#simulator-run-1802).
-  - `docs/overnight-shots/` is local only: not in git yet (339 files, 169 MB). Screenshot paths below work only on the build Mac until it is committed. `ios/tools/run_ui_tour.sh tour` remakes the `light-*` and `dark-*` folders, per its header (u: not re-run; where `live-activity/`, `verdict-web/` and `brand/` come from wasn't checked).
-- **iPhone:** Paywise is installed (not yet opened). Nothing below has run on the phone yet.
+  - `docs/overnight-shots/` is in git as 300 JPGs (commit 50cbe79 and later). `ios/tools/run_ui_tour.sh tour` remakes the `light-*` and `dark-*` folders as full-size PNGs, which `.gitignore` keeps out of git; convert them to JPG before committing (u: where `live-activity/`, `verdict-web/` and `brand/` come from wasn't checked).
+- **iPhone:** Oct 16 runs on the owner's iPhone and on Carol (a second iPhone) are in [Results](#results-fill-in). Every other iPhone column is still open.
 - **(u)** = not checked this run; where I looked is named next to it.
 
 ## Gates
@@ -13,7 +15,7 @@ SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, c
 | Gate | Pass rule (§14.2) | Seen on the simulator | Still open (iPhone) | State |
 |---|---|---|---|---|
 | **G1** chain | ≥9/10 presses (SPEC says Action Button; Back Tap is now the main trigger, owner Oct 16) capture the right screen and show the island (store in Safari + 2 real apps) | `CheckCheckoutIntent.perform()` with real Vision OCR on the laptop screenshot → Switch (`RealReaderIntentTests`). In-app check against Render: Switch copy 4.17 s after the pick. *Checking* island: `live-activity/01–02`. | The whole press chain: Back Tap (or Action Button) → Shortcut → Take Screenshot → intent. Which screen gets captured. | Open: results below |
-| **G2** surface | Snippet appears ≥9/10 (Safari + ≥1 third-party app); [Paying with …] saves and reloads ≥9/10; island empty 5 min after Done; silent alert expands with no sound | Snippet states render in the app (`*/50–57-gallery-*`). Two racing saves make one purchase (`testSaveIsIdempotent`). Island fallback (`islandModeShowsSwitchFallback`, `live-activity/07–08`). `silent.caf` is silent PCM in both bundles (`AssetTests`). | All four checks. The system snippet only exists after a real press. | Open |
+| **G2** surface | Snippet appears ≥9/10 (Safari + ≥1 third-party app); [Paying with …] saves and reloads ≥9/10; island empty 5 min after Done; silent alert expands with no sound | Snippet states render in the app (`*/59–67-gallery-*`). Two racing saves make one purchase (`testSaveIsIdempotent`). Island fallback (`islandModeShowsSwitchFallback`, `live-activity/07–08`). `silent.caf` is silent PCM in both bundles (`AssetTests`). | All four checks. The system snippet only exists after a real press. | Open |
 | **G3** capture | Wired QuickTime or AirPlay shows the island and the snippet | Nothing (the simulator can't show this) | Everything | Open |
 | **G4** Visa | Sandbox returns an approved transaction ID | Code and tests done (`test_store_pay.py`). Mock mode works live (18:35: `/v1/store/pay` → approved, `processor: mock`). The sandbox accepts our signed request: `scripts/visa_smoke.py` at 18:36 → auth probe HTTP 400 `MISSING_FIELD` card number, so the keys and signature work (a wrong secret gave 401 earlier tonight (u: build log)). Only an approval with a card proves G4. | Nothing on the phone | **Blocked, account-side:** card map set (Oct 16), but processor `fdiglobal` lacks USD outlet/terminal IDs; Cybersource support must fix it (results below) |
 | **G5** data | Demo-card protections checked against the Guides to Benefits | `docs/benefits-verification.md` (Oct 14): all four G5 answers verified; the S1 copy holds | A human review by B or D | Data done; review pending |
@@ -24,9 +26,9 @@ SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, c
 |---|---|---|---|
 | **S0** | Project, signing, widget extension, App Group | Builds and tests green. The Live Activity renders, which needs the signed extension. | Nothing. A device build and install worked at 18:20 (u: from the build log). |
 | **S1** | Press → Shortcut → intent → island → result; os_signpost per link | Intent, OCR and live backend (see G1) | The press chain, and its timings. os_signpost per link is built (`CheckTrace`, see [Timing a press](#timing-a-press-os_signpost)) but not yet read on the phone. The part before the app runs (press → Shortcut → Take Screenshot → intent start) still needs the video. |
-| **S2** | Snippet Patterns A and B, button + reload, silent sound, `.transient` probe, island 5 min after Done, Shortcuts indicator during the 4 s Keep hold | Patterns A and B and the island fallback are built. Settings › Results switches them without a rebuild (`light-default/41-settings.png`). Pattern B without a card name falls back to a static snippet (`confirmWithoutCardNameShowsStaticSnippet`). | Every Y/N item. **The `.transient` probe isn't built** (grep of `ios/`). |
+| **S2** | Snippet Patterns A and B, button + reload, silent sound, `.transient` probe, island 5 min after Done, Shortcuts indicator during the 4 s Keep hold | Patterns A and B and the island fallback are built. Settings › Results switches them without a rebuild (`light-default/47-settings.jpg`). Pattern B without a card name falls back to a static snippet (`confirmWithoutCardNameShowsStaticSnippet`). | Every Y/N item. **The `.transient` probe isn't built** (grep of `ios/`). |
 | **S3** | Capture rig | Nothing | Same as G3 |
-| **S6** | Setup in ≤2:00 + Share Sheet branch | Steps in `ios/Shortcut/README.md`. Signed `ios/Shortcut/Paywise.shortcut` (u: signing from the build log). Setup screens `*/07–09`, `*/45`. | Stopwatch. Share Sheet branch. Whether the signed file imports. |
+| **S6** | Setup in ≤2:00 + Share Sheet branch | Steps in `ios/Shortcut/README.md`. Signed `ios/Shortcut/Paywise.shortcut` (u: signing from the build log). Setup screens `*/07–12`, `*/51`. | Stopwatch. Share Sheet branch. Whether the signed file imports. |
 
 ## Other device-only items
 
@@ -34,7 +36,7 @@ SPEC §14.2 (gates), §15.7 steps 6–7. State on **Oct 15, 2026, 18:35 PDT**, c
 |---|---|---|---|
 | OCR + redaction time | p50 ≤400 ms (§15.7 step 8) | p50 443 ms, p90 527 ms, n = 21 (Mac CPU; `readTimeP50`, 18:02 run) | Open |
 | `silent.caf` | No sound; the island still expands | Silent PCM in both bundles | Open (G2) |
-| Stale island | The bare glyph, nothing else (§6.4) | `StaleRenderTests` renders every island part and the Lock Screen with `isStale = true` for 4 states: the glyph only, no text, art or last 4 (`live-activity/stale-rendered.png`). `-demoActivity stale` (23:19): ActivityKit reports `stale` 1 s after the past-staleDate update. The redrawn island itself wasn't seen (simctl screenshots omit the island) | Open |
+| Stale island | The bare glyph, nothing else (§6.4) | `StaleRenderTests` renders every island part and the Lock Screen with `isStale = true` for 4 states: the glyph only, no text, art or last 4 (`live-activity/stale-rendered.jpg`). `-demoActivity stale` (23:19): ActivityKit reports `stale` 1 s after the past-staleDate update. The redrawn island itself wasn't seen (simctl screenshots omit the island) | Open |
 | Replay robustness | Still hits after ≥2 min, at another battery %, and with another Live Activity running (§15.7 step 10) | `replayHitAfterFailure` (replay after a failure) and `replayOffMeansCouldntCheck` (replay off → *Couldn't check*) in `CheckCheckoutIntentTests`; both passed in the 18:02 run | Open |
 
 ## Timing a press (os_signpost)
@@ -114,11 +116,11 @@ Fail → film with an external camera and add an overlay (§14.2).
 
 ### 4. OCR time on the phone, ≈3 min
 
-The `read` signpost from step 1 times crop + OCR + gate + redaction inside the background intent on the phone ([Timing a press](#timing-a-press-os_signpost)); write down its p50. As a cross-check, run the timing test on the phone (unlocked, on the cable). This reinstalls the same Debug build:
+The `read` signpost from step 1 times crop + OCR + gate + redaction inside the background intent on the phone ([Timing a press](#timing-a-press-os_signpost)); write down its p50. As a cross-check, run the timing test on the phone (unlocked, on the cable). This reinstalls the same Debug build. Set `DEVICE_ID` to the phone's UDID first (`xcrun devicectl list devices`, the Identifier marked UDID):
 
 ```bash
 cd ios
-xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'id=00008140-001858591EE0801C' -derivedDataPath /tmp/paywise-dd-device -allowProvisioningUpdates -only-testing:PaywiseTests/ScreenshotReadingTests test 2>&1 | grep PAYWISE_OCR_TIMING
+xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination "id=$DEVICE_ID" -derivedDataPath /tmp/paywise-dd-device -allowProvisioningUpdates -only-testing:PaywiseTests/ScreenshotReadingTests test 2>&1 | grep PAYWISE_OCR_TIMING
 ```
 
 Target p50 ≤400 ms. (u: never run on the phone. It times OCR in the test host, not inside the background intent.)
@@ -148,15 +150,15 @@ Also found on Oct 16: no new screenshot in Photos after the presses, so Take Scr
 | Item | Target | Result | When |
 |---|---|---|---|
 | S6 setup time | ≤2:00 | Not timed. On Carol (fresh phone) the owner went through onboarding, the Back Tap prompt (Set Up Back Tap, not Not Now) and the in-app setup without help (App Group flags: `onboarded`, `triggerSetupDone`). | Carol, Oct 16 ~15:40 |
-| Signed Shortcut file imports | Y | **Y** (AirDropped `ios/Shortcut/Paywise.shortcut`, Add Shortcut, runs) | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
-| G1 store presses | ≥9/10 | **5/5 so far with Back Tap** (4 in `testAssistedPresses` + 1 manual): each captured the store page and showed the exact Switch copy. 5 more needed for the gate. **Carol (second iPhone 16 Pro Max, iOS 27.0.1), Oct 16 ~15:45:** the owner ran the flow by hand and reports it works; no per-press tally was recorded, so the gate is still 5/5 counted. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests; Carol (UDID …E68801C), owner |
+| Signed Shortcut file imports | Y | **Y** (AirDropped `ios/Shortcut/Paywise.shortcut`, Add Shortcut, runs) | Oct 16, 09:56–10:03, owner's iPhone, owner + DevicePressUITests |
+| G1 store presses | ≥9/10 | **5/5 so far with Back Tap** (4 in `testAssistedPresses` + 1 manual): each captured the store page and showed the exact Switch copy. 5 more needed for the gate. **Carol (second iPhone 16 Pro Max, iOS 27.0.1), Oct 16 ~15:45:** the owner ran the flow by hand and reports it works; no per-press tally was recorded, so the gate is still 5/5 counted. | Oct 16, 09:56–10:03, owner's iPhone, owner + DevicePressUITests; Carol, owner |
 | G1 real app 1 / app 2 | ≥9/10 overall | | |
-| Back Tap | tally | **5/5**. In the assisted run each double tap made **two** `/v1/check` calls a few seconds apart; the second one read the snippet over the page and returned *items unreadable*. The manual press made one call. Watch for double fires. | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
+| Back Tap | tally | **5/5**. In the assisted run each double tap made **two** `/v1/check` calls a few seconds apart; the second one read the snippet over the page and returned *items unreadable*. The manual press made one call. Watch for double fires. | Oct 16, 09:56–10:03, owner's iPhone, owner + DevicePressUITests |
 | Press → *Checking* p50 | ≤1.0 s | | |
 | Press → answer p50 / p90 | ≤3.5 s / ≤5 s | | |
-| G2 snippet appears (Safari) | ≥9/10 | **5/5** over Safari (in SpringBoard's tree; lines 2–3 exact) | Oct 16, 09:56–10:03, iPhone (UDID …0801C), owner + DevicePressUITests |
+| G2 snippet appears (Safari) | ≥9/10 | **5/5** over Safari (in SpringBoard's tree; lines 2–3 exact) | Oct 16, 09:56–10:03, owner's iPhone, owner + DevicePressUITests |
 | G2 snippet appears (third-party app) | ≥1 | | |
-| G2 button saves + reloads | ≥9/10 | **Manual 1/1**: a planned Purchase row in the phone's store (Aero 14, Freedom, $1,499, check a9d3b20a), and the card reloaded to Saved. XCUITest's synthetic taps on the snippet button saved **0/4**: they don't reach a system-presented snippet, so this gate needs human taps. **Carol: 1 planned row** (Aero 14 Laptop, 14-inch, Northbay, Freedom, $1,499), read from the phone's `Purchases.store` after the owner's test. That's the store page's item name, not Try it now's sample. | Oct 16, 09:56–10:03, iPhone (UDID …0801C); Carol, ~15:50, devicectl + sqlite3 |
+| G2 button saves + reloads | ≥9/10 | **Manual 1/1**: a planned Purchase row in the phone's store (Aero 14, Freedom, $1,499, check a9d3b20a), and the card reloaded to Saved. XCUITest's synthetic taps on the snippet button saved **0/4**: they don't reach a system-presented snippet, so this gate needs human taps. **Carol: 1 planned row** (Aero 14 Laptop, 14-inch, Northbay, Freedom, $1,499), read from the phone's `Purchases.store` after the owner's test. That's the store page's item name, not Try it now's sample. | Oct 16, 09:56–10:03, owner's iPhone; Carol, ~15:50, devicectl + sqlite3 |
 | Double tap → one purchase | Y | not yet on the phone (simulator: 2 racing saves → 1 row) | |
 | Island empty 5 min after Done | Y | | |
 | Silent alert: no sound, expands | Y | | |

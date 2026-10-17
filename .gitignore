@@ -6,6 +6,9 @@
 # Claude's per-session task checklist (see CLAUDE.md)
 TASKS.md
 
+# Full-size PNGs from ios/tools/run_ui_tour.sh and StaleRenderTests; the committed shots are JPGs
+docs/overnight-shots/**/*.png
+
 # OS / editor
 .DS_Store
 .vscode/

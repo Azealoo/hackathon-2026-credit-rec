@@ -5,11 +5,11 @@ subtraction (§6.3 "Where S1's numbers come from"). Card rules come only from da
 (app/catalog.py); thresholds come from app/policy.py; copy comes from app/copy.py.
 
 Rulings applied here (see the module docstrings and the track report):
-- Baseline (v2.4): rules 4–8 compare against the wallet card selected on screen when a saved card is
+- Baseline (v2.5): rules 4–8 compare against the wallet card selected on screen when a saved card is
   selected and exactly one wallet card has its network; otherwise against the default. A Keep keeps
   the baseline, and cashBest ties go to the baseline, then the default, then wallet order.
 - R7: Freedom Unlimited's 3% dining/pharmacy rules are catalog earn rules like any other.
-- v2.4 (replaces R10): a category earn rule counts only at a known merchant, against its catalog
+- v2.5 (replaces R10): a category earn rule counts only at a known merchant, against its catalog
   category (issuers decide by merchant code). At an unknown store, a rule that would win only on the
   items' shared category isn't counted but marks the rate partial. offerContext.ruleCategory still
   falls back to the items' category for the phone's offers.
@@ -17,7 +17,7 @@ Rulings applied here (see the module docstrings and the track report):
   merchant or category match, its window contains clientDate and a phone checkout can use one of
   its channels; the base rate is always a candidate. Ties go to the more specific rule (merchant >
   category > payment method, e.g. Apple Card's 2% via Apple Pay > base), then file order.
-- v2.4 rule 3: a protection *covers* an item when its terms do, at any price; an item *qualifies*
+- v2.5 rule 3: a protection *covers* an item when its terms do, at any price; an item *qualifies*
   for Rule P when it costs $100+ in a relevant category. No switch drops cover the baseline has.
 - offerContext: the public inputs the phone's offer resolver needs (D1). It depends only on the
   cart and the catalog, so every user gets the same block for the same cart.

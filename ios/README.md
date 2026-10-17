@@ -14,18 +14,19 @@ so the commands below run without prompts.
 
 ## Commands (non-interactive)
 
-Run from `ios/`. `$DD` is any DerivedData folder, for example `/tmp/paywise-dd`.
+Run from `ios/`. `$DD` is any DerivedData folder, for example `/tmp/paywise-dd`. `$DEVICE_ID` is your iPhone's
+UDID: run `xcrun devicectl list devices` and copy the phone's Identifier (the one marked UDID).
 
 ```bash
 # Unit tests (simulator, offline). The Paywise scheme also holds the live UI tests, so name the suite.
 xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath "$DD" -only-testing:PaywiseTests test
 
 # Device build (signs, refreshes profiles, registers the phone if needed)
-xcodebuild -project Paywise.xcodeproj -scheme Paywise -configuration Debug -destination 'id=00008140-001858591EE0801C' -derivedDataPath "$DD" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
+xcodebuild -project Paywise.xcodeproj -scheme Paywise -configuration Debug -destination "id=$DEVICE_ID" -derivedDataPath "$DD" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
 
 # Install and launch (the phone must be unlocked to launch)
-xcrun devicectl device install app --device 00008140-001858591EE0801C "$DD/Build/Products/Debug-iphoneos/Paywise.app"
-xcrun devicectl device process launch --device 00008140-001858591EE0801C --terminate-existing com.azealoo.paywise
+xcrun devicectl device install app --device "$DEVICE_ID" "$DD/Build/Products/Debug-iphoneos/Paywise.app"
+xcrun devicectl device process launch --device "$DEVICE_ID" --terminate-existing com.azealoo.paywise
 ```
 
 ## Checking the island
@@ -34,7 +35,7 @@ Debug builds have a **Debug** section with *Start sample Live Activity* / *End L
 To start it without tapping, pass `-autostartSampleActivity` and read the state changes on the console:
 
 ```bash
-xcrun devicectl device process launch --device 00008140-001858591EE0801C --terminate-existing --console -- com.azealoo.paywise -autostartSampleActivity
+xcrun devicectl device process launch --device "$DEVICE_ID" --terminate-existing --console -- com.azealoo.paywise -autostartSampleActivity
 ```
 
 Then go to the Home Screen: the island only shows while Paywise isn't in the foreground. On the simulator, use the
@@ -61,12 +62,13 @@ xcrun simctl spawn <device> log show --last 2m --predicate 'subsystem == "com.az
 |---|---|
 | `-resetState` | Clears the wallet, purchases, check records, onboarding and the date override before any screen loads. |
 | `-skipOnboarding` | Seeds the demo wallet (`demo-3card`) and opens the tabs. |
-| `-dateOverride YYYY-MM-DD` | Turns on Settings › "Pretend today is…" with that day (the check's `clientDate` and the claim's `asOf`). |
+| `-dateOverride YYYY-MM-DD` | Turns on Settings › "Pretend today is…" with that day (the claim's `asOf` and incident date, and which cover Purchases shows as ended; never a check's `clientDate`). A yellow pill shows over every tab while it is on. |
 | `-tab check\|purchases\|settings` | Opens on that tab. |
 | `-doubleSave` | The in-app [Paying with …] starts two saves at once and reports what each returned (`debug.saveOutcomes`), so a UI test can show two racing saves make one purchase. A synthesized double tap reaches a SwiftUI button as one action. |
 | `-showBackTapPrompt` | The Check tab opens with the Back Tap prompt up (use with `-skipOnboarding -tab check`). |
 | `-forceReduceMotion` | Reduce Motion reads as on everywhere (the prompt's two still frames, a still breadcrumb). |
 | `-simulateBackTap` | "Try it now" gets a press 1.5 s after it opens: the real check (`CheckFlow`, live backend) on a render of its own screen, as the Shortcut would run it, so it turns to "Back Tap works ✓". |
+| `-simulateDoubleTap` | At launch, a Back Tap that fires the Shortcut twice 1.5 s apart: two `CheckCheckoutIntent` runs (live backend) on the Try it now render. The second is turned away (`PressGate`), so Settings › What we sent shows one row. |
 
 ### Back Tap prompt and setup
 
@@ -141,8 +143,8 @@ dark and tinted to `docs/overnight-shots/brand/`.
 
 ## Check chain (SPEC §15.5)
 
-`CheckCheckoutIntent` (Shortcut action "Check Checkout") → on-device reading (`ScreenReader`; a placeholder that
-throws until `VisionScreenReader` lands) → `POST /v1/check` (6.0 s; base URL from Info.plist `PaywiseAPIURL`) →
+`CheckCheckoutIntent` (Shortcut action "Check Checkout") → on-device reading (`ScreenReader`: `VisionScreenReader` crops, runs Vision OCR,
+the checkout gate and redaction) → `POST /v1/check` (6.0 s; base URL from Info.plist `PaywiseAPIURL`) →
 `CheckRecord` in `<AppGroup>/checks/` → result snippet (`CheckResultSnippetIntent`, buttons `SavePurchaseIntent` /
 `ShowSentIntent`) or an island alert. Dependencies live in `Paywise/Check/Dependencies.swift`.
 
@@ -160,4 +162,4 @@ Paying with button" / "System confirm prompt" / "Island alert, held 8 s"):
 | `snippetMode` | `snippet` (Pattern A) · `confirm` (Pattern B) · `island` (§6.6 G2 fallback, 8 s `.default` alert) | `snippet` |
 | `silentAlerts` | `true` → `.named("silent.caf")` · `false` → `.default` | `true` |
 | `replayEnabled` | replay `fixtures/replay/<merchantId>_<totalCents>.json` when the request fails or times out (not on a 4xx) | `true` |
-| `dateOverrideEnabled` + `dateOverride` | Settings › Demo › "Pretend today is…": the check's `clientDate` and the claim's `asOf` / incident date | off, `2027-12-18` |
+| `dateOverrideEnabled` + `dateOverride` | Settings › Demo › "Pretend today is…": the claim's `asOf` / incident date and which cover Purchases shows as ended (a check's `clientDate` is always the phone's date) | off, `2027-12-18` |

@@ -39,6 +39,21 @@ enum Fixtures {
     static let seattle = TimeZone(identifier: "America/Los_Angeles")!
 }
 
+/// A clock a test moves by hand (`AppDependencies.now`).
+final class TestClock: Sendable {
+    private let date: Mutex<Date>
+
+    init(_ start: Date = Fixtures.demoNow) {
+        date = Mutex(start)
+    }
+
+    var now: Date { date.withLock { $0 } }
+
+    func advance(by seconds: TimeInterval) {
+        date.withLock { $0 = $0.addingTimeInterval(seconds) }
+    }
+}
+
 /// Serves canned responses for one host per test, so tests can run in parallel. Records every request body.
 final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     enum Behavior: Sendable {

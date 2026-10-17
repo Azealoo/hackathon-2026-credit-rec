@@ -21,6 +21,49 @@ struct ReplayStore: Sendable {
         return Key(merchantId: merchantId, totalCents: cents)
     }
 
+    /// A bundled response fitted to the request it answers. nil when it recommends a card the wallet doesn't hold: a
+    /// replay never names a card the user lacks. Otherwise its purchase draft moves to `clientDate`, the purchase date
+    /// and each coverage end by the same number of days (an end can land a day off across a Feb 29), so an offline
+    /// replay on judging day saves the purchase dated that day, not the fixture's Oct 17. Same day: `data` unchanged.
+    static func fitted(_ data: Data, clientDate: String, walletCardIds: Set<String>) -> Data? {
+        guard var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        if let cardId = (object["decision"] as? [String: Any])?["recommendedCardId"] as? String,
+           !walletCardIds.contains(cardId) {
+            return nil
+        }
+        guard var draft = object["purchaseDraft"] as? [String: Any],
+              let bought = draft["purchaseDate"] as? String,
+              let shift = days(from: bought, to: clientDate), shift != 0
+        else { return data }
+        draft["purchaseDate"] = clientDate
+        if let coverage = draft["coverage"] as? [[String: Any]] {
+            draft["coverage"] = coverage.map { entry in
+                var entry = entry
+                if let until = entry["until"] as? String, let moved = day(until, plus: shift) { entry["until"] = moved }
+                return entry
+            }
+        }
+        object["purchaseDraft"] = draft
+        return try? JSONSerialization.data(withJSONObject: object)
+    }
+
+    private static var gregorian: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        return calendar
+    }
+
+    private static func days(from start: String, to end: String) -> Int? {
+        guard let start = Day.date(start, timeZone: .gmt), let end = Day.date(end, timeZone: .gmt) else { return nil }
+        return gregorian.dateComponents([.day], from: start, to: end).day
+    }
+
+    private static func day(_ day: String, plus days: Int) -> String? {
+        guard let date = Day.date(day, timeZone: .gmt), let moved = gregorian.date(byAdding: .day, value: days, to: date)
+        else { return nil }
+        return Day.string(moved, timeZone: .gmt)
+    }
+
     func response(for key: Key) -> Data? {
         guard let url = bundle.url(forResource: key.fileName, withExtension: "json", subdirectory: subdirectory)
         else { return nil }

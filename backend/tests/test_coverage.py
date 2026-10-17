@@ -149,7 +149,7 @@ def test_copy_purchase_protection_capped(results):
     for case_id in (3, 13):
         assert results[case_id]["headline"] == "May be eligible: Purchase protection, up to $500 of the $1,499."
         assert "120 days (90 in NY), to Feb 14, 2027" in results[case_id]["why"]
-    # §5.5 v2.4: Chase's purchase protection is secondary (basis in data/cards.json).
+    # §5.5 v2.5: Chase's purchase protection is secondary (basis in data/cards.json).
     assert results[13]["why"] == ("Theft is covered within 120 days (90 in NY), to Feb 14, 2027. "
                                   "It's secondary: it pays after any other insurance you have.")
     assert any("Police report" in item and "48 hours" in item for item in results[13]["checklist"])

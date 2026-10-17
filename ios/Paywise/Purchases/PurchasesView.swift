@@ -54,13 +54,14 @@ struct PurchasesView: View {
     private var list: some View {
         let wallet = model.wallet
         let catalog = model.deps.catalog
+        let today = Day.today(settings: model.deps.settings, now: model.deps.now(), timeZone: model.deps.timeZone)
         return GroupedCard(padding: 0) {
             ForEach(Array(model.purchases.enumerated()), id: \.element.id) { index, purchase in
                 if index > 0 {
                     // Separator inset to the text (design.md §4: 80 pt on rows with a thumbnail).
                     Divider().padding(.leading, 74)
                 }
-                let line = PurchaseText.line(purchase, wallet: wallet, catalog: catalog)
+                let line = PurchaseText.line(purchase, wallet: wallet, catalog: catalog, today: today)
                 NavigationLink(value: PurchaseRoute.detail(purchase.id)) {
                     PurchaseRow(purchase: purchase, line: line)
                 }
@@ -203,20 +204,24 @@ struct PurchaseDetailView: View {
                 Divider().padding(.leading, 16)
 
                 VStack(alignment: .leading, spacing: 10) {
-                    let lines = PurchaseText.coverageLines(purchase)
+                    let today = Day.today(settings: model.deps.settings, now: model.deps.now(), timeZone: model.deps.timeZone)
+                    let lines = PurchaseText.coverageLines(purchase, today: today)
                     if lines.isEmpty {
                         Text("No card coverage is saved for this purchase.")
                             .font(.app(15))
                             .foregroundStyle(.secondary)
                     }
                     ForEach(lines, id: \.self) { line in
+                        // Ended cover is greyed with a slashed shield, so it never reads as live cover (the words
+                        // say "ended" too, so the state doesn't rest on color).
                         Label {
-                            Text(line)
+                            Text(line.text)
                                 .font(.app(15, .medium))
                                 .monospacedDigit()
+                                .foregroundStyle(line.ended ? .secondary : .primary)
                         } icon: {
-                            Image(systemName: "checkmark.shield.fill")
-                                .foregroundStyle(.green)
+                            Image(systemName: line.ended ? "shield.slash" : "checkmark.shield.fill")
+                                .foregroundStyle(line.ended ? Color.secondary : Color.green)
                         }
                     }
                     if let footnote = PurchaseText.warrantyFootnote(purchase) {

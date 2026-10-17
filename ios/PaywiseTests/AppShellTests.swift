@@ -370,6 +370,7 @@ struct ClaimModelTests {
         env.deps.settings.dateOverrideEnabled = true
         env.deps.settings.dateOverrideValue = "2027-12-18"
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Lines across the screen. Never dropped."
         model.pick(.failure)
@@ -393,6 +394,142 @@ struct ClaimModelTests {
         #expect(incident["cause"] as? String == "failure")
         #expect(incident["causeSource"] as? String == "user_confirmed")
         #expect(PrivacyGuard.isSendable(body))
+    }
+
+    // MARK: Whole price on the card (§5.5 payout cap)
+
+    /// (answer, amount typed, paidWith, amountOnCardUsd)
+    nonisolated static let paidWithCases: [(PaidWithAnswer?, String, String, Double?)] = [
+        (nil, "", "unknown", nil),
+        (.full, "", "card_full", nil),
+        (.unknown, "", "unknown", nil),
+        (.partial, "", "card_partial", nil),
+        (.partial, "1000", "card_partial", 1000.0),
+        (.partial, "$1,000.50", "card_partial", 1000.5),
+        (.partial, " 999.9 ", "card_partial", 999.9),
+        // An amount the field refuses is never sent; Check stays off (below).
+        (.partial, "0", "card_partial", nil),
+        (.partial, "1499", "card_partial", nil),
+        (.partial, "abc", "card_partial", nil),
+        // Typed, then the answer changed: the amount isn't sent.
+        (.full, "1000", "card_full", nil),
+        (.unknown, "1000", "unknown", nil),
+    ]
+
+    @Test(arguments: paidWithCases)
+    func paidWithMapping(answer: PaidWithAnswer?, amount: String, paidWith: String, amountOnCard: Double?) throws {
+        let env = TestEnvironment(reading: .laptopCheckout)
+        let model = try model(env, status: .confirmed)
+        model.paidWith = answer
+        model.amountOnCardText = amount
+        let purchase = model.verdictRequest().purchase
+        #expect(purchase.paidWith == paidWith)
+        #expect(purchase.amountOnCardUsd == amountOnCard)
+    }
+
+    @Test(arguments: [
+        ("", true), ("1000", true), ("1,498.99", true), ("0.01", true),
+        ("0", false), ("1499", false), ("1,499.00", false), ("2000", false), ("12.345", false), ("1.2.3", false), ("abc", false),
+    ])
+    func partialAmountGatesCheck(amount: String, canCheck: Bool) throws {
+        let env = TestEnvironment(reading: .laptopCheckout)
+        let model = try model(env, status: .confirmed)
+        model.warranty = .oneYear
+        model.description = "Lines across the screen. Never dropped."
+        model.pick(.failure)
+        #expect(!model.canCheck, "the question needs an answer")
+        model.paidWith = .partial
+        model.amountOnCardText = amount
+        #expect(model.canCheck == canCheck)
+        #expect(model.amountOnCardIsValid == canCheck)
+        #expect((model.amountOnCardHint == nil) == canCheck)
+        if !canCheck { #expect(model.amountOnCardHint == "Enter an amount less than $1,499.00.") }
+        // The other answers ignore what was typed.
+        model.paidWith = .full
+        #expect(model.canCheck)
+        #expect(model.amountOnCardHint == nil)
+    }
+
+    @Test(arguments: [
+        ("1000", 100_000), ("$1,000.50", 100_050), ("999.9", 99_990), ("1.", 100), ("0.05", 5), (" 18 ", 1_800),
+    ])
+    func amountParses(text: String, cents: Int) {
+        #expect(PaidWithAnswer.cents(text) == cents)
+    }
+
+    @Test(arguments: ["", " ", "$", ".", ".5", "abc", "12.345", "1.2.3", "-5", "1e3", "1234567890"])
+    func amountRejects(text: String) {
+        #expect(PaidWithAnswer.cents(text) == nil)
+    }
+
+    /// Case 12's purchase on the wire: card_partial with the part on the card; the other answers leave the key out.
+    @Test func partialPaymentBodyMatchesCase12() throws {
+        let env = TestEnvironment(reading: .laptopCheckout)
+        env.deps.settings.dateOverrideEnabled = true
+        env.deps.settings.dateOverrideValue = "2027-12-18"
+        let model = try model(env, status: .confirmed)
+        model.paidWith = .partial
+        model.amountOnCardText = "1000"
+        model.warranty = .oneYear
+        model.description = "Lines across the screen. Never dropped."
+        model.pick(.failure)
+        #expect(model.canCheck)
+
+        let body = try model.verdictRequest().body()
+        #expect(PrivacyGuard.isSendable(body))
+        let purchase = try #require(
+            (try JSONSerialization.jsonObject(with: body) as? [String: Any])?["purchase"] as? [String: Any]
+        )
+        #expect(purchase["paidWith"] as? String == "card_partial")
+        #expect(purchase["amountOnCardUsd"] as? Double == 1000)
+
+        let case12 = try #require(try Self.coverageCase(12)["purchase"] as? [String: Any])
+        for key in ["cardId", "category", "condition", "priceUsd", "purchaseDate", "status",
+                    "manufacturerWarrantyMonths", "manufacturerWarrantySource", "paidWith", "amountOnCardUsd"] {
+            #expect("\(purchase[key] ?? "missing")" == "\(case12[key] ?? "missing")", "\(key)")
+        }
+        #expect(Set(purchase.keys) == Set(case12.keys))
+
+        for answer in [PaidWithAnswer.full, .unknown] {
+            model.paidWith = answer
+            let other = try #require(
+                (try JSONSerialization.jsonObject(with: try model.verdictRequest().body()) as? [String: Any])?["purchase"]
+                    as? [String: Any]
+            )
+            #expect(other["paidWith"] as? String == answer.rawValue)
+            #expect(other["amountOnCardUsd"] == nil, "\(answer): no amountOnCardUsd key")
+        }
+    }
+
+    /// The classification request carries the answer too (unanswered: unknown).
+    @Test func classificationSendsTheAnswer() async throws {
+        let reply = Data(#"{"incident":{"cause":"failure","causeSource":"llm"}}"#.utf8)
+        let env = TestEnvironment(reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply)))
+        let model = try model(env)
+        model.description = "Lines across the screen. Never dropped."
+        await model.classify(model.trimmedDescription)
+        model.paidWith = .partial
+        model.amountOnCardText = "1000"
+        model.description = "Lines across the screen, never dropped."
+        await model.classify(model.trimmedDescription)
+        #expect(env.requests.count == 2)
+        let purchases = try env.requests.map {
+            try #require((try JSONSerialization.jsonObject(with: $0) as? [String: Any])?["purchase"] as? [String: Any])
+        }
+        #expect(purchases[0]["paidWith"] as? String == "unknown")
+        #expect(purchases[0]["amountOnCardUsd"] == nil)
+        #expect(purchases[1]["paidWith"] as? String == "card_partial")
+        #expect(purchases[1]["amountOnCardUsd"] as? Double == 1000)
+    }
+
+    /// `fixtures/coverage_cases.json` by id.
+    private static func coverageCase(_ id: Int) throws -> [String: Any] {
+        let url = URL(filePath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appending(path: "fixtures/coverage_cases.json")
+        let json = try JSONSerialization.jsonObject(with: Data(contentsOf: url))
+        let cases = (json as? [[String: Any]]) ?? ((json as? [String: Any])?["cases"] as? [[String: Any]]) ?? []
+        return try #require(cases.first { $0["id"] as? Int == id })
     }
 
     /// A purchase dated after today (saved while "Pretend today is…" was later, then turned off or moved back): the
@@ -445,6 +582,7 @@ struct ClaimModelTests {
         let reply = Data(#"{"verdict":"may_be_eligible","incident":{"cause":"failure","causeSource":"llm"}}"#.utf8)
         let env = TestEnvironment(reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply)))
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Lines across the screen. Never dropped."
         await model.classify(model.trimmedDescription)
@@ -462,6 +600,7 @@ struct ClaimModelTests {
     @Test func aPickedCauseSurvivesAnEdit() throws {
         let env = TestEnvironment(reading: .laptopCheckout)
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Stolen from my bag"
         model.pick(.theft)
@@ -477,6 +616,7 @@ struct ClaimModelTests {
             reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply), delay: 0.4)
         )
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Lines across the screen. Never dropped."
         await model.classify(model.trimmedDescription)

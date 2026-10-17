@@ -42,7 +42,7 @@ final class AppShellUITests: XCTestCase {
     }
 
     /// [Paying with Freedom] with two saves racing on one check → *Saved* → Purchases shows exactly one row, the
-    /// §15.7 step 12a line word for word. The check runs on Oct 17, 2026 (`-dateOverride`, the check's `clientDate`).
+    /// §15.7 step 12a line word for word, dated from the day the test runs (a check's `clientDate` is the phone's date).
     ///
     /// A synthesized double tap reaches a SwiftUI button as ONE action (checked: one save ran), so it can't show
     /// idempotency. `-doubleSave` makes the in-app button start two saves at once instead, and the app reports what
@@ -52,8 +52,8 @@ final class AppShellUITests: XCTestCase {
     /// a double tap on the system snippet's button is the on-device check in §15.7 step 12a.
     @MainActor
     func testSaveIsIdempotent() throws {
-        let app = Launch.app(["-resetState", "-skipOnboarding", "-dateOverride", Launch.purchaseDay, "-tab", "check", "-doubleSave"])
-        app.pickNewestPhoto()
+        let app = Launch.app(["-resetState", "-skipOnboarding", "-tab", "check", "-doubleSave"])
+        let checked = app.pickNewestPhoto()
 
         let save = app.buttons["result.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 10))
@@ -79,7 +79,7 @@ final class AppShellUITests: XCTestCase {
         let rows = app.buttons.matching(identifier: "purchase.row")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(rows.count, 1, "two racing saves make one purchase")
-        XCTAssertEqual(rows.firstMatch.label, Expected.purchaseLine)
+        XCTAssertEqual(rows.firstMatch.label, Expected.purchaseLine(checkedOn: checked))
         attach(app, "purchases")
 
         // Read the store again from a fresh launch: a late second save would show here.
@@ -88,24 +88,18 @@ final class AppShellUITests: XCTestCase {
         let again = relaunched.buttons.matching(identifier: "purchase.row")
         XCTAssertTrue(again.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(again.count, 1, "still one purchase after a relaunch")
-        XCTAssertEqual(again.firstMatch.label, Expected.purchaseLine)
+        XCTAssertEqual(again.firstMatch.label, Expected.purchaseLine(checkedOn: checked))
         print("PAYWISE_UI testSaveIsIdempotent: \(again.count) row after relaunch: \"\(again.firstMatch.label)\"")
     }
 
-    /// §15.4 claim cases 1 and 2 on "14 months later" (Dec 18, 2027), from the S1 purchase checked and saved on
-    /// Oct 17, 2026 through the live backend. The verdict is the backend's HTML in the in-app web view.
+    /// §15.4 claim cases 1 and 2 on "14 months later" (Dec 18, 2027 for the spec's Oct 17, 2026), from the S1 purchase
+    /// checked and saved today through the live backend. The verdict is the backend's HTML in the in-app web view.
     @MainActor
     func testClaimCases1and2() throws {
-        // The purchase: a live check on Oct 17, 2026 and [Paying with Freedom].
-        let setup = Launch.app(["-resetState", "-skipOnboarding", "-dateOverride", Launch.purchaseDay, "-tab", "check"])
-        setup.pickNewestPhoto()
-        XCTAssertTrue(setup.buttons["result.save"].waitForExistence(timeout: 10))
-        setup.buttons["result.save"].tap()
-        XCTAssertTrue(setup.descendants(matching: .any)["result.saved"].waitForExistence(timeout: 5))
-        setup.terminate()
+        let checked = savePurchase()
 
         // 14 months later.
-        let app = Launch.app(["-dateOverride", Launch.claimDay, "-tab", "purchases"])
+        let app = Launch.app(["-dateOverride", Launch.claimDay(after: checked), "-tab", "purchases"])
         let row = app.buttons.matching(identifier: "purchase.row").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
@@ -114,7 +108,7 @@ final class AppShellUITests: XCTestCase {
 
         // Case 1: "Lines across the screen. Never dropped." → May be eligible: Extended warranty.
         XCTAssertTrue(app.staticTexts["claim.paid.question"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["claim.paid.question"].label, Expected.paidQuestion)
+        XCTAssertEqual(app.staticTexts["claim.paid.question"].label, Expected.paidQuestion(checkedOn: checked))
         fillClaim(app, text: Expected.case1Text, cause: "failure", acceptSuggestion: true)
         app.buttons["claim.check"].tap()
         XCTAssertTrue(app.verdictWeb.waitForExistence(timeout: 25), "the verdict web view opens")
@@ -144,14 +138,9 @@ final class AppShellUITests: XCTestCase {
     /// keeps [Check] off.
     @MainActor
     func testPartialPaymentCapsThePayout() throws {
-        let setup = Launch.app(["-resetState", "-skipOnboarding", "-dateOverride", Launch.purchaseDay, "-tab", "check"])
-        setup.pickNewestPhoto()
-        XCTAssertTrue(setup.buttons["result.save"].waitForExistence(timeout: 10))
-        setup.buttons["result.save"].tap()
-        XCTAssertTrue(setup.descendants(matching: .any)["result.saved"].waitForExistence(timeout: 5))
-        setup.terminate()
+        let checked = savePurchase()
 
-        let app = Launch.app(["-dateOverride", Launch.claimDay, "-tab", "purchases"])
+        let app = Launch.app(["-dateOverride", Launch.claimDay(after: checked), "-tab", "purchases"])
         let row = app.buttons.matching(identifier: "purchase.row").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
@@ -190,6 +179,19 @@ final class AppShellUITests: XCTestCase {
         XCTAssertTrue(app.verdictText(containing: "$1,000.00", timeout: 2), "capped at the part on the card: \(app.verdictDump)")
         print("PAYWISE_UI testPartialPaymentCapsThePayout: \(app.verdictDump.prefix(600))")
         attach(app, "partial-verdict")
+    }
+
+    /// The S1 purchase: a live check and [Paying with Freedom], with "Pretend today is…" off, as the demo checks it
+    /// (docs/overnight-report.md, morning checklist). Returns the moment of the pick: the check is dated that day.
+    @MainActor
+    private func savePurchase() -> Date {
+        let setup = Launch.app(["-resetState", "-skipOnboarding", "-tab", "check"])
+        let checked = setup.pickNewestPhoto()
+        XCTAssertTrue(setup.buttons["result.save"].waitForExistence(timeout: 10))
+        setup.buttons["result.save"].tap()
+        XCTAssertTrue(setup.descendants(matching: .any)["result.saved"].waitForExistence(timeout: 5))
+        setup.terminate()
+        return checked
     }
 
     /// Yes → whole price → 1 year → the text → the cause chip. With `acceptSuggestion`, waits for the server's classification to

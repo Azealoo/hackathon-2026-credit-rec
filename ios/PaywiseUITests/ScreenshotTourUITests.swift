@@ -12,6 +12,8 @@ import XCTest
 /// see AppShellUITests).
 final class ScreenshotTourUITests: XCTestCase {
     private var shots: Shots!
+    /// The moment `checkAndSave` picked the purchase's photo: the check, and so the purchase, is dated that day.
+    private var checked = Date()
 
     override func setUp() {
         continueAfterFailure = false
@@ -98,7 +100,7 @@ final class ScreenshotTourUITests: XCTestCase {
 
     @MainActor
     private func checkAndSave() {
-        let app = Launch.app(["-resetState", "-skipOnboarding", "-dateOverride", Launch.purchaseDay, "-tab", "check"])
+        let app = Launch.app(["-resetState", "-skipOnboarding", "-tab", "check"])
         let pick = app.buttons["check.pickScreenshot"]
         XCTAssertTrue(pick.waitForExistence(timeout: 10))
         pick.tap()
@@ -106,6 +108,7 @@ final class ScreenshotTourUITests: XCTestCase {
         XCTAssertTrue(photo.waitForExistence(timeout: 15), "the picker shows the laptop screenshot (simctl addmedia)")
         shots.snap("check-photo-picker")
         photo.tap()
+        checked = Date()
 
         if app.descendants(matching: .any)["check.progress"].waitForExistence(timeout: 3) {
             shots.snap("check-checking", settle: 0)
@@ -152,7 +155,7 @@ final class ScreenshotTourUITests: XCTestCase {
         app.tabBars.buttons["Purchases"].tap()
         let row = app.buttons.matching(identifier: "purchase.row").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
-        XCTAssertEqual(row.label, Expected.purchaseLine)
+        XCTAssertEqual(row.label, Expected.purchaseLine(checkedOn: checked))
         shots.snap("purchases-list")
         row.tap()
         XCTAssertTrue(app.buttons["purchase.somethingHappened"].waitForExistence(timeout: 5))
@@ -249,7 +252,7 @@ final class ScreenshotTourUITests: XCTestCase {
 
     @MainActor
     private func claims() {
-        let app = Launch.app(["-dateOverride", Launch.claimDay, "-tab", "purchases"])
+        let app = Launch.app(["-dateOverride", Launch.claimDay(after: checked), "-tab", "purchases"])
         let row = app.buttons.matching(identifier: "purchase.row").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()

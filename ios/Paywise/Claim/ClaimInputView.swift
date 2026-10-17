@@ -7,6 +7,7 @@ struct ClaimInputView: View {
     @State private var model: ClaimModel
     @Binding var path: [PurchaseRoute]
     @FocusState private var descriptionFocused: Bool
+    @FocusState private var amountFocused: Bool
     @State private var checking = false
 
     init(purchase: PurchaseSnapshot, deps: AppDependencies, wallet: Wallet, path: Binding<[PurchaseRoute]>) {
@@ -18,6 +19,7 @@ struct ClaimInputView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
                 paidSection
+                wholePriceSection
                 warrantySection
                 happenedSection
                 dateSection
@@ -32,7 +34,10 @@ struct ClaimInputView: View {
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Done") { descriptionFocused = false }
+                Button("Done") {
+                    descriptionFocused = false
+                    amountFocused = false
+                }
             }
         }
     }
@@ -74,6 +79,45 @@ struct ClaimInputView: View {
     private var isOtherCard: Bool {
         if case .otherCard = model.paid { return true }
         return false
+    }
+
+    // MARK: 1b. Whole price on the card (the §5.5 payout cap)
+
+    private var wholePriceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle("Did the whole price go on this card?")
+            ChipFlow {
+                ForEach(PaidWithAnswer.allCases) { answer in
+                    ChipButton(title: answer.label, isSelected: model.paidWith == answer) {
+                        model.paidWith = answer
+                        if answer != .partial { amountFocused = false }
+                    }
+                    .accessibilityIdentifier("claim.paidWith.\(answer.rawValue)")
+                }
+            }
+            if model.paidWith == .partial {
+                HStack(spacing: 6) {
+                    Text("$")
+                        .foregroundStyle(.secondary)
+                    TextField("Amount on the card, if you know it", text: $model.amountOnCardText)
+                        .keyboardType(.decimalPad)
+                        .focused($amountFocused)
+                        .accessibilityLabel("Amount on the card")
+                        .accessibilityIdentifier("claim.paidWith.amount")
+                }
+                .font(.app(17))
+                .monospacedDigit()
+                .padding(14)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                if let hint = model.amountOnCardHint {
+                    Label(hint, systemImage: "exclamationmark.triangle.fill")
+                        .font(.app(13))
+                        .foregroundStyle(.yellow)
+                        .monospacedDigit()
+                        .accessibilityIdentifier("claim.paidWith.amountHint")
+                }
+            }
+        }
     }
 
     // MARK: 2. Maker's warranty
@@ -152,6 +196,7 @@ struct ClaimInputView: View {
     private var checkButton: some View {
         Button("Check") {
             descriptionFocused = false
+            amountFocused = false
             checking = true
             Task {
                 if let request = await model.prepareVerdict(purchases) {

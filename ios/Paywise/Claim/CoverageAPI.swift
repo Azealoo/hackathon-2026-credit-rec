@@ -68,11 +68,15 @@ struct CoverageRequest: Encodable, Sendable, Hashable {
         var manufacturerWarrantyMonths: Int?
         /// "user", or "assumed" for "Don't know" (12 months).
         var manufacturerWarrantySource: String
+        /// card_full / card_partial / unknown, from "Did the whole price go on this card?" (`PaidWithAnswer`).
         var paidWith: String
+        /// The part charged to the card, for card_partial (the payout cap is at most this, §5.5). Optional in the
+        /// contract: nil leaves the key out, which means unknown.
+        var amountOnCardUsd: Double? = nil
 
         private enum CodingKeys: String, CodingKey {
             case cardId, merchant, item, category, condition, priceUsd, purchaseDate, status
-            case manufacturerWarrantyMonths, manufacturerWarrantySource, paidWith
+            case manufacturerWarrantyMonths, manufacturerWarrantySource, paidWith, amountOnCardUsd
         }
 
         func encode(to encoder: any Encoder) throws {
@@ -88,6 +92,7 @@ struct CoverageRequest: Encodable, Sendable, Hashable {
             try c.encode(manufacturerWarrantyMonths, forKey: .manufacturerWarrantyMonths)
             try c.encode(manufacturerWarrantySource, forKey: .manufacturerWarrantySource)
             try c.encode(paidWith, forKey: .paidWith)
+            try c.encodeIfPresent(amountOnCardUsd, forKey: .amountOnCardUsd)
         }
     }
 
@@ -170,6 +175,36 @@ enum WarrantyAnswer: String, CaseIterable, Sendable, Identifiable {
         case 24: self = .twoYears
         default: return nil
         }
+    }
+}
+
+/// "Did the whole price go on this card?" (§5.5 payout cap) and its `paidWith` wire values. With [Part of it] the
+/// user may type the amount on the card; "Don't know" lets the server assume the full price.
+enum PaidWithAnswer: String, CaseIterable, Sendable, Identifiable {
+    case full = "card_full"
+    case partial = "card_partial"
+    case unknown
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .full: "Yes"
+        case .partial: "Part of it"
+        case .unknown: "Don't know"
+        }
+    }
+
+    /// The amount typed for [Part of it], in cents: "1000", "1,000.50", "$999.9". nil for anything else (empty, a
+    /// letter, three decimals, too big to hold).
+    static func cents(_ text: String) -> Int? {
+        let digits = text.filter { !$0.isWhitespace && $0 != "$" && $0 != "," }
+        guard digits.wholeMatch(of: /[0-9]{1,9}(\.[0-9]{0,2})?/) != nil else { return nil }
+        let parts = digits.split(separator: ".", omittingEmptySubsequences: false)
+        guard let dollars = Int(parts[0]) else { return nil }
+        let fraction = parts.count > 1 ? String(parts[1]) : ""
+        let cents = Int(fraction.padding(toLength: 2, withPad: "0", startingAt: 0)) ?? 0
+        return dollars * 100 + cents
     }
 }
 

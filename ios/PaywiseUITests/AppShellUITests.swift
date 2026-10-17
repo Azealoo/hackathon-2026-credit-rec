@@ -139,11 +139,12 @@ final class AppShellUITests: XCTestCase {
         attach(app, "case2")
     }
 
-    /// Yes → 1 year → the text → the cause chip. With `acceptSuggestion`, waits for the server's classification to
+    /// Yes → whole price → 1 year → the text → the cause chip. With `acceptSuggestion`, waits for the server's classification to
     /// pre-select `cause` and taps it only if it doesn't.
     @MainActor
     private func fillClaim(_ app: XCUIApplication, text: String, cause: String, acceptSuggestion: Bool) {
         app.buttons["claim.paid.yes"].tap()
+        app.buttons["claim.paidWith.card_full"].tap()
         app.buttons["claim.warranty.oneYear"].tap()
         let description = app.claimDescription
         description.tap()

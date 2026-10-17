@@ -1,8 +1,8 @@
 import Foundation
 import os
 
-/// The "Can I claim?" input (SPEC §5.5, §15.7 step 12d): confirm the card and date, the maker's warranty, what
-/// happened with a cause chip. After the user types, the server's LLM classifies the cause (`cause: null`) and its
+/// The "Can I claim?" input (SPEC §5.5, §15.7 step 12d): confirm the card and date, whether the whole price went on
+/// it, the maker's warranty, what happened with a cause chip. After the user types, the server's LLM classifies the cause (`cause: null`) and its
 /// chip is pre-selected; [Check] then sends the cause the user has picked as `user_confirmed`.
 @MainActor
 @Observable
@@ -22,6 +22,10 @@ final class ClaimModel {
 
     private(set) var paid: PaidAnswer?
     var choosingOtherCard = false
+    /// "Did the whole price go on this card?": with `card_partial` the payout cap is at most the part on the card.
+    var paidWith: PaidWithAnswer?
+    /// The amount on the card for [Part of it], as typed. Empty means the user doesn't know it.
+    var amountOnCardText = ""
     var warranty: WarrantyAnswer?
     /// What happened, as the user typed it. The view calls `descriptionChanged()` on every edit.
     var description = ""
@@ -83,8 +87,32 @@ final class ClaimModel {
 
     var trimmedDescription: String { description.trimmingCharacters(in: .whitespacesAndNewlines) }
 
+    /// [Part of it]'s amount: empty (not known), or more than $0 and less than the price. Always true for the other
+    /// answers.
+    var amountOnCardIsValid: Bool {
+        guard paidWith == .partial, !amountOnCardText.trimmingCharacters(in: .whitespaces).isEmpty else { return true }
+        guard let cents = PaidWithAnswer.cents(amountOnCardText) else { return false }
+        return cents > 0 && cents < Int((purchase.priceUsd * 100).rounded())
+    }
+
+    /// Under the amount field while what's typed can't be sent.
+    var amountOnCardHint: String? {
+        amountOnCardIsValid ? nil : "Enter an amount less than \(PurchaseText.price(purchase.priceUsd))."
+    }
+
+    /// `paidWith` and `amountOnCardUsd` for the request. Unanswered and [Don't know] send unknown (the server assumes
+    /// the full price); [Part of it] carries the amount when a valid one is typed, else leaves it unknown.
+    var payment: (paidWith: String, amountOnCardUsd: Double?) {
+        let answer = paidWith ?? .unknown
+        guard answer == .partial, amountOnCardIsValid, let cents = PaidWithAnswer.cents(amountOnCardText) else {
+            return (answer.rawValue, nil)
+        }
+        return (answer.rawValue, Double(cents) / 100)
+    }
+
     var canCheck: Bool {
-        paid != nil && warranty != nil && !trimmedDescription.isEmpty && cause != nil
+        paid != nil && paidWith != nil && amountOnCardIsValid && warranty != nil && !trimmedDescription.isEmpty
+            && cause != nil
     }
 
     // MARK: Answers
@@ -207,6 +235,7 @@ final class ClaimModel {
     func request(description: String, cause: ClaimCause?, causeSource: String?, redacted: Bool = true) -> CoverageRequest {
         let warranty = warranty ?? .unknown
         let description = redacted ? sendableDescription(description) : description
+        let payment = self.payment
         return CoverageRequest(
             purchase: .init(
                 cardId: paidCardId,
@@ -219,7 +248,8 @@ final class ClaimModel {
                 status: paid == nil ? purchase.status.rawValue : Purchase.Status.confirmed.rawValue,
                 manufacturerWarrantyMonths: warranty.months,
                 manufacturerWarrantySource: warranty.source,
-                paidWith: "card_full"
+                paidWith: payment.paidWith,
+                amountOnCardUsd: payment.amountOnCardUsd
             ),
             incident: .init(date: incidentDay, description: description, cause: cause, causeSource: causeSource),
             asOf: today

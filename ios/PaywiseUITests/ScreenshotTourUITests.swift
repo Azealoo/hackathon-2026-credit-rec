@@ -265,6 +265,7 @@ final class ScreenshotTourUITests: XCTestCase {
 
         // Case 1 ([Yes] puts the card back to Freedom).
         app.buttons["claim.paid.yes"].tap()
+        app.buttons["claim.paidWith.card_full"].tap()
         app.buttons["claim.warranty.oneYear"].tap()
         let description = app.claimDescription
         description.tap()
@@ -292,6 +293,7 @@ final class ScreenshotTourUITests: XCTestCase {
         app.buttons["purchase.somethingHappened"].tap()
         XCTAssertTrue(app.staticTexts["claim.paid.question"].waitForExistence(timeout: 5))
         app.buttons["claim.paid.yes"].tap()
+        app.buttons["claim.paidWith.card_full"].tap()
         app.buttons["claim.warranty.oneYear"].tap()
         app.claimDescription.tap()
         app.claimDescription.typeText(Expected.case2Text)
@@ -315,6 +317,7 @@ final class ScreenshotTourUITests: XCTestCase {
         app.buttons["purchase.somethingHappened"].tap()
         XCTAssertTrue(app.staticTexts["claim.paid.question"].waitForExistence(timeout: 5))
         app.buttons["claim.paid.yes"].tap()
+        app.buttons["claim.paidWith.card_full"].tap()
         app.buttons["claim.warranty.unknown"].tap()
         app.claimDescription.tap()
         app.claimDescription.typeText(Expected.case1Text)

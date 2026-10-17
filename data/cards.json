@@ -1,6 +1,6 @@
 {
   "$schema": "./cards.schema.json",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "catalogVersion": "2026-10-16",
   "cards": [
     {
@@ -38,7 +38,12 @@
             "ratePct": 3,
             "cap": null,
             "needsActivation": false,
-            "status": "verified"
+            "status": "verified",
+            "excludes": [
+              "Apple goods and services sold through third-party stores, including Apple authorized resellers",
+              "Payment through a third-party wallet",
+              "Purchases for resale"
+            ]
           },
           {
             "id": "apple-card-bonus-merchants",
@@ -54,6 +59,249 @@
             "cap": null,
             "needsActivation": false,
             "status": "verified"
+          },
+          {
+            "id": "apple-card-duane-reade",
+            "category": null,
+            "merchantIds": [
+              "duane-reade"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "in_store"
+            ],
+            "excludes": [
+              "New York and New Jersey stores only",
+              "Third-party merchants or kiosks inside stores",
+              "Third-party delivery apps",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "In New York and New Jersey, get 3% Daily Cash back using Apple Card with Apple Pay when you shop at Duane Reade stores.",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "apple-card-ace-hardware",
+            "category": null,
+            "merchantIds": [
+              "ace-hardware"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "in_store",
+              "online",
+              "in_app"
+            ],
+            "excludes": [
+              "Online and mobile app gift card purchases",
+              "3rd-party merchants using independent point-of-sale systems in a store",
+              "Non-participating stores",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "Excludes online and mobile app gift card purchases and purchases from 3rd party merchants using independent point-of-sale systems",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "apple-card-chargepoint",
+            "category": null,
+            "merchantIds": [
+              "chargepoint"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "in_app",
+              "in_store",
+              "online"
+            ],
+            "excludes": [
+              "Private charging stations",
+              "Fleet services",
+              "Commercial hardware and software",
+              "Support services",
+              "Third-party hardware",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "Not valid for purchases at private charging stations or for fleet services, for commercial hardware and software, for support services",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "apple-card-exxon-mobil",
+            "category": null,
+            "merchantIds": [
+              "exxon-mobil"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "in_app",
+              "in_store"
+            ],
+            "excludes": [
+              "Exxon or Mobil gift cards bought online",
+              "3rd-party merchants at the location, including independent car washes",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "Excludes Exxon or Mobil gift card purchases made online and purchases at 3rd party merchants, including independent car washes",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "apple-card-hertz",
+            "category": null,
+            "merchantIds": [
+              "hertz"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "online",
+              "in_app"
+            ],
+            "excludes": [
+              "U.S. corporate locations only, booked online or in the app",
+              "Phone or counter bookings and franchise locations",
+              "Rentals longer than 61 days",
+              "Paying by another method at pickup",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "you must select a “corporate” location type to qualify",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "apple-card-uber",
+            "category": null,
+            "merchantIds": [
+              "uber"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "online",
+              "in_app"
+            ],
+            "excludes": [
+              "Alcohol in OR, LA, GA, WA, MO, PA and MA",
+              "Uber Gift Cards bought on the web",
+              "Purchases where Uber is not the merchant",
+              "Flows without Apple Pay (split fares, group orders, Uber Family)",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "3% Daily Cash is not earned on 1) purchases of alcohol in the following states: Oregon, Louisiana, Georgia, Washington, Missouri, Pennsylvania, and Massachusetts",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "apple-card-uber-eats",
+            "category": null,
+            "merchantIds": [
+              "uber-eats"
+            ],
+            "paymentMethods": [
+              "apple_pay"
+            ],
+            "ratePct": 3,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "channels": [
+              "online",
+              "in_app"
+            ],
+            "excludes": [
+              "Alcohol in OR, LA, GA, WA, MO, PA and MA",
+              "Uber Gift Cards bought on the web",
+              "Purchases where Uber is not the merchant",
+              "Group orders and other flows without Apple Pay",
+              "Titanium card or virtual card number"
+            ],
+            "sources": [
+              {
+                "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+                "section": "Merchants that offer 3% Daily Cash back",
+                "versionDate": "2026-09-25",
+                "url": "https://support.apple.com/en-us/120400",
+                "quote": "Get 3% Daily Cash back using Apple Card with Apple Pay in the Uber Eats app or at ubereats.com.",
+                "checkedOn": "2026-10-16"
+              }
+            ]
           },
           {
             "id": "apple-card-apple-pay",
@@ -107,8 +355,9 @@
       "notes": [
         "Mastercard tier (World or World Elite) and Wallet's in-app benefits list not checked (benefits-verification.md §4.1); neither changes the no-protection answer.",
         "3% at Apple excludes payments through a third-party wallet and purchases from resellers (Customer Agreement p. 6-7).",
-        "3% via Apple Pay: only the merchants in this file's list (Nike, Walgreens). Apple's list as of Sep 25, 2026 also has Ace Hardware, Booking.com, ChargePoint, Duane Reade, Exxon/Mobil, Hertz, Uber and Uber Eats; offers may change at any time.",
-        "Walgreens: online or in-app orders with more than one item can't use Apple Pay; the engine's apple_pay path already needs a visible Apple Pay button."
+        "Walgreens: online or in-app orders with more than one item can't use Apple Pay; the engine's apple_pay path already needs a visible Apple Pay button.",
+        "3% via Apple Pay: Nike, Walgreens and the 7 partners above (Apple's list of Sep 25, 2026). Booking.com needs Apple's link, so it is a hint (offers[] apple-card-booking-3pct). Offers may change at any time.",
+        "Chase becomes the issuer in about 24 months (events[] apple-card-to-chase); no reward change is attributed to Chase yet."
       ]
     },
     {
@@ -125,7 +374,7 @@
       "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
-      "foreignTransactionFeePct": null,
+      "foreignTransactionFeePct": 3,
       "art": {
         "assetName": "card-wf-active-cash",
         "color": "#ef6a5b"
@@ -207,7 +456,7 @@
       ],
       "notes": [
         "No extended warranty or purchase protection: the Wells Fargo Guide (in effect 09/15/2025) has 0 matches. CardRatings' generic Visa Signature list conflicts; the issuer guide wins (benefits-verification.md §1 #1).",
-        "Foreign transaction fee not checked."
+        "Foreign transaction fee 3%: Wells Fargo Active Cash Important Credit Terms, Fees, checked 2026-10-16 (https://www.wellsfargo.com/credit-cards/active-cash/terms/)."
       ]
     },
     {
@@ -224,7 +473,7 @@
       "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
-      "foreignTransactionFeePct": null,
+      "foreignTransactionFeePct": 3,
       "art": {
         "assetName": "card-chase-freedom-unlimited",
         "color": "#3f7ff0"
@@ -256,6 +505,90 @@
             "cap": null,
             "needsActivation": false,
             "status": "verified"
+          },
+          {
+            "id": "cfu-chase-travel",
+            "category": null,
+            "merchantIds": [
+              "chase-travel"
+            ],
+            "paymentMethods": [
+              "card"
+            ],
+            "ratePct": 5,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "excludes": [
+              "FROSCH and Valerie Wilson Travel by Chase Travel",
+              "The part paid with points earns nothing",
+              "Charges not paid on chasetravel.com or by phone"
+            ],
+            "sources": [
+              {
+                "document": "Chase Freedom Unlimited card page",
+                "section": "Earn rewards",
+                "versionDate": null,
+                "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+                "quote": "Earn 5% on travel purchased through Chase Travel",
+                "checkedOn": "2026-10-16"
+              },
+              {
+                "document": "Chase rewards category FAQs",
+                "section": null,
+                "versionDate": null,
+                "url": "https://www.chase.com/rewardscategoryfaqs",
+                "quote": "Any portion of your purchase paid for using rewards will not qualify.",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          },
+          {
+            "id": "cfu-lyft",
+            "category": null,
+            "merchantIds": [
+              "lyft"
+            ],
+            "paymentMethods": [
+              "card"
+            ],
+            "ratePct": 2,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "window": {
+              "startsOn": null,
+              "endsOn": "2027-09-30",
+              "endsOnStatus": "verified"
+            },
+            "channels": [
+              "in_app"
+            ],
+            "excludes": [
+              "Gift cards",
+              "Car rentals",
+              "Vehicle service centers",
+              "Miscellaneous fees",
+              "Apple Pay not stated: card only (narrow reading)"
+            ],
+            "sources": [
+              {
+                "document": "Chase Freedom Unlimited card page",
+                "section": "Partner benefits",
+                "versionDate": null,
+                "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+                "quote": "You'll earn 2% cash back total on qualifying Lyft products and services purchased through the Lyft mobile application through 09/30/2027.",
+                "checkedOn": "2026-10-16"
+              },
+              {
+                "document": "Chase Freedom partner benefits page",
+                "section": null,
+                "versionDate": null,
+                "url": "https://creditcards.chase.com/a1/freedom-slate/partnerbenefits",
+                "quote": "Earn 2% total cash back on Lyft rides with your Freedom Unlimited card through September 30, 2027.",
+                "checkedOn": "2026-10-16"
+              }
+            ]
           }
         ]
       },
@@ -306,7 +639,10 @@
               "pharmacy",
               "gift_card",
               "services",
-              "travel"
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
             ]
           },
           "notice": {
@@ -329,7 +665,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining and grocery (perishables, consumables), pharmacy (consumables, medical equipment), travel (tickets), gift_card (cash and cards), services (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining, grocery and gas (perishables, consumables), pharmacy (consumables, medical equipment), travel and entertainment (tickets), gift_card (cash and cards), services and utilities (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
           }
         },
         {
@@ -369,7 +705,10 @@
               "pharmacy",
               "gift_card",
               "services",
-              "travel"
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
             ]
           },
           "notice": {
@@ -392,7 +731,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, pharmacy, gift_card, services and travel items don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, gas, pharmacy, gift_card, services, travel, entertainment and utilities purchases don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
           }
         }
       ],
@@ -416,8 +755,9 @@
       ],
       "notes": [
         "3% dining and drugstores: Chase decides by merchant category code, so the engine counts these rules only at a catalog merchant of that category; at an unknown store the rate stays 1.5% and is marked partial (SPEC §7.2 rule 1). Whether Walgreens and DoorDash code that way is partial (no Chase statement found).",
-        "5% on Chase Travel is verified but not modeled (no merchant).",
-        "Network tier and foreign transaction fee not checked."
+        "Network tier not checked (pricing terms: Signature or Platinum, by credit review).",
+        "Lyft 2% is in the Lyft app only; Paywise can't tell the app from lyft.com, so it applies to any Lyft checkout.",
+        "Foreign transaction fee 3%: Chase Freedom Unlimited pricing and terms (LGC61498), Fees, checked 2026-10-16 (https://sites.chase.com/services/creatives/pricingandterms.html/content/dam/pricingandterms/LGC61498.html)."
       ]
     },
     {
@@ -434,7 +774,7 @@
       "annualFeeUsd": 0,
       "rewardCurrency": "cash_back",
       "pointValueCents": null,
-      "foreignTransactionFeePct": null,
+      "foreignTransactionFeePct": 3,
       "art": {
         "assetName": "card-chase-freedom-rise",
         "color": "#35b6a8"
@@ -442,7 +782,55 @@
       "earn": {
         "baseRatePct": 1.5,
         "baseRateStatus": "verified",
-        "rules": []
+        "rules": [
+          {
+            "id": "rise-lyft",
+            "category": null,
+            "merchantIds": [
+              "lyft"
+            ],
+            "paymentMethods": [
+              "card"
+            ],
+            "ratePct": 2,
+            "cap": null,
+            "needsActivation": false,
+            "status": "verified",
+            "window": {
+              "startsOn": null,
+              "endsOn": "2027-09-30",
+              "endsOnStatus": "verified"
+            },
+            "channels": [
+              "in_app"
+            ],
+            "excludes": [
+              "Gift cards",
+              "Car rentals",
+              "Vehicle service centers",
+              "Miscellaneous fees",
+              "Apple Pay not stated: card only (narrow reading)"
+            ],
+            "sources": [
+              {
+                "document": "Chase Freedom Rise card page",
+                "section": "Partner benefits",
+                "versionDate": null,
+                "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/rise",
+                "quote": "You’ll earn 2% cash back total on qualifying Lyft products and services purchased through the Lyft mobile application through 09/30/2027.",
+                "checkedOn": "2026-10-16"
+              },
+              {
+                "document": "Lyft: Chase cardmember benefits",
+                "section": null,
+                "versionDate": null,
+                "url": "https://www.lyft.com/chase",
+                "quote": "pay with your Chase Freedom, Chase Freedom Flex, Chase Freedom Unlimited, Chase Freedom Rise or Chase Freedom Student cards",
+                "checkedOn": "2026-10-16"
+              }
+            ]
+          }
+        ]
       },
       "protections": [
         {
@@ -491,7 +879,10 @@
               "pharmacy",
               "gift_card",
               "services",
-              "travel"
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
             ]
           },
           "notice": {
@@ -514,7 +905,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining and grocery (perishables, consumables), pharmacy (consumables, medical equipment), travel (tickets), gift_card (cash and cards), services (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining, grocery and gas (perishables, consumables), pharmacy (consumables, medical equipment), travel and entertainment (tickets), gift_card (cash and cards), services and utilities (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
           }
         },
         {
@@ -554,7 +945,10 @@
               "pharmacy",
               "gift_card",
               "services",
-              "travel"
+              "travel",
+              "gas",
+              "entertainment",
+              "utilities"
             ]
           },
           "notice": {
@@ -577,7 +971,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, pharmacy, gift_card, services and travel items don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, gas, pharmacy, gift_card, services, travel, entertainment and utilities purchases don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
           }
         }
       ],
@@ -601,9 +995,10 @@
       ],
       "notes": [
         "Same guide (BGC11366) and terms as Freedom Unlimited: protections are an exact copy of chase-freedom-unlimited's. Keep them identical when editing.",
-        "Earn is 1.5% flat; Freedom Unlimited's bonus categories don't apply.",
+        "Earn is 1.5% plus Lyft 2% in the Lyft app; Freedom Unlimited's 3% dining and drugstore rules don't apply.",
         "Art color is design.md §6's proposed teal (the card isn't in the film).",
-        "Network tier and foreign transaction fee not checked."
+        "Network tier not checked.",
+        "Foreign transaction fee 3%: Chase Freedom Rise pricing and terms (LGC65397), Fees, checked 2026-10-16 (https://sites.chase.com/services/creatives/pricingandterms.html/content/dam/pricingandterms/LGC65397.html)."
       ]
     },
     {
@@ -628,20 +1023,7 @@
       "earn": {
         "baseRatePct": 1,
         "baseRateStatus": "verified",
-        "rules": [
-          {
-            "id": "discover-q4-2026-dining",
-            "category": "dining",
-            "merchantIds": null,
-            "paymentMethods": [
-              "any"
-            ],
-            "ratePct": 5,
-            "cap": null,
-            "needsActivation": true,
-            "status": "partial"
-          }
-        ]
+        "rules": []
       },
       "protections": [],
       "sources": [
@@ -655,11 +1037,12 @@
         }
       ],
       "notes": [
-        "5% rotating quarterly categories need activation and have a quarterly cap (not modeled). Q4 2026 (Oct 1-Dec 31) is restaurants per secondary sources (NerdWallet, Doctor of Credit, as cited in the Oct 17, 2026 product review); not confirmed on discover.com, so the rule is partial. The engine never counts it: it marks Discover's 1% partial on dining, so answers say \"Likely\" (SPEC §7.2 rule 1). Replace or remove it after Dec 31, 2026.",
         "No purchase protection or extended warranty on the current card page (verified absence). Their removal on Feb 28, 2018 comes from secondary sources only (partial).",
         "Discover is now part of Capital One (card page).",
         "Art color is design.md §6's proposed amber (the card isn't in the film).",
-        "Network tier and foreign transaction fee not checked."
+        "Network tier and foreign transaction fee not checked.",
+        "The quarterly 5% needs activation and has a cap, so it is a phone-evaluated offer (offers[] discover-5pct-2026q4), not an earn rule.",
+        "Account management moves to Capital One (events[] discover-to-capital-one-2026)."
       ]
     }
   ],
@@ -832,6 +1215,199 @@
       "notes": [
         "Apple Pay in U.S. stores since Aug 24, 2026; online and in-app unverified (SPEC.md §8.3)."
       ]
+    },
+    {
+      "id": "duane-reade",
+      "names": [
+        "Duane Reade"
+      ],
+      "domains": [],
+      "category": "pharmacy",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false,
+      "notes": [
+        "Apple Card's 3% applies in its NY/NJ stores only."
+      ]
+    },
+    {
+      "id": "ace-hardware",
+      "names": [
+        "Ace Hardware"
+      ],
+      "domains": [
+        "acehardware.com"
+      ],
+      "category": "home",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "chargepoint",
+      "names": [
+        "ChargePoint"
+      ],
+      "domains": [
+        "chargepoint.com"
+      ],
+      "category": "services",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false,
+      "notes": [
+        "EV charging: issuers code it differently from gas stations."
+      ]
+    },
+    {
+      "id": "exxon-mobil",
+      "names": [
+        "Exxon",
+        "Mobil",
+        "ExxonMobil",
+        "Exxon Mobil"
+      ],
+      "domains": [
+        "exxon.com",
+        "mobil.com"
+      ],
+      "category": "gas",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "hertz",
+      "names": [
+        "Hertz"
+      ],
+      "domains": [
+        "hertz.com"
+      ],
+      "category": "travel",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "uber",
+      "names": [
+        "Uber"
+      ],
+      "domains": [
+        "uber.com"
+      ],
+      "category": "travel",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "uber-eats",
+      "names": [
+        "Uber Eats",
+        "UberEats"
+      ],
+      "domains": [
+        "ubereats.com"
+      ],
+      "category": "dining",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false,
+      "notes": [
+        "Whether issuers code it as a restaurant is unclear, so restaurant offers leave it out."
+      ]
+    },
+    {
+      "id": "lyft",
+      "names": [
+        "Lyft"
+      ],
+      "domains": [
+        "lyft.com"
+      ],
+      "category": "travel",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "booking-com",
+      "names": [
+        "Booking.com"
+      ],
+      "domains": [
+        "booking.com"
+      ],
+      "category": "travel",
+      "acceptsApplePay": {
+        "value": true,
+        "status": "verified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "chase-travel",
+      "names": [
+        "Chase Travel"
+      ],
+      "domains": [
+        "chasetravel.com"
+      ],
+      "category": "travel",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "capital-one-travel",
+      "names": [
+        "Capital One Travel"
+      ],
+      "domains": [
+        "travel.capitalone.com",
+        "capitalonetravel.com"
+      ],
+      "category": "travel",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
+    },
+    {
+      "id": "capital-one-entertainment",
+      "names": [
+        "Capital One Entertainment"
+      ],
+      "domains": [
+        "entertainment.capitalone.com"
+      ],
+      "category": "entertainment",
+      "acceptsApplePay": {
+        "value": null,
+        "status": "unverified"
+      },
+      "isDemo": false
     }
   ],
   "itemCategories": [
@@ -924,6 +1500,769 @@
       "id": "general",
       "warrantyRelevant": false,
       "theftDamageRelevant": false
+    },
+    {
+      "id": "gas",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "entertainment",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    },
+    {
+      "id": "utilities",
+      "warrantyRelevant": false,
+      "theftDamageRelevant": false
+    }
+  ],
+  "offers": [
+    {
+      "id": "discover-5pct-2026q4",
+      "cardIds": [
+        "discover-it-student-cash-back"
+      ],
+      "programId": null,
+      "title": "Q4 2026 5% Cashback Bonus: restaurants, entertainment, utilities",
+      "evaluation": "device",
+      "match": {
+        "merchantIds": null,
+        "categories": [
+          "dining",
+          "entertainment",
+          "utilities"
+        ],
+        "categoryBasis": "rule",
+        "excludeMerchantIds": [
+          "doordash",
+          "uber-eats"
+        ],
+        "paymentMethods": [
+          "any"
+        ],
+        "channels": [
+          "any"
+        ],
+        "excludes": [
+          "Restaurants inside hotels or retail stores; bakeries",
+          "Golf courses, country clubs, some collegiate and charitable events",
+          "Cable and streaming subscriptions",
+          "Utilities paid through a landlord, property manager or HOA; home fuel delivery",
+          "In-store purchases of internet, cable, satellite or phone service",
+          "Digital-wallet transactions without a qualifying merchant code",
+          "Non-US merchants"
+        ]
+      },
+      "reward": {
+        "kind": "rate",
+        "ratePct": 5,
+        "basis": "total",
+        "amountUsd": null,
+        "matchPct": null,
+        "countsAsCash": true
+      },
+      "limits": {
+        "minSpendUsd": null,
+        "spendCapUsd": 1500,
+        "capPeriod": "calendar_quarter",
+        "afterCapRatePct": 1,
+        "maxRewardUsd": 75,
+        "usesPerPeriod": null
+      },
+      "window": {
+        "startsOn": "2026-10-01",
+        "endsOn": "2026-12-31",
+        "endsOnStatus": "verified"
+      },
+      "requires": [
+        {
+          "kind": "activation",
+          "deadline": "2026-12-31",
+          "retroactive": false,
+          "how": "Discover app, discover.com or 1-800-DISCOVER; after the move, the Capital One app or website. A quarter's activation moves with the account."
+        }
+      ],
+      "whenUnknown": "exclude",
+      "exclusiveGroup": null,
+      "confirmQuestion": "Activated your Q4 5%?",
+      "display": {
+        "short": "Q4 5%"
+      },
+      "status": "verified",
+      "sources": [
+        {
+          "document": "Discover home page",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.discover.com/",
+          "quote": "Earn 5% cash back with your Discover it® Cash Back Credit Card at Restaurants, Entertainment and Utilities, now-Dec. 31, on up to $1,500",
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Discover 5% categories (offer-categories JSON)",
+          "section": "Q4 2026",
+          "versionDate": null,
+          "url": "https://card.discover.com/cardissuer/public/rewards/offer/v1/offer-categories",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Discover it Student Cash Back page",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.discover.com/credit-cards/student-credit-card/",
+          "quote": "Earn 5% cash back on everyday purchases at different places you shop each quarter, up to the quarterly maximum when you activate.",
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Discover cashback calendar",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.discover.com/credit-cards/cash-back/cashback-calendar.html",
+          "quote": "Earn 5% Cashback Bonus on up to $1,500 in different category purchases each quarter, when you activate.",
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Discover digital wallets",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.discover.com/credit-cards/digital-wallets/",
+          "quote": "If your Digital Wallet purchases are made using Apple Pay, Google Pay and Samsung Pay you will earn rewards just like you would with your physical card.",
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Capital One: Discover card FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.capitalone.com/updates/discover/card-faqs/",
+          "quote": "if you already activated your 5% cash back for the quarter, this will move with your account to Capital One and stay active for the quarter.",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Earns from the later of Oct 1 and the activation day (terms as quoted by The Points Party; secondary).",
+        "DoorDash and Uber Eats are left out: the Q4 wording omits restaurant delivery services.",
+        "Discover decides by merchant category code; Paywise matches its own categories.",
+        "Q1 2027 categories weren't announced on 2026-10-16."
+      ]
+    },
+    {
+      "id": "capital-one-travel-5pct",
+      "cardIds": [
+        "discover-it-student-cash-back"
+      ],
+      "programId": null,
+      "title": "5% on Capital One Travel hotels, vacation rentals, rental cars and activities (after the move)",
+      "evaluation": "device",
+      "match": {
+        "merchantIds": [
+          "capital-one-travel"
+        ],
+        "categories": null,
+        "categoryBasis": null,
+        "excludeMerchantIds": [],
+        "paymentMethods": [
+          "card"
+        ],
+        "channels": [
+          "online",
+          "in_app"
+        ],
+        "excludes": [
+          "Purchases outside Capital One Travel",
+          "Flights aren't in the 5% wording",
+          "The part paid with travel credits or rewards"
+        ]
+      },
+      "reward": {
+        "kind": "rate",
+        "ratePct": 5,
+        "basis": "total",
+        "amountUsd": null,
+        "matchPct": null,
+        "countsAsCash": true
+      },
+      "limits": {
+        "minSpendUsd": null,
+        "spendCapUsd": null,
+        "capPeriod": null,
+        "afterCapRatePct": null,
+        "maxRewardUsd": null,
+        "usesPerPeriod": null
+      },
+      "window": {
+        "startsOn": null,
+        "endsOn": null
+      },
+      "requires": [
+        {
+          "kind": "event",
+          "eventId": "discover-to-capital-one-2026"
+        }
+      ],
+      "whenUnknown": "exclude",
+      "exclusiveGroup": null,
+      "confirmQuestion": null,
+      "display": {
+        "short": "Capital One Travel 5%"
+      },
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Capital One: Discover card FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.capitalone.com/updates/discover/card-faqs/",
+          "quote": "Capital One Travel: Earn 5% cash back or 5X miles on hotels, vacation rentals, rental cars and activities booked through Capital One Travel.",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Capital One's FAQ doesn't name Discover it Student specifically.",
+        "Flights booked there earn the 1% base until a source says otherwise."
+      ]
+    },
+    {
+      "id": "capital-one-entertainment-5pct",
+      "cardIds": [
+        "discover-it-student-cash-back"
+      ],
+      "programId": null,
+      "title": "5% on Capital One Entertainment tickets and events (after the move)",
+      "evaluation": "device",
+      "match": {
+        "merchantIds": [
+          "capital-one-entertainment"
+        ],
+        "categories": null,
+        "categoryBasis": null,
+        "excludeMerchantIds": [],
+        "paymentMethods": [
+          "card"
+        ],
+        "channels": [
+          "online",
+          "in_app"
+        ],
+        "excludes": [
+          "Tickets bought through other ticket sites"
+        ]
+      },
+      "reward": {
+        "kind": "rate",
+        "ratePct": 5,
+        "basis": "total",
+        "amountUsd": null,
+        "matchPct": null,
+        "countsAsCash": true
+      },
+      "limits": {
+        "minSpendUsd": null,
+        "spendCapUsd": null,
+        "capPeriod": null,
+        "afterCapRatePct": null,
+        "maxRewardUsd": null,
+        "usesPerPeriod": null
+      },
+      "window": {
+        "startsOn": null,
+        "endsOn": null
+      },
+      "requires": [
+        {
+          "kind": "event",
+          "eventId": "discover-to-capital-one-2026"
+        }
+      ],
+      "whenUnknown": "exclude",
+      "exclusiveGroup": null,
+      "confirmQuestion": null,
+      "display": {
+        "short": "Capital One Entertainment 5%"
+      },
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Capital One: Discover card FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.capitalone.com/updates/discover/card-faqs/",
+          "quote": "Capital One Entertainment: Earn 5% cash back or 5X miles on tickets and events booked through Capital One Entertainment.",
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Capital One Entertainment benefits",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.capitalone.com/credit-cards/benefits/entertainment/",
+          "quote": "You're a Capital One or Discover by Capital One credit card cardholder with an eligible rewards credit card",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Whether it stacks with the quarter's Entertainment 5% is unknown; rates never add here (best rate first)."
+      ]
+    },
+    {
+      "id": "rise-dining-3pct-new-account",
+      "cardIds": [
+        "chase-freedom-rise"
+      ],
+      "programId": null,
+      "title": "New-cardmember 3% on dining for 6 months (accounts opened under the limited-time offer)",
+      "evaluation": "device",
+      "match": {
+        "merchantIds": null,
+        "categories": [
+          "dining"
+        ],
+        "categoryBasis": "rule",
+        "excludeMerchantIds": [
+          "doordash",
+          "uber-eats"
+        ],
+        "paymentMethods": [
+          "any"
+        ],
+        "channels": [
+          "any"
+        ],
+        "excludes": [
+          "Dining past the first $6,000",
+          "Purchases after 6 months from account opening",
+          "Delivery and takeout count only if they code as a restaurant"
+        ]
+      },
+      "reward": {
+        "kind": "rate",
+        "ratePct": 3,
+        "basis": "total",
+        "amountUsd": null,
+        "matchPct": null,
+        "countsAsCash": true
+      },
+      "limits": {
+        "minSpendUsd": null,
+        "spendCapUsd": 6000,
+        "capPeriod": "account_window",
+        "afterCapRatePct": 1.5,
+        "maxRewardUsd": 90,
+        "usesPerPeriod": null
+      },
+      "window": {
+        "startsOn": null,
+        "endsOn": "2027-03-22",
+        "endsOnStatus": "partial"
+      },
+      "requires": [
+        {
+          "kind": "acquisition_offer",
+          "openedFrom": "2026-06-13",
+          "openedThrough": "2026-09-22",
+          "detail": "Opened under the limited-time 3% dining offer (applications about Jun 13 to Sep 22, 2026)"
+        },
+        {
+          "kind": "account_age",
+          "months": 6
+        }
+      ],
+      "whenUnknown": "exclude",
+      "exclusiveGroup": null,
+      "confirmQuestion": "Opened Rise with the 3% dining offer?",
+      "display": {
+        "short": "3% new-card dining"
+      },
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Chase Freedom Rise card page",
+          "section": "Offer no longer shown on 2026-10-16; terms read from archived copies of this page (2026-07-21, 2026-10-09) in the research notes",
+          "versionDate": null,
+          "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/rise",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Chase rewards category FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.chase.com/rewardscategoryfaqs",
+          "quote": "Delivery and takeout services will be included if they classify as a restaurant merchant.",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Application window from archived copies only: start after 2026-06-12, end between 2026-09-13 and 2026-09-22.",
+        "With no opening month from the user, the phone assumes the earliest possible one, so the window ends early, never late."
+      ]
+    },
+    {
+      "id": "apple-card-booking-3pct",
+      "cardIds": [
+        "apple-card"
+      ],
+      "programId": null,
+      "title": "3% at Booking.com with Apple Pay through Apple's link",
+      "evaluation": "hint",
+      "match": {
+        "merchantIds": [
+          "booking-com"
+        ],
+        "categories": null,
+        "categoryBasis": null,
+        "excludeMerchantIds": [],
+        "paymentMethods": [
+          "apple_pay"
+        ],
+        "channels": [
+          "online",
+          "in_app"
+        ],
+        "excludes": [
+          "Pay at the property, pay later and Partner Offer rates",
+          "Flights, packages, cruises, attractions, taxis",
+          "Bookings from a non-US IP address"
+        ]
+      },
+      "reward": {
+        "kind": "rate",
+        "ratePct": 3,
+        "basis": "total",
+        "amountUsd": null,
+        "matchPct": null,
+        "countsAsCash": true
+      },
+      "limits": {
+        "minSpendUsd": null,
+        "spendCapUsd": null,
+        "capPeriod": null,
+        "afterCapRatePct": null,
+        "maxRewardUsd": null,
+        "usesPerPeriod": null
+      },
+      "window": {
+        "startsOn": null,
+        "endsOn": null
+      },
+      "requires": [
+        {
+          "kind": "link_or_portal",
+          "detail": "Book through Apple's link (booking.com/apple-card) in the Booking.com iOS app 52.0+, iOS web or macOS Safari"
+        }
+      ],
+      "whenUnknown": "exclude",
+      "exclusiveGroup": null,
+      "confirmQuestion": null,
+      "display": {
+        "short": "3% via Apple's link"
+      },
+      "status": "verified",
+      "sources": [
+        {
+          "document": "Apple Support: Learn how to get 3% Daily Cash back when you use Apple Card with Apple Pay",
+          "section": "Merchants that offer 3% Daily Cash back",
+          "versionDate": "2026-09-25",
+          "url": "https://support.apple.com/en-us/120400",
+          "quote": "3% Daily Cash is only earned on eligible stays and car rentals, (a) booked through the exclusive Booking.com link provided",
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Booking.com: Apple Card",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.booking.com/c/apple-card/index.html",
+          "quote": "Use Apple Card with Apple Pay and get 3% Daily Cash back",
+          "checkedOn": "2026-10-16"
+        }
+      ]
+    }
+  ],
+  "programs": [
+    {
+      "id": "chase-offers",
+      "name": "Chase Offers",
+      "cardIds": [
+        "chase-freedom-unlimited",
+        "chase-freedom-rise"
+      ],
+      "whereShown": "Chase app and chase.com: the Offers section, with Added, Redeemed and Expired tabs",
+      "cardMatters": "always",
+      "applePay": "unknown",
+      "stacking": "adds_to_card_earn",
+      "needsAddStep": true,
+      "oneTimeDefault": null,
+      "layout": null,
+      "screenWords": [
+        "Add to card",
+        "Added",
+        "Redeemed",
+        "Expired"
+      ],
+      "availableAfterEventId": null,
+      "status": "verified",
+      "sources": [
+        {
+          "document": "Chase Offers FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.chase.com/personal/merchant-offers/faqs",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Chase Offers",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.chase.com/personal/merchant-offers",
+          "quote": "Customers can activate an offer on a card, shop at the merchant with the same card and receive a statement credit within 30 days.",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Offers are chosen per card from how it's used, so only the cardholder sees them (capture comes later, D2)."
+      ]
+    },
+    {
+      "id": "capital-one-offers",
+      "name": "Capital One Offers",
+      "cardIds": [
+        "discover-it-student-cash-back"
+      ],
+      "whereShown": "Capital One app and website: offer tiles in the Offers section",
+      "cardMatters": "in_store_and_in_app_only",
+      "applePay": "unknown",
+      "stacking": "adds_to_card_earn",
+      "needsAddStep": true,
+      "oneTimeDefault": null,
+      "layout": null,
+      "screenWords": [],
+      "availableAfterEventId": "discover-to-capital-one-2026",
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Capital One Offers terms",
+          "section": null,
+          "versionDate": null,
+          "url": "https://capitaloneoffers.com/Capital-One-Offers-Terms-and-Conditions.pdf",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Capital One: Discover card FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.capitalone.com/updates/discover/card-faqs/",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Online offers pay out on whatever card pays after the click-through, so they never switch the card."
+      ]
+    },
+    {
+      "id": "my-wells-fargo-deals",
+      "name": "My Wells Fargo Deals",
+      "cardIds": [
+        "wf-active-cash"
+      ],
+      "whereShown": "Wells Fargo app and Wells Fargo Online",
+      "cardMatters": "always",
+      "applePay": "may_not_count",
+      "stacking": "adds_to_card_earn",
+      "needsAddStep": true,
+      "oneTimeDefault": null,
+      "layout": null,
+      "screenWords": [],
+      "availableAfterEventId": null,
+      "status": "verified",
+      "sources": [
+        {
+          "document": "My Wells Fargo Deals terms",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.wellsfargo.com/assets/pdf/personal/my-wells-fargo-deals/terms-and-conditions-english.pdf",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Digital wallets may not qualify, so a deal applies on the card path only."
+      ]
+    },
+    {
+      "id": "apple-card-special-offers",
+      "name": "Apple Card special offers",
+      "cardIds": [
+        "apple-card"
+      ],
+      "whereShown": "Wallet: Apple Card, More, Rewards & Offers",
+      "cardMatters": "always",
+      "applePay": "required",
+      "stacking": "replaces_card_earn",
+      "needsAddStep": false,
+      "oneTimeDefault": false,
+      "layout": null,
+      "screenWords": [],
+      "availableAfterEventId": null,
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Apple Support: Apple Card Rewards & Offers",
+          "section": null,
+          "versionDate": null,
+          "url": "https://support.apple.com/en-us/119575",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Limited-time Bonus Daily Cash; none was live for existing cardholders on 2026-10-16."
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "discover-to-capital-one-2026",
+      "cardIds": [
+        "discover-it-student-cash-back"
+      ],
+      "kind": "issuer_migration",
+      "title": "Discover account management moves to Capital One",
+      "expectedOn": "2026-10-19",
+      "expectedOnStatus": "partial",
+      "askFrom": "2026-10-19",
+      "confirmQuestion": "Is your Discover card in the Capital One app?",
+      "effects": {
+        "enablesOfferIds": [
+          "capital-one-travel-5pct",
+          "capital-one-entertainment-5pct"
+        ],
+        "enablesProgramIds": [
+          "capital-one-offers"
+        ],
+        "carriesOver": [
+          "Card number, Discover network, earn rates and no annual fee",
+          "The quarter's 5% activation",
+          "Cashback Match"
+        ],
+        "otherChanges": [
+          "Pay with Rewards in Apple Pay is removed",
+          "Gift-card redemptions get a $25 minimum",
+          "Rewards can no longer pay the minimum due"
+        ]
+      },
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Capital One: Discover card FAQs",
+          "section": null,
+          "versionDate": null,
+          "url": "https://www.capitalone.com/updates/discover/card-faqs/",
+          "quote": "if you already activated your 5% cash back for the quarter, this will move with your account to Capital One and stay active for the quarter.",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "The 2026-10-19 date comes from a Capital One email quoted by Doctor of Credit (2026-08-02) that names Discover it Cash Back, not Student; Capital One says Discover accounts move throughout 2026 and early 2027."
+      ]
+    },
+    {
+      "id": "apple-card-to-chase",
+      "cardIds": [
+        "apple-card"
+      ],
+      "kind": "issuer_transition",
+      "title": "Chase becomes the Apple Card issuer",
+      "expectedOn": null,
+      "expectedOnStatus": "unverified",
+      "askFrom": null,
+      "confirmQuestion": "Is your Apple Card issued by Chase now?",
+      "effects": {
+        "enablesOfferIds": [],
+        "enablesProgramIds": [],
+        "carriesOver": [
+          "Daily Cash up to 3%, no fees, Mastercard network (Apple's transition FAQ)"
+        ],
+        "otherChanges": []
+      },
+      "status": "partial",
+      "sources": [
+        {
+          "document": "Apple Newsroom: Chase to become new issuer of Apple Card",
+          "section": null,
+          "versionDate": "2026-01-07",
+          "url": "https://www.apple.com/newsroom/2026/01/chase-to-become-new-issuer-of-apple-card/",
+          "quote": null,
+          "checkedOn": "2026-10-16"
+        },
+        {
+          "document": "Apple Card Issuer Transition",
+          "section": null,
+          "versionDate": null,
+          "url": "https://learn.applecard.apple/transition",
+          "quote": "Chase will become the new issuer of Apple Card, with an expected transition in approximately 24 months.",
+          "checkedOn": "2026-10-16"
+        }
+      ],
+      "notes": [
+        "Expected about early 2028, subject to closing conditions and regulatory approvals."
+      ]
+    }
+  ],
+  "categoryAliases": [
+    {
+      "phrase": "grocery stores",
+      "category": "grocery"
+    },
+    {
+      "phrase": "groceries",
+      "category": "grocery"
+    },
+    {
+      "phrase": "supermarkets",
+      "category": "grocery"
+    },
+    {
+      "phrase": "gas stations",
+      "category": "gas"
+    },
+    {
+      "phrase": "gas",
+      "category": "gas"
+    },
+    {
+      "phrase": "fuel",
+      "category": "gas"
+    },
+    {
+      "phrase": "restaurants",
+      "category": "dining"
+    },
+    {
+      "phrase": "dining",
+      "category": "dining"
+    },
+    {
+      "phrase": "drugstores",
+      "category": "pharmacy"
+    },
+    {
+      "phrase": "pharmacies",
+      "category": "pharmacy"
+    },
+    {
+      "phrase": "entertainment",
+      "category": "entertainment"
+    },
+    {
+      "phrase": "utilities",
+      "category": "utilities"
+    },
+    {
+      "phrase": "travel",
+      "category": "travel"
     }
   ]
 }

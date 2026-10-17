@@ -33,7 +33,7 @@ FAKE_SURNAMES = {"Doe", "Sample", "Example", "Test"}
 # Company and product names that start with a first name.
 NON_PERSON_PHRASES = {
     "Chase Freedom", "Chase Bank", "Chase Travel", "Chase Card", "Chase Guide",
-    "Virginia Surety", "Duane Reade",
+    "Virginia Surety", "Duane Reade", "Chase Offers",
 }
 
 # Common U.S. first names. Names that are also everyday capitalised words here (Will, Mark,

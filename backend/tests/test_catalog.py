@@ -27,6 +27,7 @@ RELEVANT_CATEGORIES = {
 }
 OTHER_CATEGORIES = {
     "apparel", "home", "dining", "grocery", "pharmacy", "gift_card", "services", "travel", "general",
+    "gas", "entertainment", "utilities",  # schemaVersion 2 (offers)
 }
 
 
@@ -157,7 +158,7 @@ def test_freedom_rise_uses_freedom_unlimited_terms():
     """Same guide (BGC11366): docs/benefits-verification.md §7 says keep them identical."""
     rise, fu = catalog.card("chase-freedom-rise"), catalog.card("chase-freedom-unlimited")
     assert rise.protections == fu.protections
-    assert rise.earn.base_rate_pct == Decimal("1.5") and rise.earn.rules == ()
+    assert rise.earn.base_rate_pct == Decimal("1.5") and [r.id for r in rise.earn.rules] == ["rise-lyft"]
 
 
 def test_cards_without_purchase_protection_or_extended_warranty():
@@ -183,13 +184,10 @@ def test_earn_rates():
     assert rules["apple-card-bonus-merchants"].merchant_ids == ("nike", "walgreens")
     assert rules["apple-card-bonus-merchants"].payment_methods == ("apple_pay",)
     assert rules["apple-card-apple-pay"].rate_pct == 2 and rules["apple-card-apple-pay"].merchant_ids is None
-    fu = {r.category: r.rate_pct for r in catalog.card("chase-freedom-unlimited").earn.rules}
-    assert fu == {"dining": 3, "pharmacy": 3}
-    q4 = {r.id: r for r in catalog.card("discover-it-student-cash-back").earn.rules}["discover-q4-2026-dining"]
-    assert (q4.category, q4.rate_pct, q4.needs_activation, q4.status) == ("dining", 5, True, "partial")
-    # Every rule the engine counts is verified; an activation rule is never counted (§7.2 rule 1).
-    assert all(r.status == "verified" for card in catalog.CATALOG.cards for r in card.earn.rules
-               if not r.needs_activation)
+    fu = {r.id: r.rate_pct for r in catalog.card("chase-freedom-unlimited").earn.rules}
+    assert fu == {"cfu-dining": 3, "cfu-drugstores": 3, "cfu-chase-travel": 5, "cfu-lyft": 2}
+    assert catalog.card("chase-freedom-unlimited").earn.rules[3].window.ends_on == dt.date(2027, 9, 30)
+    assert all(r.status == "verified" for card in catalog.CATALOG.cards for r in card.earn.rules)
 
 
 def test_card_art_follows_design_doc():

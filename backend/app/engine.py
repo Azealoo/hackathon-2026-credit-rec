@@ -5,18 +5,22 @@ subtraction (§6.3 "Where S1's numbers come from"). Card rules come only from da
 (app/catalog.py); thresholds come from app/policy.py; copy comes from app/copy.py.
 
 Rulings applied here (see the module docstrings and the track report):
-- Baseline (v2.3): rules 4–8 compare against the wallet card selected on screen when a saved card is
+- Baseline (v2.4): rules 4–8 compare against the wallet card selected on screen when a saved card is
   selected and exactly one wallet card has its network; otherwise against the default. A Keep keeps
   the baseline, and cashBest ties go to the baseline, then the default, then wallet order.
 - R7: Freedom Unlimited's 3% dining/pharmacy rules are catalog earn rules like any other.
-- v2.3 (replaces R10): a category earn rule counts only at a known merchant, against its catalog
-  category (Chase decides by merchant code). At an unknown store, a category rule that matches the
-  items' shared category isn't counted but marks the rate partial, as does a matching rule that needs
-  activation.
-- Earn precedence: merchant rule > category rule > a payment-method rule with neither
-  (e.g. Apple Card's 2% via Apple Pay) > base rate; the best rate wins within a tier.
-- v2.3 rule 3: a protection *covers* an item when its terms do, at any price; an item *qualifies*
+- v2.4 (replaces R10): a category earn rule counts only at a known merchant, against its catalog
+  category (issuers decide by merchant code). At an unknown store, a rule that would win only on the
+  items' shared category isn't counted but marks the rate partial. offerContext.ruleCategory still
+  falls back to the items' category for the phone's offers.
+- Earn precedence (D4): the best applicable rate wins. A rule applies when its payment method,
+  merchant or category match, its window contains clientDate and a phone checkout can use one of
+  its channels; the base rate is always a candidate. Ties go to the more specific rule (merchant >
+  category > payment method, e.g. Apple Card's 2% via Apple Pay > base), then file order.
+- v2.4 rule 3: a protection *covers* an item when its terms do, at any price; an item *qualifies*
   for Rule P when it costs $100+ in a relevant category. No switch drops cover the baseline has.
+- offerContext: the public inputs the phone's offer resolver needs (D1). It depends only on the
+  cart and the catalog, so every user gets the same block for the same cart.
 - §8.2 display rule: confidence is worked out before the copy. A "medium" answer drops the cap
   (copy line 2 and the draft's limitUsd); a cash figure from a rate that isn't verified is stated
   without its number; the draft saves no dates for a protection that isn't verified.
@@ -38,9 +42,11 @@ from app.models import (
     CoverageEntry,
     Decision,
     Item,
+    OfferContext,
     PaymentPath,
     ProtectionChange,
     ProtectionLimit,
+    PublicRate,
     PurchaseDraft,
     ScreenType,
     Source,
@@ -70,12 +76,14 @@ class EngineResult:
     decision: Decision
     purchase_draft: PurchaseDraft | None
     sources: list[Source]
+    offer_context: OfferContext | None = None
 
 
 @dataclass(frozen=True)
 class Rate:
     pct: Decimal
     status: str  # verified / partial / unverified
+    rule_id: str | None = None  # None: the card's base rate
 
 
 def cents(amount: Decimal) -> Decimal:
@@ -126,38 +134,54 @@ def payment_path(cart: Cart) -> PaymentPath:
     return "unknown"
 
 
-def _applies(rule: EarnRule, merchant_id: str | None, category: str | None, method: str) -> bool:
-    if "any" not in rule.payment_methods and method not in rule.payment_methods:
-        return False
+# A Paywise check reads a phone screen: the purchase is online or in an app, never in a store.
+CHECK_CHANNELS = frozenset({"online", "in_app", "any"})
+
+
+def _tier(rule: EarnRule, merchant_id: str | None, rule_category: str | None) -> int | None:
+    """How specific a matching rule is (3 merchant, 2 category, 1 payment method); None if it doesn't match."""
     if rule.merchant_ids:
-        return merchant_id in rule.merchant_ids and (rule.category is None or rule.category == category)
-    return rule.category is None or rule.category == category
+        return 3 if merchant_id in rule.merchant_ids and rule.category in (None, rule_category) else None
+    if rule.category is not None:
+        return 2 if rule.category == rule_category else None
+    return 1
 
 
-def earn_rate(card: Card, merchant_id: str | None, category: str | None, method: str, *,
-              guess_category: str | None = None) -> Rate:
-    """The card's rate for this merchant and payment method ("apple_pay" or "card").
+def applicable_rules(card: Card, merchant_id: str | None, rule_category: str | None, method: str,
+                     on: dt.date | None = None) -> list[tuple[int, EarnRule]]:
+    """(tier, rule) for each earn rule that applies, in file order. `on` is clientDate; None skips windows."""
+    found = []
+    for rule in card.earn.rules:
+        if rule.needs_activation or not ("any" in rule.payment_methods or method in rule.payment_methods):
+            continue
+        if on is not None and rule.window is not None and not rule.window.contains(on):
+            continue
+        if CHECK_CHANNELS.isdisjoint(rule.channels):
+            continue
+        tier = _tier(rule, merchant_id, rule_category)
+        if tier is not None:
+            found.append((tier, rule))
+    return found
 
-    `category` is the known merchant's catalog category: Chase decides by merchant code, so a category rule
-    counts only there. `guess_category` is the items' shared category at a store the catalog doesn't know.
-    A rule that may apply but isn't counted (it needs activation, or it matches only the guessed category)
-    leaves the counted rate in place but marks it partial, so the copy hedges (§7.2 rule 1)."""
-    counted = [r for r in card.earn.rules if not r.needs_activation and _applies(r, merchant_id, category, method)]
-    tiers = ([r for r in counted if r.merchant_ids],
-             [r for r in counted if not r.merchant_ids and r.category is not None],
-             [r for r in counted if not r.merchant_ids and r.category is None])
-    tier = next((t for t in tiers if t), None)
-    if tier:
-        best = max(tier, key=lambda r: r.rate_pct)
-        rate = Rate(best.rate_pct, best.status)
-    else:
-        rate = Rate(card.earn.base_rate_pct, card.earn.base_rate_status)
-    maybe = [r for r in card.earn.rules if r.needs_activation and _applies(r, merchant_id, category, method)]
-    if guess_category is not None:
-        maybe += [r for r in card.earn.rules if _applies(r, merchant_id, guess_category, method)]
-    if rate.status == "verified" and any(r.rate_pct > rate.pct for r in maybe):
-        return Rate(rate.pct, "partial")
-    return rate
+
+def earn_rate(card: Card, merchant_id: str | None, rule_category: str | None, method: str,
+              on: dt.date | None = None, *, guess_category: str | None = None) -> Rate:
+    """The card's public rate for this merchant / category / payment method ("apple_pay" or "card") on day `on`
+    (D4: the best applicable rate; ties to the more specific rule, then file order; the base rate always counts).
+
+    `rule_category` is the known merchant's catalog category: issuers decide by merchant code, so a category rule
+    counts only there. `guess_category` is the items' shared category at a store the catalog doesn't know: a rule
+    that would beat the counted rate only on it isn't counted, but marks the rate partial so the copy hedges
+    (§7.2 rule 1)."""
+    best = Rate(card.earn.base_rate_pct, card.earn.base_rate_status)
+    best_key = (best.pct, 0)
+    for tier, rule in applicable_rules(card, merchant_id, rule_category, method, on):
+        if (rule.rate_pct, tier) > best_key:
+            best, best_key = Rate(rule.rate_pct, rule.status, rule.id), (rule.rate_pct, tier)
+    if guess_category is not None and best.status == "verified" and any(
+            rule.rate_pct > best.pct for _, rule in applicable_rules(card, merchant_id, guess_category, method, on)):
+        return Rate(best.pct, "partial", best.rule_id)
+    return best
 
 
 def cash_for(amount: Decimal, rate: Rate) -> Decimal:
@@ -309,14 +333,16 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
     merchant_id = merchant.id if merchant else None
     category = merchant.category if merchant else None
     guess = None if merchant else _shared_category(cart)
-    rates = {c.id: earn_rate(c, merchant_id, category, method, guess_category=guess) for c in cards}
+    rates = {c.id: earn_rate(c, merchant_id, category, method, client_date, guess_category=guess) for c in cards}
     cash = {c.id: cash_for(amount, rates[c.id]) for c in cards}
     best_cash = max(cash.values())
     tied = [c for c in cards if cash[c.id] == best_cash]
     cash_best = next((c for c in (baseline, default) if c in tied), tied[0])
 
     rules = _Rules(cat, cart, path)
-    ctx = _Context(cat, cart, path, cards, default, baseline, cash_best, cash, rates, rules, client_date)
+    # offerContext.ruleCategory keeps the items' fallback: the phone matches offers on it (D1).
+    ctx = _Context(cat, cart, path, cards, default, baseline, cash_best, cash, rates, rules, client_date,
+                   amount, merchant_id, category or guess, method)
 
     # Rule 2: items unreadable.
     if not cart.items or cart.confidence.items < policy.ITEM_CONFIDENCE_MIN:
@@ -327,6 +353,9 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
     eligible = {c.id: [rules.eligible(c, item) for item in qualifying] for c in cards}
     baseline_types = [set(e) for e in eligible[baseline.id]]
     baseline_covers = [rules.covers(baseline, item) for item in cart.items]
+    # The cards a cash decision may pick (Rule C, and the phone's offers) without dropping cover the baseline has.
+    ctx.allowed_cash_picks = [c for c in cards if all(set(rules.covers(c, item)) >= set(mine)
+                                                      for item, mine in zip(cart.items, baseline_covers))]
 
     # Rule 4 (P): a card that adds a type the baseline lacks on a qualifying item and keeps every type the
     # baseline covers on every item.
@@ -363,7 +392,7 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
     threshold = policy.CASH_SWITCH_MIN_USD[path]
     gain = cash[cash_best.id] - cash[baseline.id]
     if cash_best is not baseline and gain >= threshold:
-        if ctx.lost(cash_best):
+        if cash_best not in ctx.allowed_cash_picks:
             covered = _protections(baseline_covers, set().union(*(set(c) for c in baseline_covers)))
             covered_confidence = ctx.confidence(covered)
             return ctx.keep("already_protected", copy_text.keep_protected(
@@ -375,8 +404,8 @@ def decide(screen_type: ScreenType, cart: Cart | None, wallet: Sequence[WalletCa
 
     # Rule 7 (M): the baseline earns more via Apple Pay than typed, and the button is visible.
     if path == "apple_pay":
-        apple_pay_rate = earn_rate(baseline, merchant_id, category, "apple_pay", guess_category=guess)
-        typed_rate = earn_rate(baseline, merchant_id, category, "card", guess_category=guess)
+        apple_pay_rate = earn_rate(baseline, merchant_id, category, "apple_pay", client_date, guess_category=guess)
+        typed_rate = earn_rate(baseline, merchant_id, category, "card", client_date, guess_category=guess)
         apple_pay_cash = cash_for(amount, apple_pay_rate)
         if apple_pay_cash > cash_for(amount, typed_rate):
             return ctx.keep("method", copy_text.keep_method(
@@ -440,6 +469,29 @@ class _Context:
     rates: dict[str, Rate]
     rules: _Rules
     client_date: dt.date
+    amount: Decimal
+    merchant_id: str | None
+    rule_category: str | None
+    method: str
+    allowed_cash_picks: list[Card] | None = None  # None until rule 3 ran (rule 2 returns before it)
+
+    def offer_context(self, decision: Decision) -> OfferContext:
+        """offerContext (D1): public, per cart. The phone may move a cash decision to another card in
+        allowedCashPicks; it may never override protection, items_unreadable or no_checkout."""
+        may_override = (decision.kind, decision.reason) in {
+            ("switch", "cash"), ("keep", "default_best"), ("keep", "below_threshold"), ("keep", "method")}
+        allowed = self.allowed_cash_picks if may_override and self.allowed_cash_picks else [self.baseline]
+        try:
+            drafts = {c.id: self._draft(c, self.confidence()) for c in allowed} if may_override else {}
+        except DateOutOfRange:  # clientDate near the calendar's end: keep the server's decision
+            drafts, allowed, may_override = {}, [self.baseline], False
+        return OfferContext(
+            catalog_version=self.cat.catalog_version, amount_usd=float(self.amount), merchant_id=self.merchant_id,
+            rule_category=self.rule_category, item_categories=list(dict.fromkeys(i.category for i in self.cart.items)),
+            payment_path=self.path, method=self.method, threshold_usd=float(policy.CASH_SWITCH_MIN_USD[self.path]),
+            public_rates={c.id: PublicRate(rate_pct=float(self.rates[c.id].pct), status=self.rates[c.id].status,
+                                           rule_id=self.rates[c.id].rule_id) for c in self.cards},
+            allowed_cash_picks=[c.id for c in allowed], purchase_draft_by_card=drafts, device_may_override=may_override)
 
     def notes(self) -> list[str]:
         """Why an item that would qualify gets no card cover (only when its condition blocks a
@@ -554,7 +606,7 @@ class _Context:
         notes = self.notes() if notes is None else notes
         decision = self._decision("switch", reason, picked, gained, copy, notes, confidence)
         return EngineResult(decision, self._draft(picked, confidence, {p.type for p in gained}),
-                            self._sources(picked, gained, cash_copy=reason == "cash"))
+                            self._sources(picked, gained, cash_copy=reason == "cash"), self.offer_context(decision))
 
     def keep(self, reason: str, copy, confidence: Confidence, kept: list[Protection] | None = None) -> EngineResult:
         """Keep the baseline: the card on screen when it's known, else the default."""
@@ -562,7 +614,8 @@ class _Context:
         notes = [] if reason == "items_unreadable" else self.notes()
         decision = self._decision("keep", reason, self.baseline, [], copy, notes, confidence)
         draft = self._draft(self.baseline, confidence) if reason == "already_protected" else None
-        return EngineResult(decision, draft, self._sources(self.baseline, kept, cash_copy=reason == "method"))
+        return EngineResult(decision, draft, self._sources(self.baseline, kept, cash_copy=reason == "method"),
+                            self.offer_context(decision))
 
 
 def _float(value: Decimal | None) -> float | None:

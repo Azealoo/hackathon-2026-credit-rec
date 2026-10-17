@@ -41,9 +41,97 @@ struct CardCatalog: Sendable {
         var names: [String]?
     }
 
+    /// Both days inclusive (yyyy-MM-dd); nil is open-ended.
+    struct Window: Decodable, Sendable, Equatable {
+        var startsOn: String?
+        var endsOn: String?
+
+        func contains(_ day: String) -> Bool {
+            (startsOn.map { $0 <= day } ?? true) && (endsOn.map { day <= $0 } ?? true)
+        }
+    }
+
+    /// `offers[]` (schemaVersion 2): a reward that depends on something only the user knows. Only the fields
+    /// `OfferResolver` and the offer questions use.
+    struct Offer: Decodable, Sendable, Equatable, Identifiable {
+        struct Match: Decodable, Sendable, Equatable {
+            var merchantIds: [String]?
+            var categories: [String]?
+            /// "rule" or "items".
+            var categoryBasis: String?
+            var excludeMerchantIds: [String]?
+            var paymentMethods: [String]?
+            var channels: [String]?
+        }
+
+        struct Reward: Decodable, Sendable, Equatable {
+            /// rate, statement_credit, … (only those two can be `device`).
+            var kind: String
+            var ratePct: Double?
+            /// "total" or "extra".
+            var basis: String?
+            var amountUsd: Double?
+            var countsAsCash: Bool?
+        }
+
+        struct Limits: Decodable, Sendable, Equatable {
+            var minSpendUsd: Double?
+            var spendCapUsd: Double?
+            var capPeriod: String?
+        }
+
+        struct Requirement: Decodable, Sendable, Equatable {
+            /// activation, enrollment, targeted, account_age, acquisition_offer, event, link_or_portal.
+            var kind: String
+            var deadline: String?
+            var retroactive: Bool?
+            var months: Int?
+            var openedFrom: String?
+            var openedThrough: String?
+            var eventId: String?
+        }
+
+        struct Display: Decodable, Sendable, Equatable {
+            var short: String
+        }
+
+        var id: String
+        var cardIds: [String]
+        var title: String?
+        /// "device" or "hint".
+        var evaluation: String
+        var match: Match
+        var reward: Reward
+        var limits: Limits?
+        var window: Window?
+        var requires: [Requirement]
+        /// "exclude" or "medium".
+        var whenUnknown: String?
+        var exclusiveGroup: String?
+        var confirmQuestion: String?
+        var display: Display
+        var status: VerificationStatus?
+    }
+
+    /// `events[]`: an issuer change the user confirms for their card (Discover → Capital One).
+    struct Event: Decodable, Sendable, Equatable, Identifiable {
+        struct Effects: Decodable, Sendable, Equatable {
+            var enablesOfferIds: [String]?
+        }
+
+        var id: String
+        var cardIds: [String]
+        var title: String?
+        var askFrom: String?
+        var confirmQuestion: String
+        var effects: Effects?
+    }
+
     var catalogVersion: String?
     var cards: [Card]
     var merchants: [Merchant]
+    var offers: [Offer] = []
+    var events: [Event] = []
 
     /// Loads `cards.json` from the app bundle. A missing or unreadable file gives an empty catalog
     /// (names fall back to card IDs) rather than a crash inside a background intent.
@@ -100,13 +188,15 @@ struct CardCatalog: Sendable {
 }
 
 extension CardCatalog: Decodable {
-    private enum CodingKeys: String, CodingKey { case catalogVersion, cards, merchants }
+    private enum CodingKeys: String, CodingKey { case catalogVersion, cards, merchants, offers, events }
 
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         catalogVersion = container.tolerant(String.self, .catalogVersion)
         cards = (container.tolerant([Lossy<Card>].self, .cards) ?? []).compactMap(\.value)
         merchants = (container.tolerant([Lossy<Merchant>].self, .merchants) ?? []).compactMap(\.value)
+        offers = (container.tolerant([Lossy<Offer>].self, .offers) ?? []).compactMap(\.value)
+        events = (container.tolerant([Lossy<Event>].self, .events) ?? []).compactMap(\.value)
     }
 }
 

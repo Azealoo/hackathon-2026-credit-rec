@@ -1,17 +1,23 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Paywise card catalog",
-  "description": "Structure of data/cards.json, the one card-data file (SPEC.md §15.3). Display rule (§8.2): copy states a value as fact only when its status is verified.",
+  "description": "Structure of data/cards.json, the one card-data file (SPEC.md §15.3). Display rule (§8.2): copy states a value as fact only when its status is verified. schemaVersion 2 adds promotional offers (reports/Paywise offers schema.md, decisions D1-D4): earn rules gain windows and channels and stay unconditional (the server applies them); offers[] hold anything that depends on the user (activation, targeting, account age, an issuer event, cap progress) and only the phone evaluates them; programs[] describe personal-offer programs; events[] are issuer changes the user confirms; categoryAliases[] map screen wording to item categories.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "catalogVersion", "cards", "merchants", "itemCategories"],
+  "required": [
+    "schemaVersion", "catalogVersion", "cards", "merchants", "itemCategories", "offers", "programs", "events", "categoryAliases"
+  ],
   "properties": {
     "$schema": {"type": "string"},
-    "schemaVersion": {"const": 1},
+    "schemaVersion": {"const": 2},
     "catalogVersion": {"$ref": "#/$defs/date"},
     "cards": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/card"}},
     "merchants": {"type": "array", "items": {"$ref": "#/$defs/merchant"}},
-    "itemCategories": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/itemCategory"}}
+    "itemCategories": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/itemCategory"}},
+    "offers": {"type": "array", "items": {"$ref": "#/$defs/offer"}},
+    "programs": {"type": "array", "items": {"$ref": "#/$defs/program"}},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/event"}},
+    "categoryAliases": {"type": "array", "items": {"$ref": "#/$defs/categoryAlias"}}
   },
   "$defs": {
     "date": {"type": "string", "format": "date"},
@@ -21,6 +27,29 @@
     "usdOrNull": {"type": ["number", "null"], "minimum": 0},
     "monthsOrNull": {"type": ["integer", "null"], "minimum": 0},
     "daysOrNull": {"type": ["integer", "null"], "minimum": 1},
+    "dateOrNull": {"anyOf": [{"$ref": "#/$defs/date"}, {"type": "null"}]},
+    "pctOrNull": {"type": ["number", "null"], "minimum": 0},
+    "paymentMethod": {"type": "string", "enum": ["apple_pay", "card", "any"]},
+    "channel": {
+      "description": "Where the purchase happens. A Paywise check reads a phone screen, so it is online or in_app; a rule or offer that is in_store only never matches a check.",
+      "type": "string",
+      "enum": ["online", "in_app", "in_store", "any"]
+    },
+    "channels": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/channel"}},
+    "window": {
+      "description": "When an earn rule or offer is live, both days inclusive; null means open-ended. Code compares it with clientDate (server) or the phone's date; the model never does.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startsOn", "endsOn"],
+      "properties": {
+        "startsOn": {"$ref": "#/$defs/dateOrNull"},
+        "endsOn": {"$ref": "#/$defs/dateOrNull"},
+        "endsOnStatus": {
+          "$ref": "#/$defs/status",
+          "description": "partial: the end date is soft (sources disagree or it is inferred)."
+        }
+      }
+    },
     "notes": {
       "description": "Open questions and caveats for the team (G5). Never shown to users.",
       "type": "array",
@@ -80,7 +109,7 @@
       "then": {"properties": {"pointValueCents": {"type": "null"}}}
     },
     "earnRule": {
-      "description": "Rate precedence: merchant rule > category rule > base (§7.2 rule 1).",
+      "description": "An unconditional public rate the server engine applies. Precedence (D4, §7.2 rule 1): among the rules that apply (payment method, merchant or category, window contains clientDate, a channel a phone checkout can use), the best rate wins, and the base rate is always a candidate; ties go to the more specific rule (merchant > category > payment method > base), then file order. Anything capped, activated, targeted or account-dependent is an offer instead, so cap stays null and needsActivation false.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "category", "merchantIds", "paymentMethods", "ratePct", "cap", "needsActivation", "status"],
@@ -88,22 +117,20 @@
         "id": {"$ref": "#/$defs/id"},
         "category": {"anyOf": [{"$ref": "#/$defs/itemCategoryId"}, {"type": "null"}]},
         "merchantIds": {"anyOf": [{"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}}, {"type": "null"}]},
-        "paymentMethods": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {"type": "string", "enum": ["apple_pay", "card", "any"]}
-        },
+        "paymentMethods": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/paymentMethod"}},
         "ratePct": {"type": "number", "minimum": 0},
-        "cap": {"type": "null", "description": "Caps aren't modeled in v1 (§7.2 rule 9)."},
-        "needsActivation": {
-          "type": "boolean",
-          "description": "true: the rate needs activation, which Paywise can't see. The engine never counts it; when it would beat the counted rate, that rate is marked partial (§7.2 rule 1)."
+        "cap": {"type": "null", "description": "Always null: a capped rate is an offer (offers[].limits)."},
+        "needsActivation": {"const": false, "description": "Always false: an activated rate is an offer (offers[].requires)."},
+        "status": {"$ref": "#/$defs/status"},
+        "window": {"$ref": "#/$defs/window"},
+        "channels": {"$ref": "#/$defs/channels", "description": "Missing means any."},
+        "excludes": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Issuer fine print for the team and the Why sheet. The engine doesn't read it."
         },
-        "status": {"$ref": "#/$defs/status"}
-      },
-      "if": {"properties": {"needsActivation": {"const": true}}},
-      "then": {"properties": {"status": {"enum": ["partial", "unverified"]}}}
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/cardSource"}}
+      }
     },
     "protection": {
       "type": "object",
@@ -238,7 +265,7 @@
       }
     },
     "cardSource": {
-      "description": "A card-level citation (earn rates, benefit lists): a named document someone read on checkedOn.",
+      "description": "A citation (card earn rates, benefit lists, earn rules, offers, programs, events): a named primary document someone read on checkedOn. Archived copies (web.archive.org) stay in research notes.",
       "type": "object",
       "additionalProperties": false,
       "required": ["document", "section", "versionDate", "url", "quote", "checkedOn"],
@@ -288,6 +315,398 @@
           "description": "Rule P may switch for purchase protection. false doesn't mean uncovered: a card's terms decide that (excludedCategories)."
         }
       }
+    },
+    "offer": {
+      "description": "A conditional or dated reward that depends on something only the user knows (D1: the user's answers never leave the phone). evaluation device: the phone's OfferResolver adds it to that card's cash and may move a cash decision within offerContext.allowedCashPicks; it never changes a protection decision. evaluation hint: shown, never changes cash or the pick.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "cardIds",
+        "programId",
+        "title",
+        "evaluation",
+        "match",
+        "reward",
+        "limits",
+        "window",
+        "requires",
+        "whenUnknown",
+        "exclusiveGroup",
+        "confirmQuestion",
+        "display",
+        "status",
+        "sources"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id",
+          "description": "One id per period (discover-5pct-2026q4, then -2027q1), so a new quarter starts unanswered."
+        },
+        "cardIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "programId": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "title": {"type": "string", "description": "Team-facing name. Copy uses display.short."},
+        "evaluation": {"enum": ["device", "hint"]},
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["merchantIds", "categories", "categoryBasis", "excludeMerchantIds", "paymentMethods", "channels"],
+          "properties": {
+            "merchantIds": {
+              "anyOf": [
+                {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+                {"type": "null"}
+              ]
+            },
+            "categories": {
+              "anyOf": [
+                {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/itemCategoryId"}},
+                {"type": "null"}
+              ]
+            },
+            "categoryBasis": {
+              "enum": ["rule", "items", null],
+              "description": "rule: the category the engine uses for category earn rules (the merchant's catalog category, else the items' shared category; offerContext.ruleCategory). items: every cart item's category."
+            },
+            "excludeMerchantIds": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/id"},
+              "description": "Merchants left out even when their category matches, e.g. when an issuer's coding is unclear (DoorDash under Discover Restaurants)."
+            },
+            "paymentMethods": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/paymentMethod"},
+              "description": "When a source doesn't say whether Apple Pay counts, the narrow reading: card only."
+            },
+            "channels": {"$ref": "#/$defs/channels"},
+            "excludes": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Issuer exclusions code doesn't check, for the team and the Why sheet."
+            }
+          }
+        },
+        "reward": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "ratePct", "basis", "amountUsd", "matchPct", "countsAsCash"],
+          "properties": {
+            "kind": {
+              "enum": [
+                "rate",
+                "statement_credit",
+                "checkout_discount",
+                "cashback_match",
+                "membership",
+                "spend_bonus",
+                "count_bonus",
+                "partner_credit",
+                "price_perk"
+              ]
+            },
+            "ratePct": {"$ref": "#/$defs/pctOrNull"},
+            "basis": {
+              "enum": ["total", "extra", null],
+              "description": "rate only. total: the offer's rate replaces the card's public rate on the capped spend. extra: it adds to it."
+            },
+            "amountUsd": {"$ref": "#/$defs/usdOrNull"},
+            "matchPct": {"$ref": "#/$defs/pctOrNull"},
+            "countsAsCash": {
+              "type": "boolean",
+              "description": "true only for value that is the card's own cash back or a statement credit."
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minSpendUsd", "spendCapUsd", "capPeriod", "afterCapRatePct", "maxRewardUsd", "usesPerPeriod"],
+          "properties": {
+            "minSpendUsd": {"$ref": "#/$defs/usdOrNull"},
+            "spendCapUsd": {
+              "$ref": "#/$defs/usdOrNull",
+              "description": "Spend that earns the offer's rate per capPeriod. The phone knows how much is left only when the user says (OfferState.spentTowardCapUsd); unknown means the full cap at medium confidence."
+            },
+            "capPeriod": {
+              "enum": ["offer_window", "calendar_quarter", "account_window", "per_booking", null],
+              "description": "account_window: the account_age requirement's span from CardFacts.openedOn."
+            },
+            "afterCapRatePct": {
+              "$ref": "#/$defs/pctOrNull",
+              "description": "As printed. Past the cap the resolver uses the card's public rate (offerContext.publicRates)."
+            },
+            "maxRewardUsd": {
+              "$ref": "#/$defs/usdOrNull",
+              "description": "As printed, for copy. The resolver limits by spendCapUsd."
+            },
+            "usesPerPeriod": {"type": ["integer", "null"], "minimum": 1}
+          }
+        },
+        "window": {"$ref": "#/$defs/window"},
+        "requires": {"type": "array", "items": {"$ref": "#/$defs/precondition"}},
+        "whenUnknown": {
+          "enum": ["exclude", "medium"],
+          "description": "What the phone does while the user hasn't answered: exclude (the offer doesn't apply) or medium (it applies, and copy states no dollar figure)."
+        },
+        "exclusiveGroup": {
+          "type": ["string", "null"],
+          "description": "Offers in one group are variants; a user holds at most one (targeted 3% gas OR grocery)."
+        },
+        "confirmQuestion": {
+          "type": ["string", "null"],
+          "maxLength": 60,
+          "description": "The one-tap question the app asks per card, e.g. \"Activated your Q4 5%?\". Required when the offer needs the user's answer."
+        },
+        "display": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["short"],
+          "properties": {
+            "short": {"type": "string", "maxLength": 30, "description": "For copy: \"With your {short}\"."}
+          }
+        },
+        "status": {"$ref": "#/$defs/status"},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cardSource"}},
+        "notes": {"$ref": "#/$defs/notes"}
+      },
+      "allOf": [
+        {
+          "description": "A device offer depends on the user (an unconditional public rate is an earn rule) and is cash the resolver can value.",
+          "if": {"properties": {"evaluation": {"const": "device"}}},
+          "then": {
+            "properties": {
+              "requires": {"minItems": 1},
+              "reward": {
+                "properties": {"kind": {"enum": ["rate", "statement_credit"]}, "countsAsCash": {"const": true}}
+              }
+            }
+          }
+        },
+        {
+          "description": "Memberships, thresholds, counts, partner credits and price perks never change cash per card.",
+          "if": {
+            "properties": {
+              "reward": {
+                "properties": {
+                  "kind": {"enum": ["membership", "spend_bonus", "count_bonus", "partner_credit", "price_perk"]}
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evaluation": {"const": "hint"},
+              "reward": {"properties": {"countsAsCash": {"const": false}}}
+            }
+          }
+        },
+        {
+          "description": "A purchase that must start from a link or portal can't be seen at checkout.",
+          "if": {
+            "properties": {
+              "requires": {"contains": {"properties": {"kind": {"const": "link_or_portal"}}, "required": ["kind"]}}
+            }
+          },
+          "then": {"properties": {"evaluation": {"const": "hint"}}}
+        },
+        {
+          "description": "A rate offer states its rate and basis.",
+          "if": {"properties": {"reward": {"properties": {"kind": {"const": "rate"}}}}},
+          "then": {
+            "properties": {
+              "reward": {"properties": {"ratePct": {"type": "number"}, "basis": {"enum": ["total", "extra"]}}}
+            }
+          }
+        },
+        {
+          "description": "A statement credit states its amount.",
+          "if": {"properties": {"reward": {"properties": {"kind": {"const": "statement_credit"}}}}},
+          "then": {"properties": {"reward": {"properties": {"amountUsd": {"type": "number"}}}}}
+        },
+        {
+          "description": "A cap needs a period.",
+          "if": {"properties": {"limits": {"properties": {"spendCapUsd": {"type": "number"}}}}},
+          "then": {"properties": {"limits": {"properties": {"capPeriod": {"type": "string"}}}}}
+        },
+        {
+          "description": "An offer that needs the user's own answer has a question to ask (event-only offers use the event's question).",
+          "if": {
+            "properties": {
+              "requires": {
+                "contains": {
+                  "properties": {
+                    "kind": {"enum": ["activation", "enrollment", "targeted", "account_age", "acquisition_offer"]}
+                  },
+                  "required": ["kind"]
+                }
+              }
+            }
+          },
+          "then": {"properties": {"confirmQuestion": {"type": "string"}}}
+        }
+      ]
+    },
+    "precondition": {
+      "description": "Something only the user knows. The phone keeps the answer (OfferState, CardFacts); nothing about it is sent (D1).",
+      "type": "object",
+      "required": ["kind"],
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "required": ["kind", "deadline", "retroactive", "how"],
+          "properties": {
+            "kind": {"const": "activation"},
+            "deadline": {"$ref": "#/$defs/dateOrNull"},
+            "retroactive": {"type": ["boolean", "null"], "description": "false: earns only from the activation day."},
+            "how": {"type": "string"}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "what", "deadline"],
+          "properties": {
+            "kind": {"const": "enrollment"},
+            "what": {"type": "string"},
+            "deadline": {"$ref": "#/$defs/dateOrNull"}
+          }
+        },
+        {
+          "additionalProperties": false,
+          "required": ["kind", "how"],
+          "properties": {"kind": {"const": "targeted"}, "how": {"type": "string"}}
+        },
+        {
+          "description": "Only within this many months of account opening (CardFacts.openedOn; month precision counts from the 1st, which ends the window early, never late).",
+          "additionalProperties": false,
+          "required": ["kind", "months"],
+          "properties": {"kind": {"const": "account_age"}, "months": {"type": "integer", "minimum": 1}}
+        },
+        {
+          "description": "The account was opened under this offer (the user says so). openedFrom/openedThrough bound the opening date when the user doesn't give one.",
+          "additionalProperties": false,
+          "required": ["kind", "openedFrom", "openedThrough", "detail"],
+          "properties": {
+            "kind": {"const": "acquisition_offer"},
+            "openedFrom": {"$ref": "#/$defs/dateOrNull"},
+            "openedThrough": {"$ref": "#/$defs/dateOrNull"},
+            "detail": {"type": "string"}
+          }
+        },
+        {
+          "description": "Only after a catalog event the user confirmed for this card (events[]).",
+          "additionalProperties": false,
+          "required": ["kind", "eventId"],
+          "properties": {"kind": {"const": "event"}, "eventId": {"$ref": "#/$defs/id"}}
+        },
+        {
+          "description": "The purchase must start from a link or portal. A checkout screen can't show that, so the offer is a hint.",
+          "additionalProperties": false,
+          "required": ["kind", "detail"],
+          "properties": {"kind": {"const": "link_or_portal"}, "detail": {"type": "string"}}
+        }
+      ]
+    },
+    "program": {
+      "description": "A personal-offer program: its offers are visible only to the cardholder. The catalog holds how the program behaves; capturing its offers from the user's screen comes later (D2, D3).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "cardIds",
+        "whereShown",
+        "cardMatters",
+        "applePay",
+        "stacking",
+        "needsAddStep",
+        "oneTimeDefault",
+        "layout",
+        "screenWords",
+        "availableAfterEventId",
+        "status",
+        "sources"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "name": {"type": "string"},
+        "cardIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "whereShown": {"type": "string"},
+        "cardMatters": {
+          "enum": ["always", "in_store_and_in_app_only", "never"],
+          "description": "in_store_and_in_app_only: online offers pay whatever card is used (Capital One Offers), so they never switch the card at a Paywise check."
+        },
+        "applePay": {"enum": ["counts", "required", "may_not_count", "excluded", "unknown"]},
+        "stacking": {"enum": ["adds_to_card_earn", "replaces_card_earn", "unknown"]},
+        "needsAddStep": {
+          "type": ["boolean", "null"],
+          "description": "true: an offer earns only after the user adds or activates it."
+        },
+        "oneTimeDefault": {"type": ["boolean", "null"], "description": "null: depends on each offer's terms."},
+        "layout": {
+          "enum": ["merchant_first", "reward_first", "sentence", null],
+          "description": "How an offer tile reads, for the rules reader (D3)."
+        },
+        "screenWords": {"type": "array", "items": {"type": "string"}, "description": "Wording seen on its screens."},
+        "availableAfterEventId": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "status": {"$ref": "#/$defs/status"},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cardSource"}},
+        "notes": {"$ref": "#/$defs/notes"}
+      }
+    },
+    "event": {
+      "description": "A dated issuer change that turns offers or programs on for a card once the user confirms it happened to their account.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "cardIds",
+        "kind",
+        "title",
+        "expectedOn",
+        "expectedOnStatus",
+        "askFrom",
+        "confirmQuestion",
+        "effects",
+        "status",
+        "sources"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "cardIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "kind": {"enum": ["issuer_migration", "issuer_transition"]},
+        "title": {"type": "string"},
+        "expectedOn": {"$ref": "#/$defs/dateOrNull"},
+        "expectedOnStatus": {"$ref": "#/$defs/status"},
+        "askFrom": {
+          "$ref": "#/$defs/dateOrNull",
+          "description": "The phone asks confirmQuestion from this day; null: not yet."
+        },
+        "confirmQuestion": {"type": "string", "maxLength": 60},
+        "effects": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enablesOfferIds", "enablesProgramIds", "carriesOver", "otherChanges"],
+          "properties": {
+            "enablesOfferIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+            "enablesProgramIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+            "carriesOver": {"type": "array", "items": {"type": "string"}},
+            "otherChanges": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "status": {"$ref": "#/$defs/status"},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cardSource"}},
+        "notes": {"$ref": "#/$defs/notes"}
+      }
+    },
+    "categoryAlias": {
+      "description": "Screen wording -> item category (\"grocery stores\" -> grocery), for code that reads offer text. Compared case-insensitively.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phrase", "category"],
+      "properties": {"phrase": {"type": "string", "minLength": 2}, "category": {"$ref": "#/$defs/itemCategoryId"}}
     }
   }
 }

@@ -439,8 +439,16 @@ def test_a_spoofed_forwarded_for_does_not_reset_the_limit(monkeypatch):
         ({"cf-connecting-ip": " ", "x-forwarded-for": "192.0.2.1, 198.51.100.4"}, "198.51.100.4"),
         ({"x-forwarded-for": "192.0.2.1, "}, "testclient"),
         ({}, "testclient"),
+        ({"cf-connecting-ip": "2001:db8:1:2:aaaa:bbbb:cccc:dddd"}, "2001:db8:1:2::/64"),
+        ({"cf-connecting-ip": "2001:DB8:1:2::9"}, "2001:db8:1:2::/64"),
+        ({"cf-connecting-ip": "::ffff:203.0.113.9"}, "203.0.113.9"),
+        ({"x-forwarded-for": "192.0.2.1, 2001:db8:1:2::5"}, "2001:db8:1:2::/64"),
+        ({"cf-connecting-ip": "not-an-ip", "x-forwarded-for": "192.0.2.1, 198.51.100.4"}, "198.51.100.4"),
+        ({"cf-connecting-ip": "203.0.113.9, 192.0.2.1"}, "testclient"),
+        ({"x-forwarded-for": "192.0.2.1, 198.51.100.4:443"}, "testclient"),
     ],
-    ids=["cf-connecting-ip", "last-hop", "one-hop", "blank-cf", "blank-last-hop", "socket-peer"],
+    ids=["cf-connecting-ip", "last-hop", "one-hop", "blank-cf", "blank-last-hop", "socket-peer", "ipv6-by-64",
+         "ipv6-uppercase", "ipv4-mapped", "ipv6-last-hop", "cf-not-an-ip", "cf-a-list", "last-hop-with-port"],
 )
 def test_client_key_never_uses_a_hop_the_caller_wrote(headers, client):
     scope = {"headers": [(k.encode(), v.encode()) for k, v in headers.items()], "client": ("testclient", 50000)}
@@ -469,6 +477,47 @@ def test_coverage_and_store_pay_are_rate_limited_in_their_own_windows(monkeypatc
     assert post(check_body(), headers=headers).status_code == 200
 
 
+def test_each_client_has_its_own_llm_budget(monkeypatch):
+    """Review 2026-10-17: a probe spent the whole LLM cap; a legit /v1/coverage then got need_more_info with no
+    cause. One client now spends at most LLM_CLIENT_DAILY_CAP; the next client still gets the LLM's cause."""
+    from types import SimpleNamespace
+
+    from app import llm
+
+    class FakeAnthropic:
+        def __init__(self):
+            self.calls = 0
+            self.messages = SimpleNamespace(create=self.create)
+
+        async def create(self, **_kwargs):
+            self.calls += 1
+            return SimpleNamespace(stop_reason="end_turn", usage=None,
+                                   content=[SimpleNamespace(type="text", text='{"cause": "theft"}')])
+
+    fake = FakeAnthropic()
+    monkeypatch.setattr(llm, "_get_client", lambda _key: fake)
+    monkeypatch.setenv("COVERAGE_MODE", "llm")
+    monkeypatch.setenv("LLM_API_KEY", "test-key-not-real")
+    monkeypatch.setenv("LLM_HEDGE_AFTER_S", "0")
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "2")
+    monkeypatch.delenv("LLM_DAILY_CAP", raising=False)
+    llm.reset_budget()
+    body = coverage_case_13()
+    body["incident"] = {**body["incident"], "cause": None, "causeSource": None}
+
+    def source(ip: str) -> str | None:
+        response = client.post("/v1/coverage", json=body, headers={"cf-connecting-ip": ip})
+        assert response.status_code == 200
+        return response.json()["incident"]["causeSource"]
+
+    try:
+        assert [source("203.0.113.9") for _ in range(3)] == ["llm", "llm", None]
+        assert source("198.51.100.4") == "llm"
+        assert fake.calls == 3
+    finally:
+        llm.reset_budget()
+
+
 def test_requests_to_other_paths_share_one_window(monkeypatch):
     """BSEC-5: a POST to /health or a path with no route is limited too (its body is still privacy-scanned)."""
     monkeypatch.setattr(middleware.LIMITER, "per_minute", 3)
@@ -477,6 +526,42 @@ def test_requests_to_other_paths_share_one_window(monkeypatch):
              for path in ("/health", "/nope", "/v2/check", "/health")]
     assert codes == [405, 404, 404, 429]
     assert client.get("/health", headers=headers).status_code == 200  # reads are never limited
+
+
+def test_rotating_ipv6_addresses_in_one_64_share_a_window(monkeypatch):
+    """Review 2026-10-17: 300 addresses in one /64 got 0 rejections. A /64 is one subscriber's network, so it is one
+    client; another /64 is another client."""
+    monkeypatch.setattr(middleware.LIMITER, "per_minute", 3)
+    rotating = [{"cf-connecting-ip": f"2001:db8:1:2::{n:x}"} for n in range(1, 7)]
+    assert [post(check_body(), headers=h).status_code for h in rotating] == [200, 200, 200, 429, 429, 429]
+    assert post(check_body(), headers={"cf-connecting-ip": "2001:db8:1:3::1"}).status_code == 200
+
+
+def test_the_limiter_holds_at_most_max_keys():
+    """Above MAX_KEYS live keys, the old prune rebuilt the whole dict on every request and kept every key; the
+    least recently seen key is now dropped first, in O(1)."""
+    limiter = middleware.SlidingWindowLimiter(per_minute=2)
+    limiter.MAX_KEYS = 100
+    assert limiter.allow("busy", now=0.0) and limiter.allow("busy", now=0.0)
+    for n in range(1000):
+        limiter.allow(f"rotating {n}", now=1.0)
+        if n % 50 == 0:
+            assert not limiter.allow("busy", now=1.0)  # a client that keeps coming back keeps its window
+    assert len(limiter._hits) <= 100
+
+
+def test_the_key_source_is_logged_once_per_header(monkeypatch, caplog):
+    """Render's header handling is unverified (review 2026-10-17): the log says which header supplies the key."""
+    monkeypatch.setattr(middleware, "_logged_sources", set())
+    with caplog.at_level(logging.INFO, logger="paywise.ratelimit"):
+        for _ in range(3):
+            post(check_body(), headers={"cf-connecting-ip": "203.0.113.9"})
+            post(check_body(), headers={"x-forwarded-for": "192.0.2.1, 198.51.100.4"})
+            post(check_body())
+    lines = [r.getMessage() for r in caplog.records if r.name == "paywise.ratelimit"]
+    assert len(lines) == 3
+    assert ["CF-Connecting-IP" in lines[0], "X-Forwarded-For" in lines[1], "socket peer" in lines[2]] == [True] * 3
+    assert not any("203.0.113" in line or "198.51.100" in line for line in lines)
 
 
 def test_sliding_window_frees_up_after_a_minute():

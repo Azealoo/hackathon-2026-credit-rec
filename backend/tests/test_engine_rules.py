@@ -75,7 +75,7 @@ def test_earn_rate_precedence(card_id, merchant_id, category, method, rate):
 
 
 def test_unknown_merchant_earns_the_base_rate_and_a_shared_item_category_marks_it_partial():
-    """v2.3 §7.2 rule 1 (replaces R10): Chase codes by merchant, so the items' category isn't counted."""
+    """v2.4 §7.2 rule 1 (replaces R10): Chase codes by merchant, so the items' category isn't counted."""
     one = cart(items=(("Multivitamin", 40.0, "pharmacy", "new"),), merchant=("Corner Drugs", None))
     mixed = cart(items=(("Multivitamin", 40.0, "pharmacy", "new"), ("Mug", 10.0, "home", "new")),
                  merchant=("Corner Drugs", None))

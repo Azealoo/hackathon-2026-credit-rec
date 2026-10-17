@@ -1,4 +1,4 @@
-"""Advice correctness fixes from the Oct 17, 2026 product review (SPEC v2.3 §7.2, §5.5).
+"""Advice correctness fixes from the Oct 17, 2026 product review (SPEC v2.4 §7.2, §5.5).
 
 One block per review item. Each test reproduced its issue on 6960a66 before the fix.
 """
@@ -207,43 +207,50 @@ def test_no_answer_drops_cover(c, card_ids):
 
 
 # --- 3. Discover's Q4 2026 dining shown as a verified 1% ---------------------------------------
-
+# SPEC v2.3 (offers, D1-D4) holds Discover's activated Q4 5% as a device offer the phone applies; the server
+# states the public 1%, hedges a rate it can only guess, and lets the phone move cash decisions.
 
 DOORDASH = ("DoorDash", "doordash")
-CATERING = (("Catering Order", 249.0, "dining", "new"),)
+RESTAURANT = ("Luigi's Trattoria", None)  # not in the catalog
+DINNER = (("Dinner for Four", 249.0, "dining", "new"),)
 
 
-def test_discover_dining_rate_is_partial():
-    discover = catalog.card(DISC)
-    assert engine.earn_rate(discover, "doordash", "dining", "card") == engine.Rate(Decimal("1"), "partial")
-    electronics = engine.earn_rate(discover, "northbay-electronics", "electronics", "card")
-    assert electronics == engine.Rate(Decimal("1"), "verified")
-    rule = next(r for r in discover.earn.rules if r.category == "dining")
-    assert (rule.needs_activation, rule.status) == (True, "partial")
+def test_discover_q4_dining_is_an_offer_the_phone_applies():
+    offer = next(o for o in catalog.CATALOG.offers if o.id == "discover-5pct-2026q4")
+    assert (offer.card_ids, offer.evaluation, offer.reward.rate_pct) == ((DISC,), "device", 5)
+    assert "dining" in offer.match.categories and "doordash" in offer.match.exclude_merchant_ids
+    assert [r.kind for r in offer.requires] == ["activation"]
+    assert not any(r.needs_activation for card in catalog.CATALOG.cards for r in card.earn.rules)
+    assert engine.earn_rate(catalog.card(DISC), "doordash", "dining", "card", DAY) == engine.Rate(
+        Decimal("1"), "verified")
 
 
-def test_cash_switch_away_from_discover_on_dining_says_likely():
-    d = decide(cart(CATERING, merchant=DOORDASH, options=("apple_pay", "card_form")), wallet(DISC, FU)).decision
-    assert (d.kind, d.reason, d.recommended_card_id, d.confidence) == ("switch", "cash", FU, "medium")
-    assert d.copy_.line2 == "Likely more cash back than Discover"
+def test_discover_default_at_an_unknown_restaurant_hedges_and_lets_the_phone_decide():
+    result = decide(cart(DINNER, merchant=RESTAURANT, options=("card_form",)), wallet(DISC, FU))
+    d = result.decision
+    assert (d.kind, d.reason, d.recommended_card_id, d.confidence) == ("keep", "below_threshold", DISC, "medium")
+    assert d.copy_.line2 == "Switching likely gains under $5 here"
+    context = result.offer_context
+    assert (context.rule_category, context.device_may_override) == ("dining", True)  # Discover's offer can match
+    assert context.allowed_cash_picks == [DISC, FU]
+    assert context.public_rates[FU].status == "partial"
 
 
-def test_default_best_on_dining_with_discover_in_the_wallet_says_likely():
-    d = decide(cart(CATERING, merchant=DOORDASH), wallet(FU, DISC)).decision
+def test_default_best_with_a_guessed_rate_says_likely():
+    d = decide(cart(DINNER, merchant=RESTAURANT), wallet(FU, DISC)).decision
     assert (d.kind, d.reason, d.confidence) == ("keep", "default_best", "medium")
     assert d.copy_.line2 == "Likely best of your 2 cards here"
 
 
-def test_below_threshold_with_a_partial_rate_says_likely():
-    d = decide(cart(CATERING, merchant=DOORDASH), wallet(DISC, FU)).decision  # card path: $4.98 < $5
-    assert (d.kind, d.reason, d.confidence) == ("keep", "below_threshold", "medium")
-    assert d.copy_.line2 == "Switching likely gains under $5 here"
+def test_doordash_is_outside_discovers_q4_offer_so_the_cash_switch_states_its_figure():
+    d = decide(cart(DINNER, merchant=DOORDASH, options=("apple_pay", "card_form")), wallet(DISC, FU)).decision
+    assert (d.kind, d.reason, d.recommended_card_id, d.confidence) == ("switch", "cash", FU, "high")
+    assert d.copy_.line2 == "$4.98 more cash back than Discover"
 
 
-def test_an_activation_rule_must_not_be_verified(tmp_path):
+def test_an_earn_rule_never_needs_activation(tmp_path):
     raw = json.loads(CARDS_FILE.read_text(encoding="utf-8"))
-    discover = next(c for c in raw["cards"] if c["id"] == DISC)
-    next(r for r in discover["earn"]["rules"] if r["needsActivation"])["status"] = "verified"
+    next(c for c in raw["cards"] if c["id"] == FU)["earn"]["rules"][0]["needsActivation"] = True
     cards = tmp_path / "cards.json"
     cards.write_text(json.dumps(raw), encoding="utf-8")
     with pytest.raises(CatalogError):
@@ -262,7 +269,8 @@ def test_hedged_keep_lines_fit_44_characters(size):
 
 def test_category_rule_counts_only_at_a_known_merchant():
     freedom = catalog.card(FU)
-    assert engine.earn_rate(freedom, "walgreens", "pharmacy", "card") == engine.Rate(Decimal("3"), "verified")
+    assert engine.earn_rate(freedom, "walgreens", "pharmacy", "card") == engine.Rate(
+        Decimal("3"), "verified", "cfu-drugstores")
     assert engine.earn_rate(freedom, None, None, "card", guess_category="pharmacy") == engine.Rate(
         Decimal("1.5"), "partial")
     assert engine.earn_rate(freedom, None, None, "card", guess_category="computers") == engine.Rate(

@@ -29,7 +29,8 @@
 const BACKEND_STORE_PATH = /^\/store\//;
 const PAY_MODE = BACKEND_STORE_PATH.test(location.pathname) ? "backend" : "mock";
 const PAY_URL = "/v1/store/pay";
-const PAY_TIMEOUT_MS = 10000;
+// Longer than the backend's 7 s processor deadline (visa_acceptance.TIMEOUT_S), so its answer always arrives first.
+const PAY_TIMEOUT_MS = 12000;
 const MOCK_DELAY_MS = 700;
 
 // Always the same order number, so fixture screenshots are reproducible.

@@ -176,11 +176,11 @@ def test_purchase_draft_dates_for_s1():
     assert by_type["extended_warranty"].assumes_manufacturer_warranty_months == 12
 
 
-MEDIUM_CONFIDENCE = {28}  # Discover's partial dining rate (§8.2)
+MEDIUM_CONFIDENCE = {28}  # Freedom's guessed dining rate is partial (§8.2)
 
 
 def test_only_the_partial_rate_scenario_hedges():
-    """§8.2: the demo catalog is verified, so only scenario 28 (Discover on dining) hedges its copy."""
+    """§8.2: the demo catalog is verified, so only scenario 28 (an unknown restaurant) hedges its copy."""
     assert {scenario["id"]: RESULTS[scenario["id"]].decision.confidence for scenario in SCENARIOS} == {
         scenario["id"]: "medium" if scenario["id"] in MEDIUM_CONFIDENCE else "high" for scenario in SCENARIOS}
 
@@ -206,8 +206,11 @@ def test_never_drop_cover_copy():
     assert RESULTS[27].decision.copy_.line2 == "$6.00 more cash back than Freedom"
 
 
-def test_partial_rate_copy():
-    assert RESULTS[28].decision.copy_.line2 == "Likely more cash back than Discover"
+def test_partial_rate_copy_and_the_phones_offer_room():
+    result = RESULTS[28]
+    assert result.decision.copy_.line2 == "Switching likely gains under $5 here"
+    # Discover's Q4 5% (an activated offer) is the phone's to apply: the server leaves it room.
+    assert (result.offer_context.rule_category, result.offer_context.device_may_override) == ("dining", True)
 
 
 def test_snippet_states_save_a_draft_and_island_states_dont():

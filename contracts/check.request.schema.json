@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "POST /v1/check request",
-  "description": "Sent by CheckCheckoutIntent (SPEC.md §15.5): redacted OCR text and card ids only. No last 4, no images. The backend answers 400 privacy_rejected for any body with a run of 12 or more digits.",
+  "description": "Sent by CheckCheckoutIntent (SPEC.md §15.5): redacted OCR text and card ids only. No last 4, no images. Never carries offer, activation, account-age or cap data: those stay on the phone (offers design D1), and additionalProperties: false rejects them. The backend answers 400 privacy_rejected for any body with a run of 12 or more digits.",
   "type": "object",
   "additionalProperties": false,
   "required": ["requestId", "client", "clientDate", "screen", "wallet", "prefs"],

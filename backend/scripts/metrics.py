@@ -268,7 +268,7 @@ def live_lines(base_url: str, runs: int = LIVE_RUNS) -> list[str]:
         elapsed, code, data = _timed("GET", f"{base_url}/health", None)
         times.append(elapsed)
         codes.append(code)
-        ok += code == 200 and data == {"ok": True}
+        ok += code == 200 and isinstance(data, dict) and data.get("ok") is True
     lines.append(latency_line("LIVE_HEALTH", times, ok, runs,
                               f" http={status_counts(codes)} warmup_ms={ms(warmup_ms)} warmup_http={warmup_code}"))
 

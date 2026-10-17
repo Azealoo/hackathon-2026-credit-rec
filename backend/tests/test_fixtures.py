@@ -115,7 +115,7 @@ SPEC_SCENARIOS = {
     25: ("fu-default", "keep", "already_protected", None),
     26: ("rise-ac", "keep", "already_protected", None),
     27: ("fu-default", "switch", "cash", AC),
-    28: ("discover-fu", "switch", "cash", FU),
+    28: ("discover-fu", "keep", "below_threshold", None),
 }
 
 # Numbers the §15.4 table states: id -> (expected field, value).
@@ -131,7 +131,7 @@ SPEC_SCENARIO_NUMBERS = {
     25: ("cashDeltaVsCashBest", -6.00),  # "AC +$6.00 would otherwise switch"
     26: ("cashDeltaVsCashBest", -7.50),  # "AC +$7.50 would otherwise switch"
     27: ("cashDeltaVsDefault", 6.00),  # "+$6.00"
-    28: ("cashDeltaVsDefault", 4.98),  # "+$4.98, medium confidence"
+    28: ("cashDeltaVsCashBest", -1.25),  # "FU +$1.25, partial"
 }
 
 # §15.4 scenarios table, "Cart / path" column: id -> (total, item category, item condition, merchant the
@@ -163,11 +163,11 @@ SPEC_CARTS = {
     25: (1200.00, "apparel", "new", "stride-athletics"),
     26: (1500.00, "home", "new", "target"),
     27: (1200.00, "grocery", "new", None),
-    28: (249.00, "dining", "new", "doordash"),
+    28: (249.00, "dining", "new", None),
 }
-APPLE_PAY_VISIBLE = {8, 19, 22, 28}  # the only rows that say "Apple Pay visible"
+APPLE_PAY_VISIBLE = {8, 19, 22}  # the only rows that say "Apple Pay visible"
 SAVED_CARD = {1, 5, 20, 21, 23, 24, 25, 26, 27}  # rows that say "saved card" or name a selected card
-CARD_FORM_ONLY = {9}  # "card form only"
+CARD_FORM_ONLY = {9, 28}  # "card form only"
 
 # §15.4 screenshot list: name -> (total, condition of its one item).
 SPEC_SCREENSHOT_CARTS = {
@@ -388,7 +388,7 @@ def test_scenario_cash_follows_cards_json(scenario):
     cart, expected = scenario["cart"], scenario["expected"]
     wallet = [card["cardId"] for card in WALLETS[scenario["wallet"]]["cards"]]
     merchant_id = cart["merchant"]["merchantId"]
-    # §7.2 rule 1 (v2.3): a category rule counts only at a known merchant, against its catalog category.
+    # §7.2 rule 1 (v2.4): a category rule counts only at a known merchant, against its catalog category.
     by_merchant = cash_by_card(cart, wallet, MERCHANTS[merchant_id]["category"] if merchant_id else None)
     assert {card_id: usd(value) for card_id, value in expected["cashByCard"].items()} == by_merchant
     best = max(by_merchant.values())
@@ -404,7 +404,7 @@ def test_scenario_specifics():
     unreadable = by_id[18]["cart"]
     assert unreadable["totalUsd"] is not None and unreadable["confidence"]["total"] >= 0.8
     assert unreadable["items"] == [] or unreadable["confidence"]["items"] < 0.8
-    for sid in (8, 19, 22, 28):  # "Apple Pay visible"
+    for sid in (8, 19, 22):  # "Apple Pay visible"
         assert "apple_pay" in by_id[sid]["cart"]["paymentOptionsVisible"]
         assert by_id[sid]["paymentPath"] == "apple_pay"
     for sid in (1, 3, 5, 10, 16, 17, 22):

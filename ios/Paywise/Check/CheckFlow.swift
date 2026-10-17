@@ -74,13 +74,18 @@ struct CheckFlow: Sendable {
         )
         trace.end(.post)
 
-        // 6. Write the CheckRecord.
+        // 6. Apply the user's offers on the phone (D1: nothing about them was sent), then write the CheckRecord.
         trace.begin(.record)
         let response = (try? responseJSON.decode(CheckResponse.self)) ?? CheckResponse()
+        let adjustment = OfferResolver.resolve(
+            response: response, catalog: deps.catalog, records: deps.offers.load(), wallet: wallet,
+            today: prepared.request.clientDate
+        )
+        let decision = adjustment?.decision ?? response.decision
         let filled = CopyFill.fill(
-            response.decision?.copy,
+            decision?.copy,
             wallet: wallet,
-            ppCap: CopyFill.ppCap(decision: response.decision, catalog: deps.catalog)
+            ppCap: CopyFill.ppCap(decision: decision, catalog: deps.catalog)
         )
         let record = CheckRecord(
             checkId: checkId,
@@ -88,7 +93,8 @@ struct CheckFlow: Sendable {
             sentPayload: (try? JSONValue(data: prepared.body)) ?? .null,
             response: responseJSON,
             filledCopy: filled,
-            replayed: replayed
+            replayed: replayed,
+            offerAdjustment: adjustment
         )
         var stored = true
         do {
@@ -100,7 +106,7 @@ struct CheckFlow: Sendable {
         trace.end(.record)
 
         // 7 (decided here, shown by the intent).
-        return present(record: record, decision: response.decision, wallet: wallet, stored: stored)
+        return present(record: record, decision: decision, wallet: wallet, stored: stored)
     }
 
     /// A checkout read on the phone, turned into a body that passed the privacy check.
@@ -196,7 +202,7 @@ struct CheckFlow: Sendable {
                 // replay: the server did answer, so this isn't a connection failure. A 5xx (even in the error shape,
                 // §15.5) falls through to `.server`: §6.3's "No connection · press again" and the replay lookup.
                 Self.log.error("The server refused the check: HTTP \(reply.status, privacy: .public)")
-                return (Self.rejectedResponse(checkId: checkId, code: parsed?.error?.code), false)
+                return (Self.rejectedResponse(checkId: checkId, code: parsed?.error?.code, status: reply.status), false)
             }
             if let json, let kind, kind != .unrecognized, (200..<300).contains(reply.status) {
                 return (json, false)
@@ -227,16 +233,17 @@ struct CheckFlow: Sendable {
         )
     }
 
-    /// R16: a 4xx (or the server's error shape on a 2xx) shows *Couldn't check* with "Something went wrong · press again".
+    /// R16: a 4xx (or the server's error shape on a 2xx) shows *Couldn't check* with "Something went wrong · press again",
+    /// except a 429 (the backend's 60-a-minute limit), where pressing again fails too: "Too many checks · wait a minute".
     /// The stored error code is the server's when it is one the contract knows, else bad_request.
-    static func rejectedResponse(checkId: String, code: APIErrorCode?) -> JSONValue {
+    static func rejectedResponse(checkId: String, code: APIErrorCode?, status: Int = 400) -> JSONValue {
         let known: APIErrorCode = switch code {
         case .some(.unrecognized), .none: .badRequest
         case .some(let code): code
         }
         return errorResponse(
-            checkId: checkId, line2: Self.somethingWentWrong, code: known,
-            message: "The server refused the request."
+            checkId: checkId, line2: status == 429 ? Self.tooManyChecks : Self.somethingWentWrong, code: known,
+            message: status == 429 ? "Too many checks in a minute." : "The server refused the request."
         )
     }
 
@@ -245,6 +252,8 @@ struct CheckFlow: Sendable {
     static let tookTooLong = "Took too long · press again"
     /// R16, new copy (not in §6.3): the server refused the request.
     static let somethingWentWrong = "Something went wrong · press again"
+    /// The backend's 429 line2 (backend/app/middleware.py RateLimit), in the phone's own words.
+    static let tooManyChecks = "Too many checks · wait a minute"
 
     private static func errorResponse(checkId: String, line2: String, code: APIErrorCode, message: String) -> JSONValue {
         let response = CheckResponse(

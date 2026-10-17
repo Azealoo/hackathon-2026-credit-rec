@@ -227,6 +227,30 @@ class TimingMs(Contract):
     engine: Annotated[int, Field(ge=0)]
 
 
+class PublicRate(Contract):
+    rate_pct: Annotated[float, Field(ge=0)]
+    status: Verification
+    rule_id: str | None  # None: the card's base rate
+
+
+class OfferContext(Contract):
+    """The public inputs the phone's offer resolver needs (D1). A function of the cart and the public catalog
+    only, so it is the same for every user; the phone applies the user's offers to it and never sends them."""
+
+    catalog_version: dt.date
+    amount_usd: Usd
+    merchant_id: MerchantId | None
+    rule_category: ItemCategoryId | None
+    item_categories: list[ItemCategoryId]
+    payment_path: PaymentPath
+    method: Literal["apple_pay", "card"]
+    threshold_usd: Usd
+    public_rates: dict[CardId, PublicRate]
+    allowed_cash_picks: list[CardId]
+    purchase_draft_by_card: dict[CardId, PurchaseDraft]
+    device_may_override: bool
+
+
 class CheckResult(Contract):
     request_id: Uuid
     screen_type: ScreenType
@@ -234,6 +258,7 @@ class CheckResult(Contract):
     decision: Decision
     purchase_draft: PurchaseDraft | None
     sources: list[Source]
+    offer_context: OfferContext | None
     timing_ms: TimingMs
 
 
@@ -268,6 +293,21 @@ class FilledCopy(Contract):
     instruction: str | None = None
 
 
+class AppliedOffer(Contract):
+    offer_id: Annotated[str, Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")]
+    card_id: CardId
+    extra_usd: Usd
+
+
+class OfferAdjustment(Contract):
+    """Device only (offers design D1): what the phone's OfferResolver changed. Never sent."""
+
+    decision: Decision
+    purchase_draft: PurchaseDraft | None
+    applied_offers: list[AppliedOffer]
+    changed_decision: bool
+
+
 class CheckRecord(Contract):
     check_id: Uuid
     created_at: dt.datetime
@@ -277,6 +317,7 @@ class CheckRecord(Contract):
     replayed: bool
     saved_purchase_id: PurchaseId | None
     view: Literal["result", "saved", "sent"]
+    offer_adjustment: OfferAdjustment | None = None
 
 
 class Purchase(Contract):

@@ -51,6 +51,15 @@ struct CheckCheckoutIntent: AppIntent, LiveActivityIntent {
             trace.resultShown()
             return .result(snippetIntent: MessageSnippetIntent.notSetUp)
 
+        case .ignored(let reshowing):
+            // A repeat press, or Paywise's own result on screen: no check ran, so the earlier press keeps the island
+            // and its save offer. Its Pattern A snippet shows again (the same record: one save); otherwise nothing.
+            trace.resultShown()
+            if let reshowing {
+                return .result(snippetIntent: CheckResultSnippetIntent(checkId: reshowing))
+            }
+            return .result(snippetIntent: EmptySnippetIntent())
+
         case .snippet(let checkId):
             // The Live Activity is ended before the snippet appears (§6.3).
             await deps.island.end(checkId: checkId)

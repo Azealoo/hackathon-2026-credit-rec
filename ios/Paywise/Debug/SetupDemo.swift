@@ -1,7 +1,9 @@
 #if DEBUG
+import AppIntents
 import os
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 /// Debug-only hooks for the Back Tap prompt and setup (screenshots and UI tests):
 ///
@@ -10,12 +12,34 @@ import UIKit
 /// | `-showBackTapPrompt` | The Check tab opens with the Back Tap prompt up (use with `-skipOnboarding -tab check`). |
 /// | `-forceReduceMotion` | Every view reads `accessibilityReduceMotion` as on: the prompt's still frames, a still breadcrumb. |
 /// | `-simulateBackTap` | "Try it now" gets a press 1.5 s after it opens: the real check (`CheckFlow`) on a render of its own screen, as the Shortcut would run it, so the screen turns to "Back Tap works ✓". |
+/// | `-simulateDoubleTap` | At launch, one Back Tap that fires the Shortcut twice 1.5 s apart (docs/spikes.md › Results › Back Tap): two `CheckCheckoutIntent` runs on the sample checkout render. Settings › What we sent then shows one row (`PressGate`). |
 enum SetupDemo {
     static let log = Logger(subsystem: "com.azealoo.paywise", category: "demo")
 
     static var showBackTapPrompt: Bool { ProcessInfo.processInfo.arguments.contains("-showBackTapPrompt") }
     static var forceReduceMotion: Bool { ProcessInfo.processInfo.arguments.contains("-forceReduceMotion") }
     static var simulateBackTap: Bool { ProcessInfo.processInfo.arguments.contains("-simulateBackTap") }
+    static var simulateDoubleTap: Bool { ProcessInfo.processInfo.arguments.contains("-simulateDoubleTap") }
+
+    /// `-simulateDoubleTap`: two intent runs `gap` apart, as a double-firing Back Tap makes them.
+    @MainActor
+    static func simulateDoubleTap(gap: Duration = .milliseconds(1500)) async {
+        guard let png = SampleCheckoutRender.png() else {
+            log.error("-simulateDoubleTap: couldn't render the sample checkout")
+            return
+        }
+        let first = Task { @MainActor in await press(png) }
+        try? await Task.sleep(for: gap)
+        await press(png)
+        await first.value
+        log.notice("-simulateDoubleTap: \(Dependencies.current.checkStore.all().count, privacy: .public) check record(s)")
+    }
+
+    @MainActor
+    private static func press(_ png: Data) async {
+        let intent = CheckCheckoutIntent(image: IntentFile(data: png, filename: "screenshot.png", type: .png))
+        _ = try? await intent.perform(trace: CheckTrace(source: .intent))
+    }
 
     /// A press on "Try it now": the check chain a Back Tap runs (read on the phone, `/v1/check`, the `CheckRecord`),
     /// on the sample checkout as the screen shows it, without the island.

@@ -138,7 +138,8 @@ Device results: `docs/spikes.md` › Results.
    - If the snippet doesn't appear: Paywise › Settings › Results › Island alert, then press again (§6.6).
    - If the alert makes a sound: turn off Silent island alerts.
    - Record counts in `docs/spikes.md` (G1 ≥9/10 presses, G2 ≥9/10 snippets/saves).
-4. **Claim, 1 min.** Paywise › Settings › "Pretend today is…" on (Dec 18, 2027) › Purchases › Aero 14 › Something happened → Yes → 1 year → "Lines across the screen. Never dropped." → expect *May be eligible: Extended warranty*.
+4. **Claim, 1 min.** Paywise › Settings › "Pretend today is…" on (Dec 18, 2027) › Purchases › Aero 14 › Something happened → Yes → 1 year → "Lines across the screen. Never dropped." → expect *May be eligible: Extended warranty*. While the override is on, a yellow "Pretend today: Dec 18, 2027" pill shows over every tab.
+5. **Turn the override off.** Paywise › Settings › "Pretend today is…" off (or tap the pill, which opens Settings). The pill should be gone. Do this after every claim run, before the next judge: the override only moves claim dates and Purchases' ended/active cover, but a demo left on Dec 18, 2027 shows the next judge's fresh purchase with its theft cover already ended.
 
 ## Blocked on me
 

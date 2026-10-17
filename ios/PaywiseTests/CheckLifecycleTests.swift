@@ -37,7 +37,20 @@ struct LiveActivityControllerTests {
               lockScreenText: State.checkedLockScreenText)
     }
 
-    private let island = LiveActivityController()
+    /// The test host app is in front; these tests are about press order, not the app-in-front fallback.
+    private let island = LiveActivityController(appIsActive: { false })
+
+    /// With Paywise in front (as in Try it now), iOS shows none of the app's own Live Activities in the island, so
+    /// `alert` reports that nothing showed and the intent falls back to the static snippet (§6.6).
+    @Test func noIslandAlertWhileTheAppIsInFront() async {
+        let front = LiveActivityController(appIsActive: { true })
+        await island.endAll()
+        let checkId = "front-\(UUID().uuidString.prefix(8))"
+        let shown = await front.alert(checkId: checkId, state: Self.verdict("No connection · press again"), sound: .silent)
+        #expect(shown == false)
+        #expect(Self.live().isEmpty, "no activity was requested for it")
+        await front.end(checkId: checkId)
+    }
 
     /// Press 2 starts during press 1's hold: press 1's end leaves press 2's *Checking* alone, and press 2's verdict
     /// updates its own activity.

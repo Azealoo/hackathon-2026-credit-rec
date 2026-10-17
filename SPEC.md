@@ -248,8 +248,9 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 
 **Input screen (SwiftUI):**
 1. "Did you pay with Freedom ••1234 on Oct 17?" [Yes] [No, another card]. Yes sets `status = confirmed`.
-2. "Maker's warranty: [1 year] [2 years] [Don't know]". "Don't know" uses 12 months and labels the result "assumed".
-3. "What happened?" as free text, plus cause chips (Stopped working / Dropped or damaged / Stolen / Lost). The LLM pre-selects a chip; the user confirms.
+2. "Did the whole price go on this card?" [Yes] [Part of it] [Don't know], with no answer pre-selected. [Part of it] shows "$ Amount on the card, if you know it" (more than $0, less than the price; otherwise "Enter an amount less than $1,499.00."). Yes sends `paidWith: card_full`; Part of it sends `card_partial` plus `amountOnCardUsd` when typed, so the payout cap below applies; Don't know sends `unknown` (the engine assumes the full price). Not saved on the purchase.
+3. "Maker's warranty: [1 year] [2 years] [Don't know]". "Don't know" uses 12 months and labels the result "assumed".
+4. "What happened?" as free text, plus cause chips (Stopped working / Dropped or damaged / Stolen / Lost). The LLM pre-selects a chip; the user confirms.
 
 **Verdict:** rendered by the backend as HTML (`POST /v1/coverage?format=html`) in an in-app web view. The checks run in order: still under the maker's warranty → card extended warranty → purchase protection (theft/damage, 120 days) → not covered.
 
@@ -517,7 +518,7 @@ The same engine could pick the credential for AI shopping agents (Visa Intellige
 | 0:15–0:30 | Coach: "Double-tap the back of the phone." **Judge double-taps.** | *Checking* → snippet: Use Freedom ••1234 / Adds a warranty year + $500 theft cover / $7.49 less cash back than Active Cash | Real: screenshot, on-device OCR + redaction, cloud parse, engine |
 | 0:30–0:45 | Judge taps **[Paying with Freedom]** → Saved. Presenter taps **[What we sent]**: "That's all that left the phone." Done. | Saved: dates + "up to $500". Sent: the redacted summary | Real |
 | 0:45–1:05 | Presenter: Change → Visa ••1234 → Place order | "Approved · Visa Acceptance sandbox · txn {id}" | Real sandbox call; test card; no money moves |
-| 1:05–1:35 | "14 months later" (said aloud as staged): Purchases → Aero 14 (Planned) → Something happened → paid with Freedom? Yes → maker's warranty 1 year → "Lines across the screen. Never dropped." | **May be eligible: Extended warranty** + clause + version date + checklist + notify-by | Date override simulated; verdict is real engine output |
+| 1:05–1:35 | "14 months later" (said aloud as staged): Purchases → Aero 14 (Planned) → Something happened → paid with Freedom? Yes → whole price? Yes → maker's warranty 1 year → "Lines across the screen. Never dropped." | **May be eligible: Extended warranty** + clause + version date + checklist + notify-by | Date override simulated; verdict is real engine output |
 | 1:35–1:50 | Contrast: "Cracked when I dropped it" | **Not covered**: damage was covered for 120 days only | Real |
 | 1:50–2:05 | Why Visa / why us: "Card benefits are how cards like this Visa differ, yet cardholders use about 2 of them (J.D. Power 2026). We show them at checkout and turn them into a claim. Visa Acceptance ran this merchant's payment. Free for students, no paid ranking." | One slide or app screen | — |
 | 2:05–2:20 | Close: tagline + one numbers line (measured p50, scenarios including misses, interview stat) | Tagline | Measured |
@@ -1101,7 +1102,7 @@ Implement §7.2 exactly (rules 0–9, thresholds in `policy.py`). The copy templ
 | 12a | `SavePurchaseIntent` + `ShowSentIntent` + Saved / Sent views | C | 2 | Mac | **G2 button test:** ≥9/10 taps over Safari create one planned Purchase (idempotent on a double tap) and reload to Saved; Purchases shows "Aero 14 · Freedom ••1234 · Planned · theft & damage up to $500 to Feb 14, 2027 · warranty year to Oct 17, 2028" |
 | 12b | `POST /v1/coverage` (`coverage.py`; `COVERAGE_MODE`; LLM cause classification by A) | B 2 + A 1 | 3 | any | `test_coverage.py` ≥12/13; every not_covered case right; cases 3 and 13 return `payoutCapUsd: 500`; every verdict cites section + version date |
 | 12c | `templates/verdict.html` + `?format=html` (the §5.5 copy) | D | 2 | any | Cases 1, 2, 7 and 13 render correctly in a phone-width browser |
-| 12d | SwiftUI claim input (confirm card + date → `confirmed`; maker's warranty 1 yr / 2 yr / don't know; text + cause chips) + `WKWebView` showing the HTML verdict | A | 1.5 | Mac | Cases 1 and 2 work end to end on the device with a date override |
+| 12d | SwiftUI claim input (confirm card + date → `confirmed`; whole price on the card → `paidWith`; maker's warranty 1 yr / 2 yr / don't know; text + cause chips) + `WKWebView` showing the HTML verdict | A | 1.5 | Mac | Cases 1 and 2 work end to end on the device with a date override |
 | 13 | `visa_acceptance.py` + `/v1/store/pay`; `confirm.html` shows the transaction ID | B | 3 | any | **G4:** the sandbox approves the demo Visa ••1234 order with a transaction ID; `PAY_MODE=mock` works offline |
 | 14 | Back Tap prompt + Set Up Back Tap screen (Shortcut link, Back Tap first, Try it now, optional Action Button card) | D | 1.5 | Mac | On a clean phone: install → turn on Back Tap → Try it now with no surprise prompt, in ≤2:00 |
 | 15 | Metrics harness + rehearsal script (latency, accuracy on 30 screenshots with aggregates only, scenario/coverage runs, 10 clean arcs) | A + all | 5.5 | scripts any; runs on device | Numbers in `docs/metrics.md`; the harness prints aggregates only |

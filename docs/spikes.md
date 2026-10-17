@@ -4,7 +4,7 @@ SPEC §14.2 (gates), §15.7 steps 6–7.
 
 > **Dated snapshot.** The simulator columns are the state on **Oct 15, 2026, 18:35 PDT** (commit `86dd685`, on the `overnight/v1` branch, since merged into `main` and deleted); the iPhone results below were added on Oct 16. Not updated since. Current state: [README Status](../README.md#status).
 
-- **Simulator:** iPhone 18 Pro, iOS 27.0, Xcode 27.0. Evidence at the time: the Oct 15 18:02 full run (`xcodebuild test`: 159 unit tests in 29 suites + 4 UI tests, `TEST SUCCEEDED`; all 4 UI tests ran against live Render) and the screenshots in `docs/overnight-shots/`. `main` now has 259 unit tests in 47 suites (passed Oct 16, 20:45 PDT).
+- **Simulator:** iPhone 18 Pro, iOS 27.0, Xcode 27.0. Evidence at the time: the Oct 15 18:02 full run (`xcodebuild test`: 159 unit tests in 29 suites + 4 UI tests, `TEST SUCCEEDED`; all 4 UI tests ran against live Render) and the screenshots in `docs/overnight-shots/`. `main` now has 289 unit tests in 52 suites (passed Oct 16, 21:55 PDT).
   - The run's log is in a temporary session folder (`/private/tmp/claude-501/…/scratchpad/fulltest-1802.log`) that will be deleted. Its summary lines are copied in [metrics.md](metrics.md#simulator-run-1802).
   - `docs/overnight-shots/` is in git as 300 JPGs (commit 50cbe79 and later). `ios/tools/run_ui_tour.sh tour` remakes the `light-*` and `dark-*` folders as full-size PNGs, which `.gitignore` keeps out of git; convert them to JPG before committing (u: where `live-activity/`, `verdict-web/` and `brand/` come from wasn't checked).
 - **iPhone:** Oct 16 runs on the owner's iPhone and on Carol (a second iPhone) are in [Results](#results-fill-in). Every other iPhone column is still open.

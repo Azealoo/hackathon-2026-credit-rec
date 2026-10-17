@@ -8,13 +8,13 @@ DubHacks '26 (Oct 17–18) project: a native iOS 27 app with one App Intent, run
 
 ## Status
 
-State of `main` on Oct 16, 2026, 21:00 PDT (code at `6960a66`, PR #20). [SPEC.md §15.7](SPEC.md) steps 0–14 are built except the `.transient` probe (step 7); os_signpost timing (step 6) is built but not yet read on a phone. Step 13 (Visa Acceptance) is built, but gate G4 fails, so the demo pays in mock mode. Step 15 (metrics) has its offline and live numbers, not the device ones.
+State of `main` on Oct 16, 2026, 21:50 PDT (code at `4fcbf7e`, PR #26). [SPEC.md §15.7](SPEC.md) steps 0–14 are built except the `.transient` probe (step 7); os_signpost timing (step 6) is built but not yet read on a phone. Step 13 (Visa Acceptance) is built, but gate G4 fails, so the demo pays in mock mode. Step 15 (metrics) has its offline and live numbers, not the device ones.
 
 | Part | State |
 |---|---|
-| Backend | Engine, `/v1/check`, `/v1/coverage` (+ HTML verdict), `/v1/store/pay`, rules and LLM parsers. `cd backend && uv run pytest -q`: 1,452 passed (Oct 16, 20:40). Scenarios 22/22 with 0 false switches and 0 protection drops; coverage 13/13. |
+| Backend | Engine, `/v1/check` (with the public `offerContext` for promotional offers), `/v1/coverage` (+ HTML verdict), `/v1/store/pay`, rules and LLM parsers. `cd backend && uv run pytest -q`: 1,592 passed (Oct 16, 21:45). Scenarios 22/22 with 0 false switches and 0 protection drops; coverage 13/13. |
 | Live | API **https://paywise-api-n0f9.onrender.com** (`/health`, `/v1/check`, `/v1/coverage`, `/v1/store/pay`, `/store/`), deployed from `main` with `PAY_MODE=visa_acceptance` (owner, Oct 16). G4 fails, so every order placed on the API's `/store/` fails until `PAY_MODE` is set back to `mock`. Demo store **https://paywise-store.onrender.com** (also from `main`) pays with its client-side mock, so it is unaffected. |
-| iOS | App, Live Activity, OCR + redaction, Purchases, claim check, Back Tap setup with Try it now. Simulator: 259 unit tests in 47 suites passed (iPhone 18 Pro Max simulator, iOS 27.0, Oct 16, 20:45). The live UI tests and the screenshot tour weren't re-run for this update. iPhone: run on the owner's iPhone and a second iPhone on Oct 16 ([docs/spikes.md](docs/spikes.md#results-fill-in)). |
+| iOS | App, Live Activity, OCR + redaction, Purchases, claim check, Back Tap setup with Try it now, the on-device `OfferResolver` and one-tap offer questions. Simulator: 289 unit tests in 52 suites passed (iPhone 18 Pro Max simulator, iOS 27.0, Oct 16, 21:55). The live UI tests and the screenshot tour weren't re-run for this update. iPhone: run on the owner's iPhone and a second iPhone on Oct 16 ([docs/spikes.md](docs/spikes.md#results-fill-in)). |
 | Gates | **G1** (press chain): 5/5 Back Tap presses on the store counted so far; the gate needs ≥9/10 plus 2 real apps. In the assisted run each double tap made two checks. **G2** (snippet): 5/5 over Safari, button save 1/1 by hand; third-party app, island timeout and silent alert not run. **G3** (capture) not run. **G4 (Visa sandbox) fails on Cybersource's side**: the sandbox merchant's processor (`fdiglobal`) has no USD outlet or terminal IDs, so every authorization is a 502; the demo uses `PAY_MODE=mock` and makes no Visa-API claim (SPEC §11.2). **G5**: card values verified by an AI session in [docs/benefits-verification.md](docs/benefits-verification.md); the human review is still pending. Back Tap is the main trigger (owner, Oct 16); the Action Button is optional. |
 | Metrics | [docs/metrics.md](docs/metrics.md): what is measured, and what still needs the phone or people. |
 
@@ -41,7 +41,7 @@ cd backend
 uv run uvicorn app.main:app --reload
 ```
 
-Then `curl localhost:8000/health` returns `{"ok":true}`.
+Then `curl localhost:8000/health` returns `{"ok":true,"commit":null,"modes":{…}}`: the deployed commit (on Render) and the parser, coverage and pay modes.
 
 ## Run the tests
 

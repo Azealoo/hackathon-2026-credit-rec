@@ -70,7 +70,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Demo")
                 } footer: {
-                    Text("For the \"14 months later\" claim demo. Checks and claims use this date instead of today's.")
+                    Text("For the \"14 months later\" claim demo: claims, and which cover has ended, use this date. Checks keep today's.")
                 }
 
                 Section {

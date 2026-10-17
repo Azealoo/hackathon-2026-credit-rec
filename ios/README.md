@@ -62,12 +62,13 @@ xcrun simctl spawn <device> log show --last 2m --predicate 'subsystem == "com.az
 |---|---|
 | `-resetState` | Clears the wallet, purchases, check records, onboarding and the date override before any screen loads. |
 | `-skipOnboarding` | Seeds the demo wallet (`demo-3card`) and opens the tabs. |
-| `-dateOverride YYYY-MM-DD` | Turns on Settings › "Pretend today is…" with that day (the check's `clientDate` and the claim's `asOf`). |
+| `-dateOverride YYYY-MM-DD` | Turns on Settings › "Pretend today is…" with that day (the claim's `asOf` and incident date, and which cover Purchases shows as ended; never a check's `clientDate`). A yellow pill shows over every tab while it is on. |
 | `-tab check\|purchases\|settings` | Opens on that tab. |
 | `-doubleSave` | The in-app [Paying with …] starts two saves at once and reports what each returned (`debug.saveOutcomes`), so a UI test can show two racing saves make one purchase. A synthesized double tap reaches a SwiftUI button as one action. |
 | `-showBackTapPrompt` | The Check tab opens with the Back Tap prompt up (use with `-skipOnboarding -tab check`). |
 | `-forceReduceMotion` | Reduce Motion reads as on everywhere (the prompt's two still frames, a still breadcrumb). |
 | `-simulateBackTap` | "Try it now" gets a press 1.5 s after it opens: the real check (`CheckFlow`, live backend) on a render of its own screen, as the Shortcut would run it, so it turns to "Back Tap works ✓". |
+| `-simulateDoubleTap` | At launch, a Back Tap that fires the Shortcut twice 1.5 s apart: two `CheckCheckoutIntent` runs (live backend) on the Try it now render. The second is turned away (`PressGate`), so Settings › What we sent shows one row. |
 
 ### Back Tap prompt and setup
 
@@ -161,4 +162,4 @@ Paying with button" / "System confirm prompt" / "Island alert, held 8 s"):
 | `snippetMode` | `snippet` (Pattern A) · `confirm` (Pattern B) · `island` (§6.6 G2 fallback, 8 s `.default` alert) | `snippet` |
 | `silentAlerts` | `true` → `.named("silent.caf")` · `false` → `.default` | `true` |
 | `replayEnabled` | replay `fixtures/replay/<merchantId>_<totalCents>.json` when the request fails or times out (not on a 4xx) | `true` |
-| `dateOverrideEnabled` + `dateOverride` | Settings › Demo › "Pretend today is…": the check's `clientDate` and the claim's `asOf` / incident date | off, `2027-12-18` |
+| `dateOverrideEnabled` + `dateOverride` | Settings › Demo › "Pretend today is…": the claim's `asOf` / incident date and which cover Purchases shows as ended (a check's `clientDate` is always the phone's date) | off, `2027-12-18` |

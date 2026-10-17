@@ -1,6 +1,7 @@
 import Foundation
 
-/// The user's cards, in wallet order; the default card is the one the checkout already has (SPEC §15.4).
+/// The user's cards, in wallet order; the first card is the default (SPEC §15.4). The engine compares against the card
+/// selected on screen when its network names one wallet card, else against the default (SPEC §7.2, baseline).
 /// `last4` is optional and stays on the phone: it fills `{last4:<cardId>}` and is never sent.
 struct Wallet: Codable, Sendable, Equatable {
     struct Card: Codable, Sendable, Equatable {

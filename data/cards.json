@@ -1,7 +1,7 @@
 {
   "$schema": "./cards.schema.json",
   "schemaVersion": 1,
-  "catalogVersion": "2026-10-15",
+  "catalogVersion": "2026-10-16",
   "cards": [
     {
       "id": "apple-card",
@@ -288,6 +288,7 @@
           "windowDaysByState": {
             "NY": 90
           },
+          "basis": "secondary",
           "limits": {
             "perItemUsd": 500,
             "perClaimUsd": null,
@@ -299,7 +300,14 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -321,7 +329,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3."
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining and grocery (perishables, consumables), pharmacy (consumables, medical equipment), travel (tickets), gift_card (cash and cards), services (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
           }
         },
         {
@@ -355,7 +363,14 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -377,7 +392,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3."
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, pharmacy, gift_card, services and travel items don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
           }
         }
       ],
@@ -400,7 +415,7 @@
         }
       ],
       "notes": [
-        "3% dining and drugstores: Chase decides by merchant category code. Whether Walgreens and DoorDash code that way is partial (no Chase statement found).",
+        "3% dining and drugstores: Chase decides by merchant category code, so the engine counts these rules only at a catalog merchant of that category; at an unknown store the rate stays 1.5% and is marked partial (SPEC §7.2 rule 1). Whether Walgreens and DoorDash code that way is partial (no Chase statement found).",
         "5% on Chase Travel is verified but not modeled (no merchant).",
         "Network tier and foreign transaction fee not checked."
       ]
@@ -458,6 +473,7 @@
           "windowDaysByState": {
             "NY": 90
           },
+          "basis": "secondary",
           "limits": {
             "perItemUsd": 500,
             "perClaimUsd": null,
@@ -469,7 +485,14 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -491,7 +514,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3."
+            "note": "No per-claim cap in the guide. Notice 90 days and documents 120 days from the loss, each 'or as soon as reasonably possible'. Police report may be required within 48 hours. Rewards-paid purchases also qualify. The guide covers refurbished items accompanied by a warranty; conditionsAllowed is ['new'] only because v1 models new items. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading of the exclusions, not Chase's category list: dining and grocery (perishables, consumables), pharmacy (consumables, medical equipment), travel (tickets), gift_card (cash and cards), services (not an item). Apparel, home and general items aren't excluded. Basis: \"Coverage is secondary and in excess of valid and collectible insurance\" (benefits-verification.md §4.3)."
           }
         },
         {
@@ -525,7 +548,14 @@
               "new"
             ],
             "paymentRequirement": "some_portion",
-            "excludedCategories": []
+            "excludedCategories": [
+              "dining",
+              "grocery",
+              "pharmacy",
+              "gift_card",
+              "services",
+              "travel"
+            ]
           },
           "notice": {
             "notifyWithinDays": 90,
@@ -547,7 +577,7 @@
             "status": "verified",
             "checkedBy": "claude (card-benefits session)",
             "checkedOn": "2026-10-14",
-            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3."
+            "note": "maxOriginalWarrantyMonths counts manufacturer + store warranty + service contract together. Notice 90 days and documents 120 days from product failure, each 'or as soon as reasonably possible'. Covers only what the maker's warranty would have covered. Refurbished items with a warranty are covered; conditionsAllowed is ['new'] for v1. Needs a human review per SPEC §7.3. excludedCategories is Paywise's reading, not Chase's category list: dining, grocery, pharmacy, gift_card, services and travel items don't come with a maker's U.S. repair warranty (or are excluded consumables and medical equipment)."
           }
         }
       ],
@@ -598,7 +628,20 @@
       "earn": {
         "baseRatePct": 1,
         "baseRateStatus": "verified",
-        "rules": []
+        "rules": [
+          {
+            "id": "discover-q4-2026-dining",
+            "category": "dining",
+            "merchantIds": null,
+            "paymentMethods": [
+              "any"
+            ],
+            "ratePct": 5,
+            "cap": null,
+            "needsActivation": true,
+            "status": "partial"
+          }
+        ]
       },
       "protections": [],
       "sources": [
@@ -612,7 +655,7 @@
         }
       ],
       "notes": [
-        "5% rotating quarterly categories need activation and have a cap: not modeled in v1.",
+        "5% rotating quarterly categories need activation and have a quarterly cap (not modeled). Q4 2026 (Oct 1-Dec 31) is restaurants per secondary sources (NerdWallet, Doctor of Credit, as cited in the Oct 17, 2026 product review); not confirmed on discover.com, so the rule is partial. The engine never counts it: it marks Discover's 1% partial on dining, so answers say \"Likely\" (SPEC §7.2 rule 1). Replace or remove it after Dec 31, 2026.",
         "No purchase protection or extended warranty on the current card page (verified absence). Their removal on Feb 28, 2018 comes from secondary sources only (partial).",
         "Discover is now part of Capital One (card page).",
         "Art color is design.md §6's proposed amber (the card isn't in the film).",

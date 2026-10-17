@@ -96,9 +96,14 @@
         },
         "ratePct": {"type": "number", "minimum": 0},
         "cap": {"type": "null", "description": "Caps aren't modeled in v1 (§7.2 rule 9)."},
-        "needsActivation": {"const": false, "description": "Activation isn't modeled in v1 (§7.2 rule 9)."},
+        "needsActivation": {
+          "type": "boolean",
+          "description": "true: the rate needs activation, which Paywise can't see. The engine never counts it; when it would beat the counted rate, that rate is marked partial (§7.2 rule 1)."
+        },
         "status": {"$ref": "#/$defs/status"}
-      }
+      },
+      "if": {"properties": {"needsActivation": {"const": true}}},
+      "then": {"properties": {"status": {"enum": ["partial", "unverified"]}}}
     },
     "protection": {
       "type": "object",
@@ -124,6 +129,10 @@
         "extendsByMonths": {"$ref": "#/$defs/monthsOrNull"},
         "maxOriginalWarrantyMonths": {"$ref": "#/$defs/monthsOrNull"},
         "maxTotalFromPurchaseMonths": {"$ref": "#/$defs/monthsOrNull"},
+        "basis": {
+          "enum": ["secondary", "primary", null],
+          "description": "secondary: pays only after the cardholder's other insurance (verdicts say so, §5.5). null or absent: not checked."
+        },
         "limits": {
           "description": "Required for any protection shown in copy.",
           "type": "object",
@@ -270,8 +279,14 @@
       "required": ["id", "warrantyRelevant", "theftDamageRelevant"],
       "properties": {
         "id": {"$ref": "#/$defs/itemCategoryId"},
-        "warrantyRelevant": {"type": "boolean"},
-        "theftDamageRelevant": {"type": "boolean"}
+        "warrantyRelevant": {
+          "type": "boolean",
+          "description": "Items usually come with a maker's repair warranty: extended warranty can cover them, and Rule P may switch for it (§7.2 rule 3)."
+        },
+        "theftDamageRelevant": {
+          "type": "boolean",
+          "description": "Rule P may switch for purchase protection. false doesn't mean uncovered: a card's terms decide that (excludedCategories)."
+        }
       }
     }
   }

@@ -18,14 +18,16 @@ def wallet(*card_ids: str) -> list[WalletCard]:
 
 
 def cart(items=(("Aero 14 Laptop, 14-inch", 1499.0, "computers", "new"),), total=None, merchant=("Northbay Electronics", "northbay-electronics"),
-         options=("saved_card",), items_confidence=0.92) -> Cart:
+         options=("saved_card",), items_confidence=0.92, network="unknown") -> Cart:
+    """`network`: the selected saved card's network. "unknown" (the screen doesn't say) keeps the default as the
+    baseline; tests of the selected-card baseline are in test_advice_correctness.py."""
     item_list = [{"name": n, "priceUsd": p, "quantity": 1, "category": c, "condition": cond, "seller": "merchant",
                   "isGiftCard": c == "gift_card", "isServicePlan": c == "services"} for n, p, c, cond in items]
     return Cart.model_validate({
         "merchant": {"name": merchant[0], "merchantId": merchant[1]}, "items": item_list,
         "totalUsd": sum(i["priceUsd"] for i in item_list) if total is None else total, "currency": "USD",
         "paymentOptionsVisible": list(options),
-        "selectedPayment": {"kind": "saved_card" if "saved_card" in options else "unknown", "network": "mastercard"},
+        "selectedPayment": {"kind": "saved_card" if "saved_card" in options else "unknown", "network": network},
         "upsells": {"protectionPlanUsd": None}, "bnplVisible": False,
         "confidence": {"merchant": 0.97, "total": 0.98, "items": items_confidence}})
 
@@ -62,8 +64,8 @@ def test_half_up_cents_before_subtracting():
         ("apple-card", "nike", "apparel", "card", "1"),        # Nike's 3% needs Apple Pay
         ("apple-card", "apple", "electronics", "card", "3"),   # Apple's own store: any method
         ("apple-card", "northbay-electronics", "electronics", "apple_pay", "2"),
-        ("chase-freedom-unlimited", "doordash", "dining", "card", "3"),  # R7, R10: the merchant's category
-        ("chase-freedom-unlimited", None, "pharmacy", "card", "3"),      # R10: unknown merchant, item category
+        ("chase-freedom-unlimited", "doordash", "dining", "card", "3"),  # R7: the merchant's category
+        ("chase-freedom-unlimited", "walgreens", "pharmacy", "card", "3"),  # a known merchant's category
         ("chase-freedom-unlimited", "northbay-electronics", "electronics", "card", "1.5"),
         ("wf-active-cash", "nike", "apparel", "apple_pay", "2"),
     ],
@@ -72,19 +74,24 @@ def test_earn_rate_precedence(card_id, merchant_id, category, method, rate):
     assert engine.earn_rate(catalog.card(card_id), merchant_id, category, method).pct == Decimal(rate)
 
 
-def test_unknown_merchant_uses_the_item_category_only_when_all_items_share_it():
+def test_unknown_merchant_earns_the_base_rate_and_a_shared_item_category_marks_it_partial():
+    """v2.3 §7.2 rule 1 (replaces R10): Chase codes by merchant, so the items' category isn't counted."""
     one = cart(items=(("Multivitamin", 40.0, "pharmacy", "new"),), merchant=("Corner Drugs", None))
     mixed = cart(items=(("Multivitamin", 40.0, "pharmacy", "new"), ("Mug", 10.0, "home", "new")),
                  merchant=("Corner Drugs", None))
     fu = wallet("chase-freedom-unlimited")
-    assert decide(one, fu).decision.cash.by_card["chase-freedom-unlimited"] == 1.2
-    assert decide(mixed, fu).decision.cash.by_card["chase-freedom-unlimited"] == 0.75
+    d = decide(one, fu).decision
+    assert (d.cash.by_card["chase-freedom-unlimited"], d.confidence) == (0.6, "medium")
+    d = decide(mixed, fu).decision  # no shared category: nothing to guess
+    assert (d.cash.by_card["chase-freedom-unlimited"], d.confidence) == (0.75, "high")
 
 
-def test_cash_best_tie_goes_to_the_default_then_wallet_order():
+def test_cash_best_tie_goes_to_the_baseline_then_the_default_then_wallet_order():
     tie = decide(cart(), wallet("apple-card", "discover-it-student-cash-back")).decision
     assert tie.cash_best_card_id == "apple-card"
-    # Scenario 22's tie: neither tied card is the default, so wallet order decides.
+    selected = decide(cart(network="discover"), wallet("apple-card", "discover-it-student-cash-back")).decision
+    assert selected.cash_best_card_id == "discover-it-student-cash-back"  # the card on screen
+    # No card is selected and neither tied card is the default, so wallet order decides.
     ap = cart(merchant=("Best Buy", "best-buy"), options=("apple_pay", "saved_card"))
     assert decide(ap, wallet("chase-freedom-unlimited", "wf-active-cash", "apple-card")).decision.cash_best_card_id == "wf-active-cash"
     assert decide(ap, wallet("chase-freedom-unlimited", "apple-card", "wf-active-cash")).decision.cash_best_card_id == "apple-card"

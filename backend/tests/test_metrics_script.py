@@ -96,9 +96,9 @@ def test_offline_report_prints_aggregates_only(monkeypatch):
     assert names == ["rules"] * 6  # 1 warm-up + 5 timed
 
     assert [line.split()[0] for line in lines] == ["SCENARIOS", "COVERAGE", "CHECK_LOCAL"]
-    assert re.fullmatch(r"SCENARIOS pass=\d+/22 false_switches=\d+ protection_drops=\d+ must_pass_5_21_22=(yes|no)",
+    assert re.fullmatch(r"SCENARIOS pass=\d+/28 false_switches=\d+ protection_drops=\d+ must_pass=(yes|no)",
                         lines[0])
-    assert re.fullmatch(r"COVERAGE pass=\d+/13 not_covered_right=\d+/\d+ cites_section_and_date=\d+/13 "
+    assert re.fullmatch(r"COVERAGE pass=\d+/14 not_covered_right=\d+/\d+ cites_section_and_date=\d+/14 "
                         r"cap500_cases_3_13=(yes|no)", lines[1])
     assert re.fullmatch(r"CHECK_LOCAL runs=5 ok=5/5 p50_ms=[\d.]+ p90_ms=[\d.]+ max_ms=[\d.]+ s1_copy=5/5 parser=rulesx5",
                         lines[2])

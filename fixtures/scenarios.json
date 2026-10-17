@@ -1,5 +1,5 @@
 {
-  "description": "SPEC v2.1 §15.4 scenarios, written and hand-computed by D (no engine code). Each cart is a §15.5 Cart plus screenType. Cash is Decimal, each card rounded to cents half-up before subtracting (§7.2 rule 1). recommendedCardId is the default card for keep and null for no_checkout. cashDeltaVsCashBest and cashDeltaVsDefault are the recommended (or kept) card's cash minus the cash-best card's and the default's. protectionsGained lists the types the recommended card has that the default lacks, so it is [] for every keep. screenshot names the fixtures/carts and fixtures/ocr file the cart comes from, or null for a synthetic cart.",
+  "description": "SPEC v2.3 §15.4 scenarios, written and hand-computed by D (no engine code); 23-28 and the new answers for 5 and 22 come from the v2.3 advice-correctness fixes. Each cart is a §15.5 Cart plus screenType. Cash is Decimal, each card rounded to cents half-up before subtracting (§7.2 rule 1). recommendedCardId is the baseline card for keep (the card selected on screen when its network names exactly one wallet card, else the default; §7.2) and null for no_checkout. cashDeltaVsCashBest and cashDeltaVsDefault are the recommended (or kept) card's cash minus the cash-best card's and the default's. protectionsGained lists the types the recommended card has that the baseline lacks, so it is [] for every keep. screenshot names the fixtures/carts and fixtures/ocr file the cart comes from, or null for a synthetic cart.",
   "demoDate": "2026-10-17",
   "scenarios": [
     {
@@ -98,9 +98,9 @@
         "cashDeltaVsCashBest": 0.0,
         "cashDeltaVsDefault": 10.99,
         "protectionsGained": [],
-        "eligibilityNotes": ["Renewed, no warranty: no card covers it"]
+        "eligibilityNotes": ["Renewed: no card cover counted"]
       },
-      "workings": "Rule 1 (saved_card): apple-card 1% x 1099.00 = 10.99; wf-active-cash 2% x 1099.00 = 21.98; FU 1.5% x 1099.00 = 16.485 -> 16.49. cashBest = wf-active-cash. Rule 2: readable. Rule 3: condition renewed is not in conditionsAllowed ['new'], so no card has an eligible protection. Rule 4 (P): nothing to gain. Rule 5 (G): default has nothing to lose. Rule 6 (C): cashBest != default, gain 21.98 - 10.99 = 10.99 >= 5 (saved_card) -> switch / cash -> AC. deltaVsCashBest = 21.98 - 21.98 = 0.00; deltaVsDefault = +10.99 (the spec's '+$10.99 vs Apple Card'). Eligibility note per §6.3 / §7.3."
+      "workings": "Rule 1 (saved_card): apple-card 1% x 1099.00 = 10.99; wf-active-cash 2% x 1099.00 = 21.98; FU 1.5% x 1099.00 = 16.485 -> 16.49. cashBest = wf-active-cash. Rule 2: readable. Rule 3: condition renewed is not in conditionsAllowed ['new'], so no card has an eligible protection. Rule 4 (P): nothing to gain. Rule 5 (G): default has nothing to lose. Rule 6 (C): cashBest != default, gain 21.98 - 10.99 = 10.99 >= 5 (saved_card) -> switch / cash -> AC. deltaVsCashBest = 21.98 - 21.98 = 0.00; deltaVsDefault = +10.99 (the spec's '+$10.99 vs Apple Card'). Eligibility note per §6.3 / §7.3 (v2.3 wording: the engine can't see whether the listing has a warranty)."
     },
     {
       "id": 3,
@@ -204,7 +204,7 @@
     },
     {
       "id": 5,
-      "title": "S1-K: laptop $1,499 with Freedom as the default",
+      "title": "S1-K: laptop $1,499, Freedom default, Mastercard (Apple Card) selected",
       "wallet": "fu-default",
       "paymentPath": "saved_card",
       "screenshot": "laptop-checkout",
@@ -235,8 +235,8 @@
         "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
       },
       "expected": {
-        "kind": "keep",
-        "reason": "already_protected",
+        "kind": "switch",
+        "reason": "protection",
         "presentation": "snippet",
         "recommendedCardId": "chase-freedom-unlimited",
         "cashBestCardId": "wf-active-cash",
@@ -247,10 +247,10 @@
         },
         "cashDeltaVsCashBest": -7.49,
         "cashDeltaVsDefault": 0.0,
-        "protectionsGained": [],
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
         "eligibilityNotes": []
       },
-      "workings": "Rule 1 (saved_card): FU 1.5% x 1499.00 = 22.485 -> 22.49; wf-active-cash 29.98; apple-card 14.99. cashBest = wf-active-cash. Rule 3: laptop qualifies; default FU has PP + EW eligible. Rule 4 (P): no card has a type FU lacks. Rule 5 (G): default has purchase_protection (and extended_warranty) that cashBest wf-active-cash lacks -> keep / already_protected (snippet). Rule C (+7.49 >= 5) never runs. deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00."
+      "workings": "Baseline (v2.3): the screen selects a saved Mastercard, and apple-card is the only Mastercard in fu-default, so the baseline is apple-card, not the default. Rule 1 (saved_card): FU 1.5% x 1499.00 = 22.485 -> 22.49; wf-active-cash 29.98; apple-card 14.99. cashBest = wf-active-cash. Rule 3: laptop qualifies; FU has PP + EW eligible; apple-card has none. Rule 4 (P): FU adds both types the baseline lacks and drops none -> switch / protection -> FU ('Change card to Visa ••1234'). deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00 (FU is the default). Before v2.3 this was keep / already_protected: 'Keep Freedom' while Apple Card was selected (product review, Oct 17). Scenario 23 keeps the guard case."
     },
     {
       "id": 6,
@@ -985,7 +985,7 @@
     },
     {
       "id": 22,
-      "title": "Laptop $1,499 with Freedom default, Apple Pay visible",
+      "title": "Laptop $1,499 with Freedom default, Apple Pay visible, Mastercard (Apple Card) selected",
       "wallet": "fu-default",
       "paymentPath": "apple_pay",
       "screenshot": null,
@@ -1016,6 +1016,53 @@
         "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
       },
       "expected": {
+        "kind": "switch",
+        "reason": "protection",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "apple-card",
+        "cashByCard": {
+          "chase-freedom-unlimited": 22.49,
+          "wf-active-cash": 29.98,
+          "apple-card": 29.98
+        },
+        "cashDeltaVsCashBest": -7.49,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": ["purchase_protection", "extended_warranty"],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1: Apple Pay button -> path apple_pay. FU 1.5% (any) = 22.49; wf-active-cash 2% (any) = 29.98; apple-card Apple Pay 2% x 1499.00 = 29.98. Baseline (v2.3): the selected saved Mastercard is apple-card (the only Mastercard in fu-default), so the AC / Apple Card tie at 29.98 goes to the baseline: cashBest = apple-card. Rule 3: laptop qualifies; FU's PP + EW are eligible on this path (Apple Pay charges the FU card). Rule 4 (P): FU adds both types apple-card lacks -> switch / protection -> FU ('In Apple Pay, swipe to this card'). deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00. Before v2.3: keep / already_protected with Apple Card selected. Synthetic cart at Best Buy (acceptsApplePay unknown in data/cards.json), not Northbay: Northbay has no Apple Pay button in v1 (acceptsApplePay false, verified). Best Buy has no earn rule on any card and the same category (electronics), so the numbers are the same as at Northbay."
+    },
+    {
+      "id": 23,
+      "title": "S1-K guard: laptop $1,499, Freedom default, Visa selected",
+      "wallet": "fu-default",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Northbay Electronics", "merchantId": "northbay-electronics"},
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1499.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1499.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "visa"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
         "kind": "keep",
         "reason": "already_protected",
         "presentation": "snippet",
@@ -1024,14 +1071,246 @@
         "cashByCard": {
           "chase-freedom-unlimited": 22.49,
           "wf-active-cash": 29.98,
-          "apple-card": 29.98
+          "apple-card": 14.99
         },
         "cashDeltaVsCashBest": -7.49,
         "cashDeltaVsDefault": 0.0,
         "protectionsGained": [],
         "eligibilityNotes": []
       },
-      "workings": "Rule 1: Apple Pay button -> path apple_pay. FU 1.5% (any) = 22.49; wf-active-cash 2% (any) = 29.98; apple-card Apple Pay 2% x 1499.00 = 29.98. Tie AC / Apple Card at 29.98, neither is the default -> wallet order (FU, AC, Apple) -> cashBest = wf-active-cash. Rule 3: laptop qualifies; FU's PP + EW are eligible on this path (Apple Pay charges the FU card). Rule 4 (P): nothing FU lacks. Rule 5 (G): FU has PP that cashBest lacks (Apple Card lacks it too) -> keep / already_protected. deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00. Synthetic cart at Best Buy (acceptsApplePay unknown in data/cards.json), not Northbay: Northbay has no Apple Pay button in v1 (acceptsApplePay false, verified). Best Buy has no earn rule on any card and the same category (electronics), so the numbers are the same as at Northbay."
+      "workings": "Baseline: a saved Visa is selected, and fu-default has two Visa cards (FU, wf-active-cash), so the screen doesn't say which: the baseline is the default, FU. Rule 1 (saved_card): FU 1.5% x 1499.00 = 22.485 -> 22.49; wf-active-cash 29.98; apple-card 14.99. cashBest = wf-active-cash. Rule 3: laptop qualifies; FU has PP + EW eligible. Rule 4 (P): no card has a type FU lacks. Rule 5 (G): FU has purchase_protection (and extended_warranty) that cashBest wf-active-cash lacks -> keep / already_protected (snippet). Rule C (+7.49 >= 5) never runs. deltaVsCashBest = 22.49 - 29.98 = -7.49; deltaVsDefault = 0.00. Scenario 5's guard case before v2.3."
+    },
+    {
+      "id": 24,
+      "title": "Renewed laptop $1,099, Active Cash default, Mastercard (Apple Card) selected",
+      "wallet": "ac-apple",
+      "paymentPath": "saved_card",
+      "screenshot": "laptop-renewed-checkout",
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Northbay Electronics", "merchantId": "northbay-electronics"},
+        "items": [
+          {
+            "name": "Aero 14 Laptop, 14-inch",
+            "priceUsd": 1099.0,
+            "quantity": 1,
+            "category": "computers",
+            "condition": "renewed",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1099.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "mastercard"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "cash",
+        "presentation": "snippet",
+        "recommendedCardId": "wf-active-cash",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "wf-active-cash": 21.98,
+          "apple-card": 10.99
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Baseline: the selected saved Mastercard is apple-card (the only Mastercard in ac-apple), not the default. Rule 1 (saved_card): wf-active-cash 2% x 1099.00 = 21.98; apple-card 1% x 1099.00 = 10.99. cashBest = wf-active-cash. Rule 3: renewed is not in any counted protection's conditionsAllowed. Rules 4-5: nothing. Rule 6 (C): gain over the baseline 21.98 - 10.99 = 10.99 >= 5 -> switch / cash -> wf-active-cash, the default ('$10.99 more cash back than Apple Card', 'Change card to Visa ••4321'). No eligibility note: no wallet card has a counted protection the condition blocks. deltaVsCashBest = 0.00; deltaVsDefault = 0.00 (AC is the default). Before v2.3: keep / default_best, while the order as shown earned $10.99 less."
+    },
+    {
+      "id": 25,
+      "title": "Jacket $1,200 (apparel), Freedom default, Visa selected",
+      "wallet": "fu-default",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Stride Athletics", "merchantId": "stride-athletics"},
+        "items": [
+          {
+            "name": "Wool Overcoat Jacket",
+            "priceUsd": 1200.0,
+            "quantity": 1,
+            "category": "apparel",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1200.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "visa"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "already_protected",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "chase-freedom-unlimited": 18.0,
+          "wf-active-cash": 24.0,
+          "apple-card": 12.0
+        },
+        "cashDeltaVsCashBest": -6.0,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Baseline: Visa selected, two Visa cards -> the default, FU. Rule 1 (saved_card): FU 1.5% x 1200.00 = 18.00; wf-active-cash 2% = 24.00; apple-card 1% = 12.00. cashBest = wf-active-cash. Rule 3: apparel isn't theftDamageRelevant, so the jacket doesn't qualify for Rule P, but FU's purchase protection covers it (new, apparel not in excludedCategories; extended warranty needs a warrantyRelevant category). Rules 4-5: nothing on a qualifying item. Rule 6 (C): gain 24.00 - 18.00 = 6.00 >= 5, but wf-active-cash lacks the purchase protection FU covers on the jacket -> keep / already_protected (v2.3: a cash switch never drops cover). deltaVsCashBest = 18.00 - 24.00 = -6.00; deltaVsDefault = 0.00. Before v2.3: switch / cash -> AC with protectionsLost []."
+    },
+    {
+      "id": 26,
+      "title": "Sofa $1,500 (home), Freedom Rise default + Active Cash, Visa selected",
+      "wallet": "rise-ac",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "Target", "merchantId": "target"},
+        "items": [
+          {
+            "name": "Three-Seat Sofa",
+            "priceUsd": 1500.0,
+            "quantity": 1,
+            "category": "home",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1500.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "visa"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "keep",
+        "reason": "already_protected",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-rise",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "chase-freedom-rise": 22.5,
+          "wf-active-cash": 30.0
+        },
+        "cashDeltaVsCashBest": -7.5,
+        "cashDeltaVsDefault": 0.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Baseline: Visa selected, and both rise-ac cards are Visa -> the default, Rise. Rule 1 (saved_card): Rise 1.5% x 1500.00 = 22.50; wf-active-cash 2% = 30.00. cashBest = wf-active-cash. Rule 3: home isn't theftDamageRelevant (no Rule P), but Rise's purchase protection covers the sofa (new, home not excluded). Rules 4-5: nothing on a qualifying item. Rule 6 (C): gain 30.00 - 22.50 = 7.50 >= 5, but AC lacks the purchase protection Rise covers -> keep / already_protected. deltaVsCashBest = -7.50; deltaVsDefault = 0.00. Before v2.3: switch / cash -> AC, +$7.50, protectionsLost []."
+    },
+    {
+      "id": 27,
+      "title": "Groceries $1,200 at an unknown store, Freedom default, Visa selected",
+      "wallet": "fu-default",
+      "paymentPath": "saved_card",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": null, "merchantId": null},
+        "items": [
+          {
+            "name": "Weekly Groceries",
+            "priceUsd": 1200.0,
+            "quantity": 1,
+            "category": "grocery",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 1200.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["saved_card"],
+        "selectedPayment": {"kind": "saved_card", "network": "visa"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "cash",
+        "presentation": "snippet",
+        "recommendedCardId": "wf-active-cash",
+        "cashBestCardId": "wf-active-cash",
+        "cashByCard": {
+          "chase-freedom-unlimited": 18.0,
+          "wf-active-cash": 24.0,
+          "apple-card": 12.0
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 6.0,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Baseline: Visa selected, two Visa cards -> the default, FU. Rule 1 (saved_card): the store is unknown, so no category rule counts; FU has no grocery rule anyway, so its 1.5% stays verified: 18.00; wf-active-cash 24.00; apple-card 12.00. cashBest = wf-active-cash. Rule 3: grocery is in excludedCategories for both of FU's protections (perishables, consumables), so FU covers nothing. Rule 6 (C): gain 24.00 - 18.00 = 6.00 >= 5 and no cover is dropped -> switch / cash -> AC. deltaVsCashBest = 0.00; deltaVsDefault = +6.00. Same answer as before v2.3; checks that the never-drop-cover rule leaves excluded categories alone."
+    },
+    {
+      "id": 28,
+      "title": "DoorDash $249 dining, Discover default + Freedom, Apple Pay visible",
+      "wallet": "discover-fu",
+      "paymentPath": "apple_pay",
+      "screenshot": null,
+      "cart": {
+        "screenType": "checkout",
+        "merchant": {"name": "DoorDash", "merchantId": "doordash"},
+        "items": [
+          {
+            "name": "Catering Order",
+            "priceUsd": 249.0,
+            "quantity": 1,
+            "category": "dining",
+            "condition": "new",
+            "seller": "merchant",
+            "isGiftCard": false,
+            "isServicePlan": false
+          }
+        ],
+        "totalUsd": 249.0,
+        "currency": "USD",
+        "paymentOptionsVisible": ["apple_pay", "card_form"],
+        "selectedPayment": {"kind": "card_form", "network": "unknown"},
+        "upsells": {"protectionPlanUsd": null},
+        "bnplVisible": false,
+        "confidence": {"merchant": 0.97, "total": 0.98, "items": 0.92}
+      },
+      "expected": {
+        "kind": "switch",
+        "reason": "cash",
+        "presentation": "snippet",
+        "recommendedCardId": "chase-freedom-unlimited",
+        "cashBestCardId": "chase-freedom-unlimited",
+        "cashByCard": {
+          "discover-it-student-cash-back": 2.49,
+          "chase-freedom-unlimited": 7.47
+        },
+        "cashDeltaVsCashBest": 0.0,
+        "cashDeltaVsDefault": 4.98,
+        "protectionsGained": [],
+        "eligibilityNotes": []
+      },
+      "workings": "Rule 1: Apple Pay button -> path apple_pay. Discover: its Q4 2026 dining rule (5%) needs activation, so it isn't counted: base 1% x 249.00 = 2.49, marked partial. FU: DoorDash's catalog category is dining -> cfu-dining 3% (any) = 7.47. cashBest = FU. Rule 3: dining is excluded, nothing qualifies. Rules 4-5: nothing. Rule 6 (C): gain 7.47 - 2.49 = 4.98 >= 3 (apple_pay) -> switch / cash -> FU. Discover's rate is partial, so confidence is medium and line 2 says 'Likely more cash back than Discover' (§8.2). deltaVsCashBest = 0.00; deltaVsDefault = +4.98."
     }
   ]
 }

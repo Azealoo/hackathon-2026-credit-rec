@@ -1,5 +1,5 @@
 {
-  "description": "SPEC v2.1 §15.4 coverage cases, written and hand-computed by D (no engine code). Purchases are on 2026-10-17 (demo date); asOf is the incident date + 1 day. payoutCapUsd is the lesser of the benefit cap and the amount charged to the card (§5.5), null unless may_be_eligible. citesSection is never null (SPEC §13: 13/13 cite section + version date). For a card with purchase protection or extended warranty it is the source.section in data/cards.json of the protection that decides the verdict; for a card with neither it is the section of the dated card source in data/cards.json that shows the absence (the issuer document read as a whole). checklistIncludes: case-insensitive phrases the verdict's checklist must contain.",
+  "description": "SPEC v2.1 §15.4 coverage cases, written and hand-computed by D (no engine code). Purchases are on 2026-10-17 (demo date); asOf is the incident date + 1 day. payoutCapUsd is the lesser of the benefit cap and the amount charged to the card (§5.5), null unless may_be_eligible. citesSection is never null (SPEC §13: every case cites section + version date). For a card with purchase protection or extended warranty it is the source.section in data/cards.json of the protection that decides the verdict; for a card with neither it is the section of the dated card source in data/cards.json that shows the absence (the issuer document read as a whole). checklistIncludes: case-insensitive phrases the verdict's checklist must contain.",
   "cases": [
     {
       "id": 1,
@@ -442,6 +442,40 @@
         "checklistIncludes": ["police report"]
       },
       "workings": "Purchase 2026-10-17. Maker's warranty 12 months -> ends 2027-10-17. Card extended warranty +12 months -> ends 2028-10-17 (24 months total; <= 36 original and <= 48 from purchase). Purchase protection 120 days -> ends 2027-02-14 (90 in NY -> 2027-01-15, not modeled). Incident 2026-11-16 (day 30) <= 2027-02-14. Theft is covered by purchase protection. Payout cap = min($500 per item, $1,499.00 charged) = 500.00 ('up to $500 of the $1,499'). Checklist adds a police report (§5.5)."
+    },
+    {
+      "id": 14,
+      "title": "Freedom groceries: stolen at day 10",
+      "purchase": {
+        "cardId": "chase-freedom-unlimited",
+        "merchant": "Harbor Market",
+        "item": "Weekly Groceries",
+        "category": "grocery",
+        "condition": "new",
+        "priceUsd": 1200.0,
+        "purchaseDate": "2026-10-17",
+        "status": "confirmed",
+        "manufacturerWarrantyMonths": 0,
+        "manufacturerWarrantySource": "user",
+        "paidWith": "card_full",
+        "amountOnCardUsd": null
+      },
+      "incident": {
+        "date": "2026-10-27",
+        "description": "My grocery bags were taken from my car.",
+        "cause": "theft",
+        "causeSource": "user_confirmed"
+      },
+      "asOf": "2026-10-28",
+      "expected": {
+        "verdict": "not_covered",
+        "benefit": "none",
+        "route": "none",
+        "payoutCapUsd": null,
+        "citesSection": "Purchase Protection, pp. 9-11",
+        "checklistIncludes": []
+      },
+      "workings": "Purchase 2026-10-17. Incident 2026-10-27 (day 10) is inside the 120-day window, and theft is a covered cause, but Chase's purchase protection excludes perishables and consumables, which data/cards.json maps to excludedCategories grocery (SPEC v2.3). Not covered, whatever the cause or date. Cites the purchase protection clause."
     }
   ]
 }

@@ -126,7 +126,7 @@ enum DemoChecks {
             recommendedCardId: activeCash, defaultCardId: appleCard, cashBestCardId: activeCash,
             paymentPath: .savedCard, instruction: .changeSavedCard,
             protectionsGained: [], protectionsLost: [],
-            eligibilityNotes: ["Renewed, no warranty: no card covers it"],
+            eligibilityNotes: ["Renewed: no card cover counted"],
             confidence: .high,
             copy: .init(
                 line1: "Use \(name(activeCash, catalog)) ••{last4:\(activeCash)}",

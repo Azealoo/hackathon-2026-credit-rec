@@ -185,7 +185,11 @@ def test_earn_rates():
     assert rules["apple-card-apple-pay"].rate_pct == 2 and rules["apple-card-apple-pay"].merchant_ids is None
     fu = {r.category: r.rate_pct for r in catalog.card("chase-freedom-unlimited").earn.rules}
     assert fu == {"dining": 3, "pharmacy": 3}
-    assert all(r.status == "verified" for card in catalog.CATALOG.cards for r in card.earn.rules)
+    q4 = {r.id: r for r in catalog.card("discover-it-student-cash-back").earn.rules}["discover-q4-2026-dining"]
+    assert (q4.category, q4.rate_pct, q4.needs_activation, q4.status) == ("dining", 5, True, "partial")
+    # Every rule the engine counts is verified; an activation rule is never counted (§7.2 rule 1).
+    assert all(r.status == "verified" for card in catalog.CATALOG.cards for r in card.earn.rules
+               if not r.needs_activation)
 
 
 def test_card_art_follows_design_doc():

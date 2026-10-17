@@ -12,6 +12,8 @@ The checks run in the §5.5 order:
      maker's warranty is 1..`maxOriginalWarrantyMonths` months;
   3. purchase protection (theft, accidental damage; loss needs more info) within `windowDays`;
   4. not covered.
+A category the benefit's terms exclude (`excludedCategories`) is not covered whatever the cause or
+date. A verdict that names a benefit whose `basis` is "secondary" says it pays after other insurance.
 
 The LLM is used for one thing only: with COVERAGE_MODE=llm, a null `incident.cause` is classified
 by app.llm.classify_cause (owned by the LLM track and imported lazily). It never touches dates or
@@ -72,6 +74,9 @@ COVER_FOR_CAUSE = {
 }
 
 BENEFIT_NAMES = {"purchase_protection": "Purchase protection", "extended_warranty": "Extended warranty"}
+
+# Said on every verdict that names a benefit whose `basis` in data/cards.json is "secondary".
+SECONDARY = "It's secondary: it pays after any other insurance you have."
 ROUTES = {"purchase_protection": "card_purchase_protection", "extended_warranty": "card_extended_warranty"}
 
 # §5.5 checklists.
@@ -381,6 +386,8 @@ class _Assessment:
             )
             claim = protection.claim
             contact = Contact(administrator=claim.administrator, url=claim.url)
+            if protection.basis == "secondary":
+                why = f"{why} {SECONDARY}"
         else:
             limit = CoverageLimit(applies_to=None)
             contact = Contact(administrator=None, url=None)
@@ -464,12 +471,19 @@ class _Assessment:
             with_deadline=True,
         )
 
+    def exclusion(self, protection: Protection | None) -> str | None:
+        """Why the benefit's terms exclude this purchase's category, whatever happened; None when they don't."""
+        if protection is None or self.purchase.category not in protection.eligibility.excluded_categories:
+            return None
+        benefit = BENEFIT_NAMES.get(protection.type, "This benefit")
+        return f"{benefit} doesn't cover {self.purchase.category.replace('_', ' ')} items."
+
     def terms_block(self, protection: Protection) -> tuple[str, str] | None:
         """(verdict, reason) when the purchase doesn't meet the benefit's terms; None when it does."""
         purchase, eligibility = self.purchase, protection.eligibility
         benefit = BENEFIT_NAMES.get(protection.type, "This benefit")
-        if purchase.category in eligibility.excluded_categories:
-            return "not_covered", f"{benefit} doesn't cover {purchase.category.replace('_', ' ')} items."
+        if (excluded := self.exclusion(protection)) is not None:
+            return "not_covered", excluded
         allowed = eligibility.conditions_allowed
         if allowed is not None and purchase.condition not in allowed:
             if purchase.condition != "unknown":
@@ -513,9 +527,14 @@ class _Assessment:
     def failure(self) -> CoverageResponse:
         w, day, ew = self.w, self.incident.date, self.ew
         maker = months_phrase(w.maker_months, adjective=True) if w.maker_months else None
+        excluded = self.exclusion(ew)
 
         # 1. Still under the maker's warranty (R9: this route is for failures only).
         if w.under_maker(day):
+            if excluded is not None:
+                return self.not_covered(f"Contact the manufacturer first. {excluded}", self.cite(ew),
+                                        headline="Not covered by your card: it's still under the maker's warranty.",
+                                        route="manufacturer")
             if w.ew_end is not None:
                 # §5.5 copy: "starts {maker end}". On the maker's last day itself the card's year
                 # isn't in effect yet (it is from the next day), so that day says "starts after".
@@ -543,6 +562,8 @@ class _Assessment:
             pp_note = " Its purchase protection covers theft and damage, not failures." if self.pp else ""
             return self.not_covered(f"{ended}{self.name} has no {what}.{pp_note}",
                                     self.cite_absence() if self.pp is None else self.cite(self.pp))
+        if excluded is not None:
+            return self.not_covered(excluded, self.cite(ew))
         if w.ew_block is not None:
             return self.not_covered(self.ew_block_reason(), self.cite(ew))
         extra = extra_phrase(ew.extends_by_months)
@@ -588,6 +609,8 @@ class _Assessment:
                 self.cite(ew) if in_effect else self.cite_absence(),
             )
 
+        if (excluded := self.exclusion(pp)) is not None:  # whatever happened and whenever
+            return self.not_covered(excluded, self.cite(pp))
         if w.pp_end is None:  # a purchase protection without a window in cards.json
             return self.need_more_info("Paywise doesn't have this benefit's time window; see the cited clause.", pp)
         days = pp_days_phrase(pp)

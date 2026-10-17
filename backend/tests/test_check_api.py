@@ -144,7 +144,9 @@ def test_every_ocr_fixture(name, kind, reason, card):
 
 
 def test_s1_k_freedom_default_keeps_with_a_snippet():
-    data = post(check_body(wallet="fu-default")).json()
+    # A Visa on screen is Freedom or Active Cash, so the default is the baseline. (Mastercard would be Apple Card:
+    # test_advice_correctness.py.)
+    data = post(check_body(ocr("laptop-checkout").replace("Mastercard", "Visa"), wallet="fu-default")).json()
     assert schema_errors(data) == []
     assert (data["decision"]["kind"], data["decision"]["reason"]) == ("keep", "already_protected")
     assert data["decision"]["presentation"] == "snippet"

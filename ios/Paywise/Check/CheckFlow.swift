@@ -19,8 +19,9 @@ struct CheckFlow: Sendable {
         /// An alerting island update, held, then ended `.immediate`.
         case island(IslandAlert)
         /// No check ran: a repeat press (`PressGate`) or a screen showing Paywise's own result (`showsPaywiseResult`).
-        /// The intent shows the earlier press's Pattern A snippet again (`reshowing`, the same record, so still one
-        /// save), else nothing, and leaves the island and the save offer (`lastPressCheckId`) to the earlier press.
+        /// Once the earlier press has returned, the intent shows its answer again as a static snippet (`reshowing`, the
+        /// same record, so still one save); while that press is still checking or still shows its island or prompt,
+        /// nothing. Either way the island and the save offer (`lastPressCheckId`) stay the earlier press's.
         case ignored(reshowing: String?)
 
         /// The check whose `CheckRecord` was written; nil when nothing was stored.
@@ -55,12 +56,11 @@ struct CheckFlow: Sendable {
     func run(imageData: Data?, trace: CheckTrace = CheckTrace(source: .inApp)) async -> Outcome {
         guard trace.source == .intent else { return await check(imageData: imageData, trace: trace) }
         let gate = deps.pressGate
-        if case .repeatOf(let answer) = await gate.admit(now: deps.now(), window: deps.repeatWindow) {
+        if case .repeatOf(let reshowing) = await gate.admit(now: deps.now(), window: deps.repeatWindow) {
             // Before step 1: ending activities here would take the island from the press being repeated.
             trace.abandon(.intentToChecking)
             Self.log.notice("Repeat press: reusing the last answer instead of a new check")
-            if case .snippet(let checkId)? = answer { return .ignored(reshowing: checkId) }
-            return .ignored(reshowing: nil)
+            return .ignored(reshowing: reshowing)
         }
         let outcome = await check(imageData: imageData, trace: trace)
         await gate.finish(outcome, now: deps.now())
@@ -185,14 +185,16 @@ struct CheckFlow: Sendable {
         return .ready(Prepared(request: request, body: body, wallet: wallet))
     }
 
-    /// Whether OCR text shows one of Paywise's own result views (§6.3): a line that is exactly a [Paying with …] title,
+    /// Whether OCR text shows one of Paywise's own result views (§6.3): a cell that is exactly a [Paying with …] title,
     /// [What we sent] or the Sent view's title. A press over Paywise's snippet reads it with the checkout behind.
+    /// A cell is a whole line or one item of a row, which reading order joins with two spaces (`ReadingOrder`): the
+    /// in-app Saved card reads "What we sent  Done".
     static func showsPaywiseResult(_ text: String, catalog: CardCatalog) -> Bool {
         let titles = ["what we sent", "what left your iphone"]
             + catalog.cards.compactMap(\.shortName).map { "paying with \($0)".lowercased() }
-        return text.components(separatedBy: .newlines).contains {
-            titles.contains($0.trimmingCharacters(in: .whitespaces).lowercased())
-        }
+        return text.components(separatedBy: .newlines)
+            .flatMap { $0.components(separatedBy: ReadingOrder.columnSeparator) }
+            .contains { titles.contains($0.trimmingCharacters(in: .whitespaces).lowercased()) }
     }
 
     // MARK: Request
@@ -411,27 +413,38 @@ struct CheckFlow: Sendable {
 /// Back Tap): a press while another runs, or within `AppDependencies.repeatWindow` of an answer, runs no check of its
 /// own. Its screenshot shows the first press's snippet, and its check would take the island from that press (§6.2).
 /// After *No checkout* or *Couldn't check* ("press again"), the next press always runs.
+///
+/// A repeat shows the answer again once its press has returned (`returned`): by then a Keep island's hold is over and
+/// a Pattern B prompt is gone, so without it a press later in the window would show nothing at all.
 actor PressGate {
     enum Admission: Sendable, Equatable {
         case run
-        /// A repeat of `answer`; nil while the earlier press is still checking.
-        case repeatOf(CheckFlow.Outcome?)
+        /// A repeat: show this check's answer again, or nothing (nil) while the earlier press is still checking or
+        /// still shows its island or prompt.
+        case repeatOf(reshowing: String?)
     }
 
     /// A press counts as running for at most the intent's 30 s (§6.2), so one that never finished can't block the next.
     static let maxRun: TimeInterval = 30
 
+    private struct Answer {
+        var outcome: CheckFlow.Outcome
+        var at: Date
+        /// Its intent has returned (`returned`).
+        var returned = false
+    }
+
     private var runningSince: Date?
-    private var answer: (outcome: CheckFlow.Outcome, at: Date)?
+    private var answer: Answer?
 
     init() {}
 
     func admit(now: Date, window: Duration) -> Admission {
         if let runningSince, (0..<Self.maxRun).contains(now.timeIntervalSince(runningSince)) {
-            return .repeatOf(nil)
+            return .repeatOf(reshowing: nil)
         }
         if let answer, (0..<CheckTrace.milliseconds(window) / 1000).contains(now.timeIntervalSince(answer.at)) {
-            return .repeatOf(answer.outcome)
+            return .repeatOf(reshowing: answer.returned ? answer.outcome.recordCheckId : nil)
         }
         runningSince = now
         answer = nil
@@ -440,7 +453,12 @@ actor PressGate {
 
     func finish(_ outcome: CheckFlow.Outcome, now: Date) {
         runningSince = nil
-        answer = Self.isAnswer(outcome) ? (outcome, now) : nil
+        answer = Self.isAnswer(outcome) ? Answer(outcome: outcome, at: now) : nil
+    }
+
+    /// The intent that answered `checkId` has returned: its island has ended, its prompt is gone, or its snippet shows.
+    func returned(checkId: String) {
+        if answer?.outcome.recordCheckId == checkId { answer?.returned = true }
     }
 
     /// A stored Switch or Keep: the answer a repeat reuses. Errors and *No checkout* ask the user to press again.

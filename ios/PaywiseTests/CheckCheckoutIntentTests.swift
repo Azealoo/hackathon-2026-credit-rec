@@ -1,4 +1,5 @@
 import AppIntents
+import CoreGraphics
 import Foundation
 import Testing
 import UniformTypeIdentifiers
@@ -402,6 +403,56 @@ struct RepeatPressTests {
         #expect(await env.island.alerts.count == 1)
     }
 
+    /// After a Keep island's hold, or a declined Pattern B prompt, the answer is gone from the screen while the window
+    /// still runs. A press then (on another checkout, say) shows that answer again as a static snippet, not nothing:
+    /// still one check, and the island and the save offer stay the first press's.
+    @Test(arguments: [SnippetMode.island, .confirm])
+    func aRepeatAfterTheAnswerLeftTheScreenShowsItAgain(snippetMode: SnippetMode) async throws {
+        let env = try Self.environment(snippetMode: snippetMode)
+        try await env.perform(TestEnvironment.screenshot())
+        let first = try #require(env.deps.checkStore.latest())
+        let offer = try #require(env.deps.settings.lastPressCheckId)
+        let island = await env.island.events
+
+        let outcome = await Self.press(env.deps)
+
+        #expect(outcome == .ignored(reshowing: first.checkId))
+        #expect(env.requests.count == 1)
+        #expect(env.deps.settings.lastPressCheckId == offer)
+        #expect(await env.island.events == island)
+    }
+
+    /// While the first press still holds its island, a repeat shows nothing over it: the island is the answer.
+    @Test func aRepeatDuringTheHoldShowsNothing() async throws {
+        let env = try Self.environment(snippetMode: .island)
+        var deps = env.deps
+        deps.fallbackHold = .seconds(1)
+        let first = Task { @MainActor in
+            try await env.perform(TestEnvironment.screenshot(), trace: CheckTrace(source: .intent), deps: deps)
+        }
+        let deadline = ContinuousClock.now + .seconds(5)
+        while await env.island.alerts.isEmpty, ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+
+        let during = await Self.press(deps)
+        try await first.value
+        let after = await Self.press(deps)
+
+        let record = try #require(env.deps.checkStore.latest())
+        #expect(during == .ignored(reshowing: nil))
+        #expect(after == .ignored(reshowing: record.checkId))
+        #expect(env.requests.count == 1)
+        #expect(await env.island.alerts.count == 1)
+    }
+
+    /// A press as the intent makes it, without the intent's own presentation.
+    private static func press(_ deps: AppDependencies) async -> CheckFlow.Outcome {
+        await Dependencies.$current.withValue(deps) {
+            await CheckFlow(deps: deps).run(imageData: Data([0x89]), trace: CheckTrace(source: .intent))
+        }
+    }
+
     @Test func aPressAfterTheWindowRunsANewCheck() async throws {
         let env = try Self.environment()
         let clock = TestClock()
@@ -460,6 +511,28 @@ struct RepeatPressTests {
         // Try it now's sample checkout ("Pay with / Mastercard ••5678") is a checkout, not a result.
         #expect(!CheckFlow.showsPaywiseResult("Sample checkout\nPay with\nMastercard ••5678\nTotal\n$1,499.00", catalog: catalog))
         #expect(!CheckFlow.showsPaywiseResult("You're paying with Freedom today\nTotal $1,499.00", catalog: catalog))
+    }
+
+    /// Reading order joins a row's items with two spaces, so the in-app Saved card's [What we sent] [Done] row reads
+    /// "What we sent  Done". A title is found as a whole cell of a row, never inside one.
+    @Test func ownResultTitleAsACellOfARow() throws {
+        let catalog = CardCatalog.bundled()
+        let savedRow = ReadingOrder.lines([
+            OCRFragment(text: "What we sent", box: CGRect(x: 0.06, y: 0.8, width: 0.4, height: 0.03), confidence: 0.9),
+            OCRFragment(text: "Done", box: CGRect(x: 0.54, y: 0.8, width: 0.4, height: 0.03), confidence: 0.9),
+        ])
+        #expect(savedRow == ["What we sent  Done"])
+        #expect(CheckFlow.showsPaywiseResult(
+            (["✓ Saved: Aero 14 · $1,499"] + savedRow + ["Total  $1,499.00"]).joined(separator: "\n"), catalog: catalog
+        ))
+        #expect(CheckFlow.showsPaywiseResult("Use Freedom ••1234\nPaying with Freedom  Done", catalog: catalog))
+        #expect(CheckFlow.showsPaywiseResult("‹ Back   What left your iPhone", catalog: catalog))
+
+        // Checkout rows with the same words in a longer cell, or split across cells.
+        #expect(!CheckFlow.showsPaywiseResult("You're paying with Freedom today  $1,499.00", catalog: catalog))
+        #expect(!CheckFlow.showsPaywiseResult("Sample checkout\nPay with  Mastercard ••5678\nTotal  $1,499.00", catalog: catalog))
+        #expect(!CheckFlow.showsPaywiseResult("Paying with  Freedom ••1234", catalog: catalog))
+        #expect(!CheckFlow.showsPaywiseResult("Order summary  What we sent you by email", catalog: catalog))
     }
 
     /// The §6.3 Switch snippet's text above the checkout it covers, as OCR reads the screenshot.

@@ -139,6 +139,59 @@ final class AppShellUITests: XCTestCase {
         attach(app, "case2")
     }
 
+    /// SPEC §5.5 payout cap (coverage case 12) on the live backend: [Part of it] with $1,000 of the $1,499 on the card
+    /// → May be eligible: Extended warranty, with a $1,000.00 payout cap. An amount over the price shows the hint and
+    /// keeps [Check] off.
+    @MainActor
+    func testPartialPaymentCapsThePayout() throws {
+        let setup = Launch.app(["-resetState", "-skipOnboarding", "-dateOverride", Launch.purchaseDay, "-tab", "check"])
+        setup.pickNewestPhoto()
+        XCTAssertTrue(setup.buttons["result.save"].waitForExistence(timeout: 10))
+        setup.buttons["result.save"].tap()
+        XCTAssertTrue(setup.descendants(matching: .any)["result.saved"].waitForExistence(timeout: 5))
+        setup.terminate()
+
+        let app = Launch.app(["-dateOverride", Launch.claimDay, "-tab", "purchases"])
+        let row = app.buttons.matching(identifier: "purchase.row").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        XCTAssertTrue(app.buttons["purchase.somethingHappened"].waitForExistence(timeout: 5))
+        app.buttons["purchase.somethingHappened"].tap()
+        XCTAssertTrue(app.staticTexts["claim.paid.question"].waitForExistence(timeout: 5))
+        app.buttons["claim.paid.yes"].tap()
+
+        app.buttons["claim.paidWith.card_partial"].tap()
+        let amount = app.textFields["claim.paidWith.amount"]
+        XCTAssertTrue(amount.waitForExistence(timeout: 2), "[Part of it] shows the amount field")
+        amount.tap()
+        amount.typeText("2000")
+        let hint = app.descendants(matching: .any)["claim.paidWith.amountHint"]
+        XCTAssertTrue(hint.waitForExistence(timeout: 2), "an amount over the price shows the hint")
+        XCTAssertFalse(app.buttons["claim.check"].isEnabled)
+        attach(app, "partial-over-price")
+        amount.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "1000")
+        XCTAssertFalse(hint.waitForExistence(timeout: 1), "$1,000 is accepted")
+        app.dismissKeyboard()
+
+        app.buttons["claim.warranty.oneYear"].tap()
+        let description = app.claimDescription
+        description.tap()
+        description.typeText(Expected.case1Text)
+        app.dismissKeyboard()
+        let failure = app.buttons["claim.cause.failure"]
+        if !failure.waitForSelected(timeout: 12) { failure.tap() }
+        XCTAssertTrue(failure.waitForSelected(timeout: 2))
+        attach(app, "partial-input")
+        app.buttons["claim.check"].tap()
+
+        XCTAssertTrue(app.verdictWeb.waitForExistence(timeout: 25), "the verdict web view opens")
+        XCTAssertTrue(app.verdictText(containing: "May be eligible", timeout: 15), "case 12 verdict: \(app.verdictDump)")
+        XCTAssertTrue(app.verdictText(containing: "Payout cap", timeout: 2), "case 12 payout: \(app.verdictDump)")
+        XCTAssertTrue(app.verdictText(containing: "$1,000.00", timeout: 2), "capped at the part on the card: \(app.verdictDump)")
+        print("PAYWISE_UI testPartialPaymentCapsThePayout: \(app.verdictDump.prefix(600))")
+        attach(app, "partial-verdict")
+    }
+
     /// Yes → whole price → 1 year → the text → the cause chip. With `acceptSuggestion`, waits for the server's classification to
     /// pre-select `cause` and taps it only if it doesn't.
     @MainActor

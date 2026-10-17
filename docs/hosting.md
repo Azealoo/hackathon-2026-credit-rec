@@ -43,12 +43,12 @@ Tonight, for the static store:
 
 Friday morning, for the backend (needs a card):
 5. **New → Web Service** → same repo, branch `main`. Runtime **Python 3**. Region **Oregon** (closest to Seattle (u)). **Instance type Starter**, never Free.
-6. Build command: `pip install uv==0.12.17 && cd backend && uv sync --frozen --no-dev`. Start command: `cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Health check path `/health`.
+6. Build command: `cd backend && pip install uv && uv sync --frozen --no-dev`. Start command: `cd backend && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Health check path `/health`. These are the live `paywise-api` settings, on branch `main` (checked in the dashboard 2026-10-16; 6960a66 deployed with them).
    - `uv sync --frozen` installs exactly the versions in `backend/uv.lock`, the ones the tests ran on; the old `pip install ./backend` took the newest versions `pyproject.toml` allowed on every deploy. CI (`.github/workflows/backend-tests.yml`) fails a PR whose `uv.lock` is out of step with `pyproject.toml`.
-   - The build installs uv itself because Render adds uv only when `uv.lock` is in the service's root directory **(c, render.com/docs/uv-version, 2026-10-16)**; ours is in `backend/`, and the store in `demo-store/` must stay inside the service. The uv version matches CI.
-   - The start command runs the virtualenv `uv sync` built, so it needs no uv at run time.
+   - The build installs uv itself because Render adds uv only when `uv.lock` is in the service's root directory **(c, render.com/docs/uv-version, 2026-10-16)**; ours is in `backend/`, and the store in `demo-store/` must stay inside the service. The build takes the newest uv; CI pins 0.12.17.
+   - `uv run --no-sync` starts uvicorn from the virtualenv `uv sync` built, without touching the lockfile or installing anything at start.
 7. **Environment**, add each yourself (Claude never sees the values):
-   `PYTHON_VERSION=3.12.7` (any 3.12.x; Render's default for new services is 3.14 **(c, render.com/docs/python-version)**, and `backend/.python-version` isn't at the repo root, so Render doesn't read it), `UV_PYTHON_DOWNLOADS=never` (uv builds the virtualenv on that Python instead of downloading one; a downloaded Python lives outside the project folder and may not exist at run time **(u)**), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE=mock` (`visa_acceptance` only while showing the Visa sandbox live), `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`, `PUBLIC_BASE_URL=https://<name>.onrender.com`. Optional: `LLM_DAILY_CAP`, `LLM_CLIENT_DAILY_CAP`, `RATE_LIMIT_PER_MIN` (defaults in `.env.example`). (Names per `.env.example`, §15.5.)
+   `PYTHON_VERSION=3.12.7` (any 3.12.x; Render's default for new services is 3.14 **(c, render.com/docs/python-version)**, and `backend/.python-version` isn't at the repo root, so Render doesn't read it), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE=mock` (`visa_acceptance` only while showing the Visa sandbox live), `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`, `PUBLIC_BASE_URL=https://<name>.onrender.com`. Optional: `LLM_DAILY_CAP`, `LLM_CLIENT_DAILY_CAP`, `RATE_LIMIT_PER_MIN` (defaults in `.env.example`). (Names per `.env.example`, §15.5.)
    - Render sets `RENDER=true` and `RENDER_GIT_COMMIT` itself, at build and run time **(c, render.com/docs/environment-variables)**. With `RENDER=true` the backend turns off `/docs`, `/redoc` and `/openapi.json`. `/health` returns `{"ok": true, "commit": "<RENDER_GIT_COMMIT>", "modes": {"parser", "coverage", "pay"}}`, so a glance shows what is live, and startup logs the same plus a warning for any mode value it doesn't know.
 8. Turn **Auto-Deploy** on for `main` until Fri 10 PM, then **off** (a surprise deploy during the event is the main outage risk).
 9. Give Claude the service URL. Optionally create a Render API key for deploy checks. Skip it if you'd rather click.
@@ -76,15 +76,13 @@ services:
     runtime: python
     plan: starter
     region: oregon
-    buildCommand: pip install uv==0.12.17 && cd backend && uv sync --frozen --no-dev
-    startCommand: cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd backend && pip install uv && uv sync --frozen --no-dev
+    startCommand: cd backend && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true   # set false after Fri 10 PM
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: UV_PYTHON_DOWNLOADS
-        value: never
       - key: PARSER_MODE
         value: llm
       - key: COVERAGE_MODE

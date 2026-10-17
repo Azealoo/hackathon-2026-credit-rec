@@ -9,7 +9,12 @@ Anthropic Messages API through the official `anthropic` SDK, schema-constrained 
 Config (environment, read on every call so tests and the eval can change it):
 - LLM_API_KEY    the key. Only this variable is used; no other credential source is tried.
 - LLM_MODEL      default "claude-haiku-5-5"; "claude-sonnet-5-5" is the one-line fallback.
-- LLM_DAILY_CAP  calls per UTC day for this process (default 3000); over it, calls raise.
+- LLM_DAILY_CAP  calls per UTC day for this process (default 3000); over it, calls raise, and the
+  first refusal of the day logs one error.
+- LLM_CLIENT_DAILY_CAP  calls per UTC day for one client (default 500; 0 turns it off), so one
+  caller can't spend the shared cap. The client is the one RateLimit counts the request against
+  (app.middleware.CLIENT: an IPv4 address or an IPv6 /64); calls outside a request (scripts, the
+  eval) have none and only meet LLM_DAILY_CAP. Both counts are in memory and restart with the process.
 - LLM_HEDGE_AFTER_S  if a call hasn't answered after this many seconds (default 2.0), send one
   duplicate and take whichever answers first; 0 turns it off. Cuts the slow tail (single calls
   seen at 3.7-4.0 s while the median was ~1.5 s); each hedge counts toward LLM_DAILY_CAP.
@@ -26,14 +31,19 @@ import json
 import logging
 import os
 import time
+from collections import OrderedDict
 
 import anthropic
+
+from app.middleware import CLIENT
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 FALLBACK_MODEL = "claude-sonnet-5-5"  # used only when LLM_MODEL says so (docs/llm-provider.md)
 DEFAULT_DAILY_CAP = 3000
+DEFAULT_CLIENT_DAILY_CAP = 500
+MAX_CLIENTS = 10_000  # per-client counts kept (least recently used dropped first)
 DEFAULT_INFERENCE_GEO = "us"
 INFERENCE_GEOS = ("us", "global")
 CONNECT_TIMEOUT_S = 2.0
@@ -99,9 +109,17 @@ def daily_cap() -> int:
         return DEFAULT_DAILY_CAP
 
 
+def client_daily_cap() -> int:
+    try:
+        return int(os.environ.get("LLM_CLIENT_DAILY_CAP", DEFAULT_CLIENT_DAILY_CAP))
+    except ValueError:
+        return DEFAULT_CLIENT_DAILY_CAP
+
+
 # --- Budget: in-memory, per process, per UTC day ---------------------------------------------
 
-_budget = {"day": None, "count": 0}
+_budget = {"day": None, "count": 0, "cap_logged": False}
+_client_calls: OrderedDict[str, int] = OrderedDict()
 
 
 def _today() -> dt.date:
@@ -111,9 +129,26 @@ def _today() -> dt.date:
 def _take_budget() -> None:
     day = _today()
     if _budget["day"] != day:
-        _budget["day"], _budget["count"] = day, 0
-    if _budget["count"] >= daily_cap():
+        _budget.update(day=day, count=0, cap_logged=False)
+        _client_calls.clear()
+    cap = daily_cap()
+    if _budget["count"] >= cap:
+        if not _budget["cap_logged"]:
+            _budget["cap_logged"] = True
+            logger.error("llm LLM_DAILY_CAP of %d calls reached: the LLM paths answer with rules until UTC midnight", cap)
         raise LLMBudgetExceeded("daily LLM call cap reached")
+    client, client_cap = CLIENT.get(), client_daily_cap()
+    if client is not None and client_cap > 0:
+        used = _client_calls.get(client, 0)
+        if used >= client_cap:
+            if used == client_cap:  # first refusal today: log it (never the address), then mark it logged
+                _client_calls[client] = used + 1
+                logger.warning("llm LLM_CLIENT_DAILY_CAP of %d calls reached by one client", client_cap)
+            raise LLMBudgetExceeded("this client's daily LLM call cap is reached")
+        _client_calls[client] = used + 1
+        _client_calls.move_to_end(client)
+        if len(_client_calls) > MAX_CLIENTS:
+            _client_calls.popitem(last=False)
     _budget["count"] += 1
 
 
@@ -122,7 +157,8 @@ def calls_today() -> int:
 
 
 def reset_budget() -> None:
-    _budget["day"], _budget["count"] = None, 0
+    _budget.update(day=None, count=0, cap_logged=False)
+    _client_calls.clear()
 
 
 # --- Client ------------------------------------------------------------------------------------

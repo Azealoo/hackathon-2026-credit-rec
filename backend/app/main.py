@@ -6,17 +6,20 @@ card-number-like digit run before a route reads it; RateLimit caps each client's
 """
 
 import logging
+import os
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 
 from app import catalog  # Loads and validates data/cards.json: a bad catalog stops startup (§15.3).
-from app import engine
+from app import coverage, engine, visa_acceptance
+from app import llm, parser_llm  # noqa: F401  Loaded now: importing the anthropic SDK takes ~1 s, too long for a request.
 from app.middleware import PrivacyGuard, RateLimit, error_body, loggable_id, request_id_from
 from app.models import CheckRequest, CheckResult, TimingMs
-from app.parsing import parse_screen
+from app.parsing import parse_screen, parser_mode
 
 log = logging.getLogger("paywise.check")
 _paywise_log = logging.getLogger("paywise")
@@ -26,14 +29,49 @@ if not _paywise_log.handlers:  # uvicorn configures only its own loggers: show o
     _paywise_log.addHandler(_handler)
     _paywise_log.setLevel(logging.INFO)
 
-app = FastAPI(title="Paywise", version="0.1.0")
+config_log = logging.getLogger("paywise.config")
+
+# Each mode variable, its values, and the value it falls back to when unset or unknown. Read per request, so a test
+# can change them; startup logs what they are and warns about a value that isn't one of these.
+MODES = {
+    "PARSER_MODE": ("parser", ("rules", "llm"), "rules"),
+    "COVERAGE_MODE": ("coverage", ("rules", "llm"), "rules"),
+    "PAY_MODE": ("pay", ("mock", "visa_acceptance"), "mock"),
+}
+UNSET = ("", "changeme")  # .env.example's placeholder means unset
+
+
+def modes() -> dict[str, str]:
+    return {"parser": parser_mode(), "coverage": coverage.coverage_mode(), "pay": visa_acceptance.pay_mode()}
+
+
+def deployed_commit() -> str | None:
+    """The commit Render deployed (Render sets RENDER_GIT_COMMIT at build and run time); None elsewhere."""
+    return os.environ.get("RENDER_GIT_COMMIT", "").strip() or None
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    for name, (_, allowed, fallback) in MODES.items():
+        value = os.environ.get(name, "").strip().lower()
+        if value not in allowed and value not in UNSET:
+            config_log.warning("%s=%r is not one of %s: using %s", name, value[:24], ", ".join(allowed), fallback)
+    effective = " ".join(f"{key}={value}" for key, value in modes().items())
+    config_log.info("config: %s commit=%s", effective, (deployed_commit() or "unknown")[:12])
+    yield
+
+
+# The interactive API docs only in local development: Render sets RENDER=true on every service.
+_docs = {} if os.environ.get("RENDER", "").strip().lower() != "true" else {
+    "docs_url": None, "redoc_url": None, "openapi_url": None}
+app = FastAPI(title="Paywise", version="0.1.0", lifespan=lifespan, **_docs)
 app.add_middleware(PrivacyGuard)
 app.add_middleware(RateLimit)  # added last = outermost: a client over its limit is turned away first
 
 
 @app.get("/health")
-def health() -> dict[str, bool]:
-    return {"ok": True}
+def health() -> dict:
+    return {"ok": True, "commit": deployed_commit(), "modes": modes()}
 
 
 def _error(status: int, code: str, message: str, request_id: str | None) -> Response:

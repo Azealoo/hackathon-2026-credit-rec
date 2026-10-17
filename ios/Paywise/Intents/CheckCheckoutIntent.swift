@@ -46,6 +46,17 @@ struct CheckCheckoutIntent: AppIntent, LiveActivityIntent {
             deps.settings.lastPressCheckId = deps.settings.snippetMode == .snippet ? nil : checkId
         }
 
+        let result = await show(outcome, deps: deps, trace: trace, started: started)
+        // The island hold and the prompt are over: a repeat press may now show this answer again (`PressGate`).
+        if let checkId = outcome.recordCheckId { await deps.pressGate.returned(checkId: checkId) }
+        return result
+    }
+
+    /// Step 7: shows `outcome`, holding an island alert or waiting on Pattern B's prompt.
+    @MainActor
+    private func show(
+        _ outcome: CheckFlow.Outcome, deps: AppDependencies, trace: CheckTrace, started: ContinuousClock.Instant
+    ) async -> some IntentResult & ShowsSnippetIntent {
         switch outcome {
         case .notSetUp:
             trace.resultShown()
@@ -53,7 +64,8 @@ struct CheckCheckoutIntent: AppIntent, LiveActivityIntent {
 
         case .ignored(let reshowing):
             // A repeat press, or Paywise's own result on screen: no check ran, so the earlier press keeps the island
-            // and its save offer. Its Pattern A snippet shows again (the same record: one save); otherwise nothing.
+            // and its save offer. Once that press has returned, its answer shows again as a static snippet (the same
+            // record: one save); while it still shows its island or prompt, or is still checking, nothing.
             trace.resultShown()
             if let reshowing {
                 return .result(snippetIntent: CheckResultSnippetIntent(checkId: reshowing))

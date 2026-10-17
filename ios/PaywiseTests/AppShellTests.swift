@@ -582,6 +582,7 @@ struct ClaimModelTests {
         let reply = Data(#"{"verdict":"may_be_eligible","incident":{"cause":"failure","causeSource":"llm"}}"#.utf8)
         let env = TestEnvironment(reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply)))
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Lines across the screen. Never dropped."
         await model.classify(model.trimmedDescription)
@@ -599,6 +600,7 @@ struct ClaimModelTests {
     @Test func aPickedCauseSurvivesAnEdit() throws {
         let env = TestEnvironment(reading: .laptopCheckout)
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Stolen from my bag"
         model.pick(.theft)
@@ -614,6 +616,7 @@ struct ClaimModelTests {
             reading: .laptopCheckout, route: .init(behavior: .respond(status: 200, body: reply), delay: 0.4)
         )
         let model = try model(env, status: .confirmed)
+        model.paidWith = .full
         model.warranty = .oneYear
         model.description = "Lines across the screen. Never dropped."
         await model.classify(model.trimmedDescription)

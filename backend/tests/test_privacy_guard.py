@@ -9,8 +9,10 @@ Every card number here is built at runtime from the processors' published Visa t
 file passes its own repo scan (tests/test_privacy.py: no 12+ digit literals).
 """
 
+import asyncio
 import copy
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -221,7 +223,7 @@ def test_a_body_on_a_get_is_refused_without_a_scan(monkeypatch):
     response = client.request("GET", "/health", content=b'{"x": "1 1 1"}')
     assert response.status_code == 400 and response.json()["error"]["code"] == "bad_request"
     assert scanned == []
-    assert client.get("/health").json() == {"ok": True}
+    assert client.get("/health").json()["ok"] is True
 
 
 @pytest.mark.parametrize("depth", [900, 3000, 15000])
@@ -233,3 +235,137 @@ def test_deeply_nested_json_is_a_bad_request_not_a_server_error(path, depth):
     assert response.status_code == 400
     assert response.headers["content-type"].startswith("application/json")
     assert response.json()["error"]["code"] == "bad_request"
+
+
+# --- Scan cost (review 2026-10-17: one in-limit client stalled the event loop) -------------------
+
+
+def _full_size(unit: str, cap: int = middleware.MAX_BODY_BYTES) -> list[bytes]:
+    """`unit` repeated to just under `cap`, as a raw body and as one JSON string."""
+    raw = (unit * cap).encode()[: cap - 16]
+    as_json = json.dumps({"x": unit * ((cap - 32) // len(unit.encode("unicode_escape")))}).encode()[: cap - 16]
+    return [raw, as_json if as_json.endswith(b'"}') else json.dumps({"x": unit * 64}).encode()]
+
+
+# Digit runs with as many groups (and so card-shaped windows) per byte as the separators allow.
+WORST_CASES = [
+    pytest.param(body, id=f"{name}-{kind}")
+    for name, unit in [("1-space", "1 "), ("1-period", "1."), ("1-space-hyphen", "1 - "), ("1-six-spaces", "1     "),
+                       ("4-digit-groups", "1111 "), ("4-digit-hyphen", "1111-"), ("4-6-groups", "1111 222222 "),
+                       ("en-dash", "1–")]
+    for kind, body in zip(("raw", "json"), _full_size(unit))
+]
+
+
+@pytest.mark.parametrize("body", WORST_CASES)
+def test_worst_case_scan_time_is_bounded(body):
+    """A 32 KiB body of digit groups took 75-250 ms to scan (every window of up to 19 digits); a card number spans
+    3 to 5 groups, so the scan now looks at no more than 3 windows a group (under 10 ms on a laptop)."""
+    assert len(body) <= middleware.MAX_BODY_BYTES
+    best = min(_timed(middleware.body_is_private, body) for _ in range(3))
+    assert best < 0.040, f"{best * 1000:.1f} ms"
+
+
+def _timed(fn, *args) -> float:
+    started = time.perf_counter()
+    fn(*args)
+    return time.perf_counter() - started
+
+
+def test_the_scan_runs_off_the_event_loop(monkeypatch):
+    """While one body is being scanned, other requests on the single worker still get the loop."""
+    monkeypatch.setattr(middleware, "body_is_private", lambda body: time.sleep(0.3) or True)
+
+    async def app_ok(scope, receive, send):
+        await receive()
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"{}"})
+
+    async def scenario() -> float:
+        guard = middleware.PrivacyGuard(app_ok)
+        scope = {"type": "http", "method": "POST", "path": "/v1/check", "headers": [(b"content-type", b"application/json")]}
+
+        async def receive():
+            return {"type": "http.request", "body": b'{"x": 1}', "more_body": False}
+
+        async def send(message):
+            pass
+
+        done, longest = asyncio.Event(), 0.0
+
+        async def ticker():
+            nonlocal longest
+            last = time.perf_counter()
+            while not done.is_set():
+                await asyncio.sleep(0.01)
+                now = time.perf_counter()
+                longest, last = max(longest, now - last), now
+
+        async def request():
+            await asyncio.sleep(0.03)  # the ticker is running first
+            await guard(scope, receive, send)
+            done.set()
+
+        await asyncio.gather(request(), ticker())
+        return longest
+
+    assert asyncio.run(scenario()) < 0.15
+
+
+@pytest.mark.parametrize(
+    "path, cap",
+    [("/v1/store/pay", 2 * 1024), ("/v1/coverage", 16 * 1024), ("/health", 1024), ("/nope", 1024)],
+)
+def test_each_route_caps_its_body_before_the_scan(monkeypatch, path, cap):
+    """The pay body is a few dozen bytes and only /v1/check carries OCR text: the smaller caps are checked as the body
+    arrives, so a body that could never be valid there is refused unscanned."""
+    scanned = []
+    monkeypatch.setattr(middleware, "body_is_private", lambda body: scanned.append(body) or True)
+    assert middleware.body_cap(path) == cap
+    response = client.post(path, content=b'{"x": "' + b"a" * cap + b'"}', headers={"content-type": "application/json"})
+    assert response.status_code == 400 and response.json()["error"]["code"] == "bad_request"
+    assert scanned == []
+    assert middleware.body_cap("/v1/check") == middleware.MAX_BODY_BYTES
+
+
+# --- Content type (review 2026-10-17: cross-site text/plain POSTs) ---------------------------------
+
+STORE_PAY = {"orderId": "NB-100234", "savedCardId": "demo-visa-1234", "amountUsd": 18.0}
+
+
+def _bodies() -> dict[str, dict]:
+    return {"/v1/check": check_body("Northbay Electronics\nTotal $18.00"), "/v1/coverage": coverage_body("Stolen"),
+            "/v1/store/pay": STORE_PAY}
+
+
+@pytest.mark.parametrize("path", ["/v1/check", "/v1/coverage", "/v1/store/pay"])
+@pytest.mark.parametrize("content_type", ["text/plain", "text/plain;charset=UTF-8", "application/x-www-form-urlencoded",
+                                          "multipart/form-data; boundary=x", None])
+def test_api_posts_must_be_json(monkeypatch, path, content_type):
+    """A form or fetch() from another site can send text/plain without a CORS preflight; the API takes JSON only."""
+    monkeypatch.setenv("PAY_MODE", "mock")
+    scanned = []
+    monkeypatch.setattr(middleware, "body_is_private", lambda body: scanned.append(body) or True)
+    headers = {"content-type": content_type} if content_type else {}
+    response = client.post(path, content=json.dumps(_bodies()[path]).encode(), headers=headers)
+    assert response.status_code == 415
+    assert response.json()["error"]["code"] == "bad_request"
+    assert scanned == []
+
+
+@pytest.mark.parametrize("path", ["/v1/check", "/v1/coverage", "/v1/store/pay"])
+@pytest.mark.parametrize("content_type", ["application/json", "application/json; charset=utf-8", "Application/JSON"])
+def test_json_posts_still_work(monkeypatch, path, content_type):
+    monkeypatch.setenv("PAY_MODE", "mock")
+    response = client.post(path, content=json.dumps(_bodies()[path]).encode(), headers={"content-type": content_type})
+    assert response.status_code == 200
+
+
+def test_the_store_and_the_phone_send_json():
+    """The demo store (same origin, /store/) and the phone already send application/json, so nothing breaks."""
+    store = (REPO / "demo-store" / "store.js").read_text(encoding="utf-8")
+    assert 'const PAY_URL = "/v1/store/pay";' in store  # same origin: no CORS
+    assert 'headers: { "Content-Type": "application/json" }' in store
+    for swift in ("ios/Paywise/Check/PaywiseAPI.swift", "ios/Paywise/Claim/CoverageAPI.swift"):
+        assert 'request.setValue("application/json", forHTTPHeaderField: "Content-Type")' in (
+            REPO / swift).read_text(encoding="utf-8")

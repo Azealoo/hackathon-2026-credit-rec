@@ -95,6 +95,73 @@
       "verification": "verified"
     }
   ],
+  "offerContext": {
+    "catalogVersion": "2026-10-16",
+    "amountUsd": 1099.0,
+    "merchantId": "northbay-electronics",
+    "ruleCategory": "electronics",
+    "itemCategories": [
+      "computers"
+    ],
+    "paymentPath": "saved_card",
+    "method": "card",
+    "thresholdUsd": 5.0,
+    "publicRates": {
+      "apple-card": {
+        "ratePct": 1.0,
+        "status": "verified",
+        "ruleId": null
+      },
+      "wf-active-cash": {
+        "ratePct": 2.0,
+        "status": "verified",
+        "ruleId": null
+      },
+      "chase-freedom-unlimited": {
+        "ratePct": 1.5,
+        "status": "verified",
+        "ruleId": null
+      }
+    },
+    "allowedCashPicks": [
+      "apple-card",
+      "wf-active-cash",
+      "chase-freedom-unlimited"
+    ],
+    "purchaseDraftByCard": {
+      "apple-card": {
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "renewed",
+        "priceUsd": 1099.0,
+        "purchaseDate": "2026-10-17",
+        "cardId": "apple-card",
+        "coverage": []
+      },
+      "wf-active-cash": {
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "renewed",
+        "priceUsd": 1099.0,
+        "purchaseDate": "2026-10-17",
+        "cardId": "wf-active-cash",
+        "coverage": []
+      },
+      "chase-freedom-unlimited": {
+        "merchant": "Northbay Electronics",
+        "item": "Aero 14 Laptop, 14-inch",
+        "category": "computers",
+        "condition": "renewed",
+        "priceUsd": 1099.0,
+        "purchaseDate": "2026-10-17",
+        "cardId": "chase-freedom-unlimited",
+        "coverage": []
+      }
+    },
+    "deviceMayOverride": true
+  },
   "timingMs": {
     "parse": 0,
     "engine": 0

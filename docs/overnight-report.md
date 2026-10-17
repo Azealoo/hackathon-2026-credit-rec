@@ -173,7 +173,7 @@ Device results: `docs/spikes.md` › Results.
 - **Spec gaps:**
   - §5.5's check order should say the maker's-warranty step is for failures only (R9).
   - §6.3 has no copy for backend 4xx errors (R16).
-  - §15.5's response examples show the extended warranty limit as `null`/`claim`; the catalog value is $10,000 per item. (Fixed later in SPEC v2.3 and `contracts/`.)
+  - §15.5's response examples show the extended warranty limit as `null`/`claim`; the catalog value is $10,000 per item. (Fixed later in SPEC v2.4 and `contracts/`.)
   - Discover's only source has no version date.
 - **Simulator limits:**
   - The island doesn't redraw at `staleDate` (R21).

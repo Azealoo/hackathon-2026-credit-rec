@@ -35,6 +35,10 @@ struct SettingsView: View {
                         WalletSummary(wallet: wallet ?? deps.walletStore.load(), catalog: deps.catalog)
                     }
                     .accessibilityIdentifier("settings.wallet")
+                    NavigationLink("Card offers") {
+                        OfferQuestionsView(deps: deps)
+                    }
+                    .accessibilityIdentifier("settings.offers")
                 }
 
                 Section {

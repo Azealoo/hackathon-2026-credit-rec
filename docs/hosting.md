@@ -43,9 +43,13 @@ Tonight, for the static store:
 
 Friday morning, for the backend (needs a card):
 5. **New → Web Service** → same repo, branch `main`. Runtime **Python 3**. Region **Oregon** (closest to Seattle (u)). **Instance type Starter**, never Free.
-6. Build command: `pip install ./backend`. Start command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Health check path `/health`. (Adjust if the skeleton's `pyproject.toml` layout differs; Claude can fix this.)
+6. Build command: `cd backend && pip install uv && uv sync --frozen --no-dev`. Start command: `cd backend && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Health check path `/health`. These are the live `paywise-api` settings, on branch `main` (checked in the dashboard 2026-10-16; 6960a66 deployed with them).
+   - `uv sync --frozen` installs exactly the versions in `backend/uv.lock`, the ones the tests ran on; the old `pip install ./backend` took the newest versions `pyproject.toml` allowed on every deploy. CI (`.github/workflows/backend-tests.yml`) fails a PR whose `uv.lock` is out of step with `pyproject.toml`.
+   - The build installs uv itself because Render adds uv only when `uv.lock` is in the service's root directory **(c, render.com/docs/uv-version, 2026-10-16)**; ours is in `backend/`, and the store in `demo-store/` must stay inside the service. The build takes the newest uv; CI pins 0.12.17.
+   - `uv run --no-sync` starts uvicorn from the virtualenv `uv sync` built, without touching the lockfile or installing anything at start.
 7. **Environment**, add each yourself (Claude never sees the values):
-   `PYTHON_VERSION=3.12.7` (any 3.12.x), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE`, `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`. (Names per `.env.example`.)
+   `PYTHON_VERSION=3.12.7` (any 3.12.x; Render's default for new services is 3.14 **(c, render.com/docs/python-version)**, and `backend/.python-version` isn't at the repo root, so Render doesn't read it), `LLM_API_KEY`, `LLM_MODEL`, `PARSER_MODE`, `COVERAGE_MODE`, `PAY_MODE=mock` (`visa_acceptance` only while showing the Visa sandbox live), `VISA_ACCEPTANCE_MERCHANT_ID`, `VISA_ACCEPTANCE_KEY_ID`, `VISA_ACCEPTANCE_SECRET_KEY`, `DEMO_TEST_CARD_MAP`. Optional: `LLM_DAILY_CAP`, `LLM_CLIENT_DAILY_CAP`, `RATE_LIMIT_PER_MIN` (defaults in `.env.example`). (Names per `.env.example`, §15.5.)
+   - Render sets `RENDER=true` and `RENDER_GIT_COMMIT` itself, at build and run time **(c, render.com/docs/environment-variables)**. With `RENDER=true` the backend turns off `/docs`, `/redoc` and `/openapi.json`. `/health` returns `{"ok": true, "commit": "<RENDER_GIT_COMMIT>", "modes": {"parser", "coverage", "pay"}}`, so a glance shows what is live, and startup logs the same plus a warning for any mode value it doesn't know.
 8. Turn **Auto-Deploy** on for `main` until Fri 10 PM, then **off** (a surprise deploy during the event is the main outage risk).
 9. Give Claude the service URL. Optionally create a Render API key for deploy checks. Skip it if you'd rather click.
 
@@ -58,7 +62,7 @@ Sat morning: Render dashboard → service → Metrics; confirm the instance type
 3. Commit the proposed config below as `render.yaml` once the skeleton exists (optional; the dashboard route above works without it).
 4. Add a smoke script `scripts/smoke.sh` that curls `/health`, `/store/`, and a fake `POST /v1/check`, printing HTTP code and `time_total`.
 5. Fri 6 PM and Sat 8:30 AM: run the smoke script against the live URL.
-6. **Keep-warm (belt and braces):** if anything is idle for long, ping `/health` every 5 min from a Mac `launchd`/cron job or a free uptime monitor (the monitor is a third-party account; the user's call). Not needed for a paid Starter instance as documented, but cheap insurance against an unannounced restart.
+6. **Keep-warm (belt and braces):** the backend imports the LLM SDK at startup, so the first LLM request after a deploy no longer pays the ~1 s import; `/health` doesn't warm the LLM connection itself. If anything is idle for long, ping `/health` every 5 min from a Mac `launchd`/cron job or a free uptime monitor (the monitor is a third-party account; the user's call). Not needed for a paid Starter instance as documented, but cheap insurance against an unannounced restart.
 7. Measure cold-ish latency: after a manual restart in the dashboard, time the first `/v1/check`. If it exceeds about 3 s, tell the team so the replay path (§15.8) covers it.
 
 ## Proposed deploy config (inline, not committed)
@@ -72,9 +76,8 @@ services:
     runtime: python
     plan: starter
     region: oregon
-    rootDir: backend
-    buildCommand: pip install .
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd backend && pip install uv && uv sync --frozen --no-dev
+    startCommand: cd backend && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true   # set false after Fri 10 PM
     envVars:
@@ -92,7 +95,7 @@ services:
         sync: false
 ```
 
-`sync: false` means the dashboard asks for the value; nothing secret enters git. Caveat: with `rootDir: backend`, `demo-store/` sits outside the build root. If Render's build can't see it at runtime (u), either drop `rootDir` and use `pip install ./backend` with `cd backend` in the start command, or copy `demo-store` into the package at build time. Verify on the first Friday deploy.
+`sync: false` means the dashboard asks for the value; nothing secret enters git. There is no `rootDir`: `demo-store/` sits outside `backend/`, and the backend serves it at `/store/`.
 
 ## Open items
 - (u) Exact Render Starter price, workspace plan fee, and Static Site price; I could not load Render's pricing figures from the official page. Confirm in the dashboard before adding the card.

@@ -8,6 +8,7 @@ contracts/check.response.schema.json.
     cd backend && uv run python scripts/make_replay.py
 """
 
+import argparse
 import json
 import os
 import sys
@@ -53,7 +54,9 @@ def request_body(ocr_text: str) -> dict:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    # No options yet: argparse answers --help (and rejects anything else) before a file is written.
+    argparse.ArgumentParser(description=__doc__.split("\n\n")[0]).parse_args(argv)
     os.environ["PARSER_MODE"] = "rules"  # read per request by app.parsing; never call the LLM here
     client, check = TestClient(app), validator()
     REPLAY_DIR.mkdir(parents=True, exist_ok=True)

@@ -26,7 +26,7 @@ enum PrivacyCopy {
     """
 
     /// §10 "Disclaimer", with "[date]" filled from the bundled cards.json `catalogVersion` (the day its card terms were
-    /// last checked), e.g. "Oct 15, 2026".
+    /// last checked), e.g. "Oct 16, 2026".
     static func disclaimer(catalog: CardCatalog) -> String {
         guard let checked = catalog.catalogVersion.flatMap(Day.medium) else {
             // No date to show: the parenthesis goes rather than a visible "[date]".

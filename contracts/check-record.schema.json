@@ -32,6 +32,36 @@
     },
     "replayed": {"type": "boolean"},
     "savedPurchaseId": {"type": ["string", "null"], "pattern": "^p_[A-Za-z0-9-]+$"},
-    "view": {"type": "string", "enum": ["result", "saved", "sent"]}
+    "view": {"type": "string", "enum": ["result", "saved", "sent"]},
+    "offerAdjustment": {
+      "description": "Device only, never sent (offers design D1): what the phone's OfferResolver changed after the response, using the user's offer answers and the response's offerContext. Missing or null: no offer applied. The app shows `decision` and `purchaseDraft` from here instead of the response's; `response` stays exactly as received.",
+      "anyOf": [{"type": "null"}, {"$ref": "#/$defs/offerAdjustment"}]
+    }
+  },
+  "$defs": {
+    "offerAdjustment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "purchaseDraft", "appliedOffers", "changedDecision"],
+      "properties": {
+        "decision": {"$ref": "check.response.schema.json#/$defs/decision"},
+        "purchaseDraft": {"anyOf": [{"$ref": "check.response.schema.json#/$defs/purchaseDraft"}, {"type": "null"}]},
+        "appliedOffers": {
+          "description": "Each catalog offer that added cash on a card, and how much (cents, before the card's public-rate cash).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["offerId", "cardId", "extraUsd"],
+            "properties": {
+              "offerId": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+              "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
+              "extraUsd": {"$ref": "common.schema.json#/$defs/usd"}
+            }
+          }
+        },
+        "changedDecision": {"description": "The phone picked a different card or reason than the server.", "type": "boolean"}
+      }
+    }
   }
 }

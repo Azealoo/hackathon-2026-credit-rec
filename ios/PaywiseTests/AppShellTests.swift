@@ -60,7 +60,6 @@ struct BackendErrorCopyTests {
     @Test(arguments: [
         (400, BackendErrorCopyTests.privacyRejected, APIErrorCode.privacyRejected),
         (400, BackendErrorCopyTests.badRequest, APIErrorCode.badRequest),
-        (429, Data("{}".utf8), APIErrorCode.badRequest),
     ])
     func refusedRequestShowsSomethingWentWrong(status: Int, body: Data, code: APIErrorCode) async throws {
         let env = TestEnvironment(
@@ -78,6 +77,27 @@ struct BackendErrorCopyTests {
         #expect(record.replayed == false, "a request the server refused is never replayed")
         #expect(record.parsedResponse.error?.code == code)
         #expect(record.filledCopy.line2 == "Something went wrong · press again")
+    }
+
+    /// The backend's 429 (middleware.RateLimit, 60 a minute per client): pressing again within the minute fails again, so
+    /// say to wait (review 2026-10-17). Still the phone's own copy, and never replayed.
+    @Test(arguments: [Data("{}".utf8), BackendErrorCopyTests.badRequest])
+    func rateLimitedSaysWaitAMinute(body: Data) async throws {
+        let env = TestEnvironment(
+            reading: try Fixtures.laptopReading(),
+            route: .init(behavior: .respond(status: 429, body: body)),
+            replayEnabled: true
+        )
+        try await env.perform(TestEnvironment.screenshot())
+
+        let alert = try #require(await env.island.alerts.first)
+        #expect(alert.line1 == "Couldn't check this time")
+        #expect(alert.line2 == "Too many checks · wait a minute")
+        #expect(alert.phase == .error)
+        let record = try #require(env.deps.checkStore.latest(now: Fixtures.demoNow))
+        #expect(record.replayed == false)
+        #expect(record.parsedResponse.error?.code == .badRequest)
+        #expect(record.filledCopy.line2 == "Too many checks · wait a minute")
     }
 
     @Test func serverErrorStillSaysNoConnection() async throws {
@@ -587,7 +607,7 @@ struct AppCopyTests {
         #expect(!PrivacyCopy.consent.contains("\n"))
         #expect(PrivacyCopy.retention == "Screenshots are processed in memory and never saved. Purchases you save stay until you delete them. Our AI provider, Anthropic, may keep the redacted order text for up to 30 days, and longer if its safety systems flag it. It isn't used for model training.")
         let disclaimer = PrivacyCopy.disclaimer(catalog: .bundled())
-        #expect(disclaimer.contains("(last checked Oct 15, 2026)"))
+        #expect(disclaimer.contains("(last checked Oct 16, 2026)"))
         #expect(!disclaimer.contains("[date]"))
         #expect(disclaimer.hasSuffix("Not affiliated with or paid by any issuer."))
     }

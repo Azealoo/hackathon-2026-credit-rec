@@ -49,7 +49,9 @@ log = logging.getLogger(__name__)
 
 SANDBOX_BASE_URL = "https://apitest.cybersource.com"
 PAYMENTS_PATH = "/pts/v2/payments"
-TIMEOUT_S = 10.0
+# Well under the demo store's 12 s browser abort (demo-store/store.js PAY_TIMEOUT_MS): an approval that arrived
+# after the browser gave up would show an error, and the retry would authorize again.
+TIMEOUT_S = 7.0
 
 # docs/visa-sandbox.md §4 caveat: Cybersource is moving from "(request-target)" to
 # "request-target". Both spellings are supported; this is the one the live check passed with.

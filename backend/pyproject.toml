@@ -11,7 +11,9 @@ dependencies = [
     "jinja2>=3.1",
     # Validates contracts/ in tests now, and data/cards.json at startup from step 2 (catalog.py).
     "jsonschema>=4.23",
-    "anthropic>=1.15.0",
+    # Pinned to the minor version the tests and the eval ran on: a new minor can change call signatures, and
+    # parsing.py would turn the TypeError into a quiet rules_fallback. Bump it deliberately, then `uv lock`.
+    "anthropic>=1.15.0,<1.16",
 ]
 
 [dependency-groups]

@@ -142,8 +142,8 @@ dark and tinted to `docs/overnight-shots/brand/`.
 
 ## Check chain (SPEC §15.5)
 
-`CheckCheckoutIntent` (Shortcut action "Check Checkout") → on-device reading (`ScreenReader`; a placeholder that
-throws until `VisionScreenReader` lands) → `POST /v1/check` (6.0 s; base URL from Info.plist `PaywiseAPIURL`) →
+`CheckCheckoutIntent` (Shortcut action "Check Checkout") → on-device reading (`ScreenReader`: `VisionScreenReader` crops, runs Vision OCR,
+the checkout gate and redaction) → `POST /v1/check` (6.0 s; base URL from Info.plist `PaywiseAPIURL`) →
 `CheckRecord` in `<AppGroup>/checks/` → result snippet (`CheckResultSnippetIntent`, buttons `SavePurchaseIntent` /
 `ShowSentIntent`) or an island alert. Dependencies live in `Paywise/Check/Dependencies.swift`.
 

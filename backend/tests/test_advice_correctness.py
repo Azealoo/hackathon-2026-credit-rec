@@ -126,6 +126,10 @@ def test_parser_reads_the_card_line_marked_selected():
     assert selected(CHECKOUT.format(payment=payment)).model_dump() == {"kind": "saved_card", "network": "mastercard"}
     payment = "Pay with\n✓ Discover [CARD]\nVisa [CARD]"
     assert selected(CHECKOUT.format(payment=payment)).network == "discover"
+    payment = "Pay with\nVisa [CARD]  Default\nMastercard [CARD]"  # nothing else marked: the default card
+    assert selected(CHECKOUT.format(payment=payment)).network == "visa"
+    payment = "Pay with\nVisa [CARD]  Default\n✓ Mastercard [CARD]"  # a check beats "Default"
+    assert selected(CHECKOUT.format(payment=payment)).network == "mastercard"
 
 
 def test_parser_leaves_the_network_unknown_when_card_lines_disagree_and_none_is_marked():

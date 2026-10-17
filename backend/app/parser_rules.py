@@ -52,8 +52,10 @@ APPLE_PAY = re.compile(r"\bapple\s?pay\b|\s?pay\b", re.I)
 NETWORK = re.compile(r"\b(visa|master\s?card|amex|american express|discover)\b", re.I)
 CARD_ON_FILE = re.compile(r"\[CARD\]|\bend(?:ing|s) in\b|[•*]{2,}", re.I)
 PAY_CONTEXT = re.compile(r"\b(?:pay(?:ing)? with|payment|card)\b", re.I)
-# Marks the saved card a page has selected: a check or filled radio, "Selected", "Default".
-SELECTED = re.compile(r"\bselected\b|\bdefault\b|[✓✔●◉☑]", re.I)
+# Marks the saved card a page has selected: a check or filled radio, or "Selected". "Default" (the account's usual
+# card) counts only when nothing else is marked.
+SELECTED = re.compile(r"\bselected\b|[✓✔●◉☑]", re.I)
+DEFAULT_CARD = re.compile(r"\bdefault\b", re.I)
 CARD_FORM = re.compile(r"\bcard number\b|\bname on card\b|\bexpir(?:ation|y|es)\b|\bMM\s?/\s?YY\b|\bCVV\b|\bCVC\b"
                        r"|\bsecurity code\b", re.I)
 BNPL = re.compile(r"\b(?:afterpay|klarna|affirm|sezzle|pay in 4|pay later|zip pay)\b", re.I)
@@ -319,21 +321,22 @@ def _read_quantities(priced: list[tuple[Item, Decimal]], targets: list[Decimal])
     return as_line, line_fits and unit_fits
 
 
-def _selected_network(card_lines: list[tuple[str, bool]]) -> str | None:
-    """The saved card the page has selected, from (network, marked) per card line: the first line marked selected,
-    else the network every line shows, else "unknown" (lines disagree and none is marked). None: no card line."""
+def _selected_network(card_lines: list[tuple[str, int]]) -> str | None:
+    """The saved card the page has selected, from (network, mark) per card line (2 selected, 1 "Default", 0 none):
+    the first line with the strongest mark, else the network every line shows, else "unknown" (lines disagree and
+    none is marked). None: no card line."""
     if not card_lines:
         return None
-    marked = [network for network, is_marked in card_lines if is_marked]
-    if marked:
-        return marked[0]
+    strongest = max(mark for _, mark in card_lines)
+    if strongest:
+        return next(network for network, mark in card_lines if mark == strongest)
     networks = {network for network, _ in card_lines}
     return networks.pop() if len(networks) == 1 else "unknown"
 
 
 def _payment(lines: list[str], text: str, confirmation: bool) -> tuple[list[str], SelectedPayment, bool]:
     bnpl = bool(BNPL.search(text))
-    card_lines: list[tuple[str, bool]] = []
+    card_lines: list[tuple[str, int]] = []
     paid_network = None
     card_form = False
     for line in lines:
@@ -346,7 +349,7 @@ def _payment(lines: list[str], text: str, confirmation: bool) -> tuple[list[str]
             if re.search(r"\bpaid with\b", line, re.I):
                 paid_network = paid_network or net
             else:
-                card_lines.append((net, bool(SELECTED.search(line))))
+                card_lines.append((net, 2 if SELECTED.search(line) else 1 if DEFAULT_CARD.search(line) else 0))
     saved_network = _selected_network(card_lines)
     if confirmation:
         if paid_network or saved_network:

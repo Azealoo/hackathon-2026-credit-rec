@@ -142,7 +142,7 @@ enum DemoChecks {
         return response
     }
 
-    /// *Keep, protected* (scenario 5, `fu-default`: the guard keeps the protected default).
+    /// *Keep, protected* (scenario 23, `fu-default` with a Visa selected: the guard keeps the protected default).
     static func laptopKeepProtected(_ catalog: CardCatalog) -> CheckResponse? {
         guard var response = laptopSwitch() else { return nil }
         response.decision = .init(

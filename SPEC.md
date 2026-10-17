@@ -97,7 +97,7 @@ Nobody we found joins **this purchase → its coverage window → an incident ch
 |---|---|---|
 | S1 | $1,499 laptop, Northbay Electronics (our fictional demo store), saved-card checkout. Wallet: Apple Card (default), Wells Fargo Active Cash, Chase Freedom Unlimited | **Switch → Freedom ••1234:** "Adds a warranty year + $500 theft cover · $7.49 less cash back than Active Cash" |
 | S1-R | Same laptop, listed "Renewed · no warranty", $1,099 | **Switch → Active Cash** (cash): a renewed item with no maker's warranty gets no card cover |
-| S1-K | S1 with Freedom as the default | **Keep Freedom** (already protected); snippet with save |
+| S1-K | S1 with Freedom as the default and its Visa ••1234 selected on the store | **Keep Freedom** (already protected); snippet with save. With the store's preselected Mastercard ••5678 (Apple Card) it's *Use Freedom* (§7.2 baseline) |
 | S2 (engine / Q&A) | $180 shoes at Nike, Apple Pay visible | **Keep Apple Card: use Apple Pay** (3% vs 1% typed) |
 | S3 | $249 earbuds stolen at week 6 | **May be eligible:** purchase protection; police report; deadline |
 | S4 | Laptop shows lines at month 14, never dropped | **May be eligible:** extended warranty, clause cited. Contrast: dropped → **not covered** |
@@ -233,7 +233,7 @@ Visual Intelligence provider (unless promoted by §6.6) · on-device Foundation 
 | ≈6 | Taps Done (or [What we sent], then Done) | Snippet gone; island empty | — |
 | ≈7–10 | Store's Change → "Visa ••1234" → Place order | — | — |
 
-**B. Keep, default already protects the item (S1-K).** Same as A, with the *Keep, protected* copy and no sound.
+**B. Keep, default already protects the item (S1-K: Freedom default, Visa ••1234 selected on the store).** Same as A, with the *Keep, protected* copy and no sound.
 
 **C. Other Keep answers** (an $18 mug, or $180 Nike shoes with Apple Pay visible): press → *Checking* within 1.0 s → at ≈3 s the island **expands via an alerting update** (silent if gate G2 passes) with the *Keep* copy → `perform()` holds 4 s, ends the activity `.immediate`, and returns with no snippet. No tap needed.
 

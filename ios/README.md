@@ -14,18 +14,19 @@ so the commands below run without prompts.
 
 ## Commands (non-interactive)
 
-Run from `ios/`. `$DD` is any DerivedData folder, for example `/tmp/paywise-dd`.
+Run from `ios/`. `$DD` is any DerivedData folder, for example `/tmp/paywise-dd`. `$DEVICE_ID` is your iPhone's
+UDID: run `xcrun devicectl list devices` and copy the phone's Identifier (the one marked UDID).
 
 ```bash
 # Unit tests (simulator, offline). The Paywise scheme also holds the live UI tests, so name the suite.
 xcodebuild -project Paywise.xcodeproj -scheme Paywise -destination 'platform=iOS Simulator,name=iPhone 18 Pro' -derivedDataPath "$DD" -only-testing:PaywiseTests test
 
 # Device build (signs, refreshes profiles, registers the phone if needed)
-xcodebuild -project Paywise.xcodeproj -scheme Paywise -configuration Debug -destination 'id=00008140-001858591EE0801C' -derivedDataPath "$DD" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
+xcodebuild -project Paywise.xcodeproj -scheme Paywise -configuration Debug -destination "id=$DEVICE_ID" -derivedDataPath "$DD" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build
 
 # Install and launch (the phone must be unlocked to launch)
-xcrun devicectl device install app --device 00008140-001858591EE0801C "$DD/Build/Products/Debug-iphoneos/Paywise.app"
-xcrun devicectl device process launch --device 00008140-001858591EE0801C --terminate-existing com.azealoo.paywise
+xcrun devicectl device install app --device "$DEVICE_ID" "$DD/Build/Products/Debug-iphoneos/Paywise.app"
+xcrun devicectl device process launch --device "$DEVICE_ID" --terminate-existing com.azealoo.paywise
 ```
 
 ## Checking the island
@@ -34,7 +35,7 @@ Debug builds have a **Debug** section with *Start sample Live Activity* / *End L
 To start it without tapping, pass `-autostartSampleActivity` and read the state changes on the console:
 
 ```bash
-xcrun devicectl device process launch --device 00008140-001858591EE0801C --terminate-existing --console -- com.azealoo.paywise -autostartSampleActivity
+xcrun devicectl device process launch --device "$DEVICE_ID" --terminate-existing --console -- com.azealoo.paywise -autostartSampleActivity
 ```
 
 Then go to the Home Screen: the island only shows while Paywise isn't in the foreground. On the simulator, use the
@@ -141,8 +142,8 @@ dark and tinted to `docs/overnight-shots/brand/`.
 
 ## Check chain (SPEC §15.5)
 
-`CheckCheckoutIntent` (Shortcut action "Check Checkout") → on-device reading (`ScreenReader`; a placeholder that
-throws until `VisionScreenReader` lands) → `POST /v1/check` (6.0 s; base URL from Info.plist `PaywiseAPIURL`) →
+`CheckCheckoutIntent` (Shortcut action "Check Checkout") → on-device reading (`ScreenReader`: `VisionScreenReader` crops, runs Vision OCR,
+the checkout gate and redaction) → `POST /v1/check` (6.0 s; base URL from Info.plist `PaywiseAPIURL`) →
 `CheckRecord` in `<AppGroup>/checks/` → result snippet (`CheckResultSnippetIntent`, buttons `SavePurchaseIntent` /
 `ShowSentIntent`) or an island alert. Dependencies live in `Paywise/Check/Dependencies.swift`.
 

@@ -1,6 +1,7 @@
 """fixtures/replay/*.json (written by scripts/make_replay.py): valid responses, in step with the engine."""
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -53,3 +54,15 @@ def test_s1_replay_has_the_exact_copy():
     data = json.loads((REPLAY / "northbay-electronics_149900.json").read_text(encoding="utf-8"))
     assert data["decision"]["copy"]["line2"] == "Adds a warranty year + $500 theft cover"
     assert data["decision"]["copy"]["line3"] == "$7.49 less cash back than Active Cash"
+
+
+@pytest.mark.parametrize("args, code", [(["--help"], 0), (["-h"], 0), (["--bogus"], 2)])
+def test_make_replay_help_writes_nothing(args, code):
+    """Review 2026-10-17: the script ignored its arguments, so --help rewrote all four fixtures (and would hide an
+    engine change from the replay check above)."""
+    before = {p: p.stat().st_mtime_ns for p in FILES}
+    done = subprocess.run([sys.executable, str(REPO / "backend" / "scripts" / "make_replay.py"), *args],
+                          capture_output=True, text=True, timeout=60)
+    assert done.returncode == code
+    assert "usage:" in (done.stdout + done.stderr)
+    assert {p: p.stat().st_mtime_ns for p in FILES} == before

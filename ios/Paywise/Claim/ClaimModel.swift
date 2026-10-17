@@ -110,9 +110,10 @@ final class ClaimModel {
         return (answer.rawValue, Double(cents) / 100)
     }
 
+    /// Not while a classification runs: its answer may still change the chip.
     var canCheck: Bool {
         paid != nil && paidWith != nil && amountOnCardIsValid && warranty != nil && !trimmedDescription.isEmpty
-            && cause != nil
+            && cause != nil && !classifying
     }
 
     // MARK: Answers
@@ -144,6 +145,12 @@ final class ClaimModel {
     func descriptionChanged() {
         hasLongNumber = false
         classifyTask?.cancel()
+        if !userPickedCause {
+            // The server's chip described the old words ("Lines across the screen" → Stopped working); after an edit
+            // the user waits for the new classification or picks a chip, so [Check] never sends a stale cause.
+            cause = nil
+            suggestedCause = nil
+        }
         let text = trimmedDescription
         guard !userPickedCause, text.count >= 8 else {
             classifying = false

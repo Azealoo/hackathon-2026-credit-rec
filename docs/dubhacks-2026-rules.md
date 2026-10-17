@@ -19,6 +19,7 @@ Checked **2026-10-14** in the built-in browser, public pages only (no sign-in, n
 - This is the same sentence as the '24 Hacker Guide. The rules page has **no 70-30 / 30% carve-out**. The '24 carve-out may be in the '26 Hacker Guide, which we couldn't read **(u)**.
 - Read literally, the published '26 rule is stricter than "up to 30% pre-written": it says started and completed during the event. The repo's pre-event commits would contradict "started".
 - Not stated anywhere we could read: whether boilerplate, libraries, or planning/spec work count, or how it is enforced **(u)**.
+- **Organizer ruling:** the owner reports that the organizers OK'd the pre-event work (Oct 16, 2026). The ruling's wording isn't in the repo **(u)**.
 
 ## 2. Maximum team size
 

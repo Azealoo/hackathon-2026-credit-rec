@@ -156,6 +156,40 @@
         "verification": "verified"
       }
     ],
+    "offerContext": {
+      "catalogVersion": "2026-10-16",
+      "amountUsd": 1499.0,
+      "merchantId": "northbay-electronics",
+      "ruleCategory": "electronics",
+      "itemCategories": [
+        "computers"
+      ],
+      "paymentPath": "saved_card",
+      "method": "card",
+      "thresholdUsd": 5,
+      "publicRates": {
+        "apple-card": {
+          "ratePct": 1,
+          "status": "verified",
+          "ruleId": null
+        },
+        "wf-active-cash": {
+          "ratePct": 2,
+          "status": "verified",
+          "ruleId": null
+        },
+        "chase-freedom-unlimited": {
+          "ratePct": 1.5,
+          "status": "verified",
+          "ruleId": null
+        }
+      },
+      "allowedCashPicks": [
+        "apple-card"
+      ],
+      "purchaseDraftByCard": {},
+      "deviceMayOverride": false
+    },
     "timingMs": {
       "parse": 900,
       "engine": 3

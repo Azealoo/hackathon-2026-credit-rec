@@ -99,6 +99,8 @@ def enum_fields(schema: dict, registry: Registry, base_uri: str) -> set[tuple[st
             walk(sub, resolver, key)
         for key in ("items", "additionalProperties"):
             walk(node.get(key), resolver, name)
+        for sub in node.get("patternProperties", {}).values():  # pydantic's dict[CardId, Model]
+            walk(sub, resolver, name)
         for key in ("anyOf", "oneOf", "allOf"):
             for sub in node.get(key, []):
                 walk(sub, resolver, name)

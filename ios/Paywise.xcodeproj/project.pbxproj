@@ -19,6 +19,7 @@
 		2140DA350129D72BAF7DAF5D /* SnippetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E6B94E75FB0D77C554B999 /* SnippetIntents.swift */; };
 		214CE4D0E0E0135BB369953D /* CoverageAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899502A671A3D827587CA31C /* CoverageAPI.swift */; };
 		21894FAF5A7AC67304CE9B94 /* ReadingOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D420A4365FDC50B7D315DF90 /* ReadingOrder.swift */; };
+		222AB6FAEF07D95A8832D38F /* OfferQuestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAC491A9FBB9050D59DF3E2 /* OfferQuestions.swift */; };
 		25B0BDF905E1EB6029EC0969 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 18D57040442948A9C5418323 /* SwiftUI.framework */; };
 		29C764FC8A1A9F4F05D052C6 /* BackTapPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54D1A1923F87DA7321F96345 /* BackTapPrompt.swift */; };
 		2CFE5BDEAB41870A3EF3C79F /* DemoChecks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA224A03D872F6A0438FA5D4 /* DemoChecks.swift */; };
@@ -60,6 +61,7 @@
 		758917B9ACF7020803536D0C /* Dependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CB936441CD1E4E845AC2033 /* Dependencies.swift */; };
 		7834C15C41DE11DB44F08998 /* PrivacyCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CF2B25EBFB2D65B1EEF50F /* PrivacyCopy.swift */; };
 		819A62E3A82CF9B33EB0F845 /* AdversarialScreenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9D823247DBD9CE211A7EC4 /* AdversarialScreenTests.swift */; };
+		8373F18E4B5063C87EAB722F /* OfferRecords.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CF1C732A0C230301B00E656 /* OfferRecords.swift */; };
 		83B78F93D155778BAB93F5A7 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7EA79D842971DC6717287603 /* WidgetKit.framework */; };
 		83F5EB044365FF8726CA6FA2 /* SavePurchaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEB74115B29E4925C8009BE0 /* SavePurchaseTests.swift */; };
 		84F27EF3A82794294099E986 /* Redactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC7C60E9FA3D86BF0A579D0D /* Redactor.swift */; };
@@ -79,6 +81,7 @@
 		9FC38A4D08E1456B3931A0C5 /* laptop-renewed-checkout.png in Resources */ = {isa = PBXBuildFile; fileRef = 2F1E0F9D0CD37FCE061A3F10 /* laptop-renewed-checkout.png */; };
 		9FDF5ACE0CB6310B04E377BA /* CheckCheckoutIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003EC7C638E7F1E8118C1AAC /* CheckCheckoutIntent.swift */; };
 		A3D18FEB3A48BA0D03A2AADD /* Wallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 339292544EA536CCBEBC94FF /* Wallet.swift */; };
+		A41680B98F2A824B27DD518C /* OfferResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434B7EE72BA7CE0D9C415A00 /* OfferResolver.swift */; };
 		A4B9621008C2538256E8B4A6 /* CheckResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02D703FADD744BF5241877ED /* CheckResultView.swift */; };
 		A6C402E6D1A0FC4571776DF8 /* CheckStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94136504602AF4E3DCA708D6 /* CheckStore.swift */; };
 		AC6986B3AF80484C8D969BC7 /* FixtureScreenReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEEC468F732C2E50FF537E0 /* FixtureScreenReader.swift */; };
@@ -89,6 +92,7 @@
 		B817844BDC5764DD9BBE916F /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9112E14F3221684F387C1045 /* LiveActivityController.swift */; };
 		BB206C7EF38709800DE7970D /* BackTapPromptUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B524AB7BEE2636B88BA6567D /* BackTapPromptUITests.swift */; };
 		BBE918BB690F434294B1D2CE /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83968CE77789F62D255851EB /* AppGroup.swift */; };
+		BD27513270C314C88C34F6F9 /* OfferResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19EA7D3BD62BE799D2B67C9 /* OfferResolverTests.swift */; };
 		C3739CAC5D1A479B41D195E5 /* SettingsLinkUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D1A26937664884FD7F369B /* SettingsLinkUITests.swift */; };
 		C5ACA586BBFFA1B9E3D6783F /* AppShellUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */; };
 		C60BB89CC0C69D3530A664C7 /* PrivacyGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E85F8DCCA82B41D11A509F7E /* PrivacyGuard.swift */; };
@@ -170,6 +174,7 @@
 		05EF147A54A33C5224F5307B /* blurry-unreadable.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "blurry-unreadable.png"; sourceTree = "<group>"; };
 		064C96474DB44F9D6871E6A8 /* PaywiseWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PaywiseWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		06EA3BF6E444F772D203C0CF /* AppShellUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellUITests.swift; sourceTree = "<group>"; };
+		0CF1C732A0C230301B00E656 /* OfferRecords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferRecords.swift; sourceTree = "<group>"; };
 		0D6ECDF622C12553E8F34159 /* UITestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestSupport.swift; sourceTree = "<group>"; };
 		10850739492621650CB19464 /* silent.caf */ = {isa = PBXFileReference; path = silent.caf; sourceTree = "<group>"; };
 		13793DF6A9E13E43E65E1616 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -179,6 +184,7 @@
 		1BCD01FEB276CB6C328DBEE3 /* feed-not-checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "feed-not-checkout.png"; sourceTree = "<group>"; };
 		20CF2B25EBFB2D65B1EEF50F /* PrivacyCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyCopy.swift; sourceTree = "<group>"; };
 		2828883AB214063698D2B6C0 /* SavePurchaseIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavePurchaseIntent.swift; sourceTree = "<group>"; };
+		2AAC491A9FBB9050D59DF3E2 /* OfferQuestions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferQuestions.swift; sourceTree = "<group>"; };
 		2CA43C592B2BE741D02E28DC /* AppShellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellTests.swift; sourceTree = "<group>"; };
 		2CB936441CD1E4E845AC2033 /* Dependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dependencies.swift; sourceTree = "<group>"; };
 		2F1E0F9D0CD37FCE061A3F10 /* laptop-renewed-checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "laptop-renewed-checkout.png"; sourceTree = "<group>"; };
@@ -188,6 +194,7 @@
 		399E1AD111473D53E51800A6 /* LiveActivityStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityStateTests.swift; sourceTree = "<group>"; };
 		40D5B794082DB554535DF49E /* check-record.example.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "check-record.example.json"; sourceTree = "<group>"; };
 		42B9C7A2A230E4B7CAD47A54 /* SampleActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleActivity.swift; sourceTree = "<group>"; };
+		434B7EE72BA7CE0D9C415A00 /* OfferResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferResolver.swift; sourceTree = "<group>"; };
 		448A6657388B3FC035F135A1 /* CheckTraceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckTraceTests.swift; sourceTree = "<group>"; };
 		457F70CB1C29C65C358C2E50 /* Paywise.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Paywise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		46562C4A911A7430AB9C785B /* DebugHookTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHookTests.swift; sourceTree = "<group>"; };
@@ -230,6 +237,7 @@
 		A00973F6A13177A7B1C65860 /* mug-checkout.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "mug-checkout.png"; sourceTree = "<group>"; };
 		A08E0D7F7E2D2A4F335382C9 /* CheckCheckoutIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckCheckoutIntentTests.swift; sourceTree = "<group>"; };
 		A15B2BF01ABDDDD28CD49BB3 /* Day.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Day.swift; sourceTree = "<group>"; };
+		A19EA7D3BD62BE799D2B67C9 /* OfferResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfferResolverTests.swift; sourceTree = "<group>"; };
 		A30027090EE53AFA904E7EC0 /* PaywiseAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywiseAPI.swift; sourceTree = "<group>"; };
 		A5BD62216517DE6451D0521D /* CheckRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckRecord.swift; sourceTree = "<group>"; };
 		A68E03AE9D901707EEEE04E9 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -331,6 +339,7 @@
 				448A6657388B3FC035F135A1 /* CheckTraceTests.swift */,
 				46562C4A911A7430AB9C785B /* DebugHookTests.swift */,
 				399E1AD111473D53E51800A6 /* LiveActivityStateTests.swift */,
+				A19EA7D3BD62BE799D2B67C9 /* OfferResolverTests.swift */,
 				F4EE13841FF7EC226CF5A8D7 /* PaywiseTests.swift */,
 				94CAC08D44A7C6D73A575738 /* RealReaderIntentTests.swift */,
 				9011DBC6C72B29E3AD16FF01 /* RedactorTests.swift */,
@@ -460,6 +469,7 @@
 				DF52413D7B69D298332112AF /* Debug */,
 				B254999EAA532F5E15EF3FDF /* Intents */,
 				9C8B00B3528BF9408A17BE1C /* Model */,
+				BF5915D9ABD7A83C3F07FB55 /* Offers */,
 				DE56DD4F85F8B91E22E757EA /* Onboarding */,
 				45CF0071BE054831FEE4D733 /* Purchases */,
 				D78FF53A8457FCAA26C56CD8 /* Reading */,
@@ -548,6 +558,16 @@
 				0D6ECDF622C12553E8F34159 /* UITestSupport.swift */,
 			);
 			path = PaywiseUITests;
+			sourceTree = "<group>";
+		};
+		BF5915D9ABD7A83C3F07FB55 /* Offers */ = {
+			isa = PBXGroup;
+			children = (
+				2AAC491A9FBB9050D59DF3E2 /* OfferQuestions.swift */,
+				0CF1C732A0C230301B00E656 /* OfferRecords.swift */,
+				434B7EE72BA7CE0D9C415A00 /* OfferResolver.swift */,
+			);
+			path = Offers;
 			sourceTree = "<group>";
 		};
 		D78FF53A8457FCAA26C56CD8 /* Reading */ = {
@@ -799,6 +819,7 @@
 				5BEBDC056DFA75B1733798BD /* CheckTraceTests.swift in Sources */,
 				660EF3A473A90F19AE6D60F4 /* DebugHookTests.swift in Sources */,
 				C644A4E1CD7D243A917745EC /* LiveActivityStateTests.swift in Sources */,
+				BD27513270C314C88C34F6F9 /* OfferResolverTests.swift in Sources */,
 				ECFA4F2145DCDA6842CD2116 /* PaywiseTests.swift in Sources */,
 				D5404500E7FF2EA8F8E1AF79 /* RealReaderIntentTests.swift in Sources */,
 				61A45F1E7AD9355DE180CC04 /* RedactorTests.swift in Sources */,
@@ -876,6 +897,9 @@
 				2EBA97154F4C3530AA62DD4F /* JSONValue.swift in Sources */,
 				B817844BDC5764DD9BBE916F /* LiveActivityController.swift in Sources */,
 				959411CE0870ACEEAE7F1BB3 /* LiveActivityViews.swift in Sources */,
+				222AB6FAEF07D95A8832D38F /* OfferQuestions.swift in Sources */,
+				8373F18E4B5063C87EAB722F /* OfferRecords.swift in Sources */,
+				A41680B98F2A824B27DD518C /* OfferResolver.swift in Sources */,
 				C638D0A76F00A69A87897ECE /* OnboardingView.swift in Sources */,
 				E3E2E95B819973C2DB092DE5 /* PaywiseAPI.swift in Sources */,
 				C6F76795A7B4866CDC65EDE8 /* PaywiseActivityAttributes.swift in Sources */,

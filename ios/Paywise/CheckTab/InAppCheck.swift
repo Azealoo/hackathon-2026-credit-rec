@@ -82,6 +82,9 @@ final class InAppCheck {
             show(checkId: checkId, fallback: nil)
         case .island(let alert):
             show(checkId: alert.hasRecord ? alert.checkId : nil, fallback: alert.state)
+        case .ignored:
+            // A screenshot of Paywise's own result: nothing was sent.
+            phase = .message(CheckFlow.noCheckoutOnDevice)
         case .notSetUp:
             phase = .message(.init(
                 phase: .error, glyph: .warning, line1: CheckFlow.couldntCheck,

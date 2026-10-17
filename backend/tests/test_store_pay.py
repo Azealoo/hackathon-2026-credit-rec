@@ -330,8 +330,12 @@ def test_total_deadline(transport, monkeypatch):
     assert (outcome.response.status, outcome.reason) == ("error", "timeout")
 
 
-def test_timeout_is_ten_seconds():
-    assert visa_acceptance.TIMEOUT_S == 10.0
+def test_the_server_gives_up_well_before_the_browser():
+    """Review 2026-10-17: both were 10 s, so an approval at ~9.5 s showed an error and a retry authorized again."""
+    store_js = (Path(__file__).resolve().parents[2] / "demo-store" / "store.js").read_text(encoding="utf-8")
+    browser_ms = int(re.search(r"const PAY_TIMEOUT_MS = (\d+);", store_js).group(1))
+    assert visa_acceptance.TIMEOUT_S * 1000 + 3000 <= browser_ms
+    assert visa_acceptance.TIMEOUT_S == 7.0 and browser_ms == 12000
 
 
 @pytest.mark.parametrize(
@@ -469,10 +473,12 @@ def test_route_rejects_bad_requests(client, body):
 
 
 def test_route_rejects_non_json_and_huge_bodies(client):
-    assert client.post("/v1/store/pay", content=b"not json").status_code == 400
+    json_type = {"content-type": "application/json"}
+    assert client.post("/v1/store/pay", content=b"not json", headers=json_type).status_code == 400
     infinite = b'{"orderId": "NB-100234", "savedCardId": "demo-visa-1234", "amountUsd": Infinity}'
-    assert client.post("/v1/store/pay", content=infinite).status_code == 400
-    assert client.post("/v1/store/pay", content=b"{" + b" " * 5000 + b"}").status_code == 400
+    assert client.post("/v1/store/pay", content=infinite, headers=json_type).status_code == 400
+    assert client.post("/v1/store/pay", content=b"{" + b" " * 5000 + b"}", headers=json_type).status_code == 400
+    assert client.post("/v1/store/pay", content=infinite).status_code == 415  # no content type: not JSON
 
 
 @pytest.mark.parametrize("order_id", ["4" + "0" * 15, "0000 0000 0000 0000", "NB-\\u0034" + "0" * 12])
@@ -536,7 +542,7 @@ def test_store_serves_only_the_folder(client, path):
 
 
 def test_store_does_not_shadow_the_api(client):
-    assert client.get("/health").json() == {"ok": True}
+    assert client.get("/health").json()["ok"] is True
     assert client.get("/v1/store/pay").status_code == 405
 
 

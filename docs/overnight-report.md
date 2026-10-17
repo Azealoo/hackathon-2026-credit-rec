@@ -1,5 +1,7 @@
 # Paywise v1: overnight report
 
+> **Dated snapshot of Oct 15–16, 2026; not updated since.** Branch `overnight/v1` was merged into `main` (PR #17) and deleted. BSEC-2 and BSEC-4 below were fixed afterwards in c09a431 (PR #20). Current state: [README Status](../README.md#status).
+
 **Run:** Thu Oct 15, 12:13 PDT → Fri Oct 16, ~05:30 PDT (finish line reached ~02:00; a post-finish code review and two fix rounds followed) · **Final commit:** see the PR (code at bab3303) · **Branch:** `overnight/v1` · **Spec:** SPEC.md v2.1 (unchanged)
 
 Every number below comes from a command I ran or a screenshot I took during the run, quoted as it printed. Subagent claims were re-run before they went in. Logs referenced as `scratchpad/…` sit in the session scratchpad and are not in the repo.
@@ -93,9 +95,10 @@ A 5-lens review of the whole diff ran after the finish line: backend correctness
     - In island mode the last unsaved result can still be saved.
     - Pattern B is bounded under 30 s.
     - The claim description is redacted.
+- **Fixed after this report** (c09a431, PR #20):
+  - BSEC-2: the rate limiter trusted the first `X-Forwarded-For` hop. It now keys on `CF-Connecting-IP`, else the last `X-Forwarded-For` hop, else the socket peer.
+  - BSEC-4: the LLM's amounts weren't checked against the OCR text. A total or item price is now accepted only when it is printed in the OCR text; otherwise the rules parser answers.
 - **Not fixed (follow-ups):**
-  - BSEC-2: the rate limiter trusts the first `X-Forwarded-For` hop. Which hop Render puts the real client in needs checking on Render first.
-  - BSEC-4: the LLM's amounts aren't checked against the OCR text. That needs a test rework and a fresh live eval.
   - Free-text names in claim descriptions are only caught next to labels or greetings.
 
 Round-2 rulings:
@@ -138,7 +141,8 @@ Device results: `docs/spikes.md` › Results.
    - If the snippet doesn't appear: Paywise › Settings › Results › Island alert, then press again (§6.6).
    - If the alert makes a sound: turn off Silent island alerts.
    - Record counts in `docs/spikes.md` (G1 ≥9/10 presses, G2 ≥9/10 snippets/saves).
-4. **Claim, 1 min.** Paywise › Settings › "Pretend today is…" on (Dec 18, 2027) › Purchases › Aero 14 › Something happened → Yes → 1 year → "Lines across the screen. Never dropped." → expect *May be eligible: Extended warranty*.
+4. **Claim, 1 min.** Paywise › Settings › "Pretend today is…" on (Dec 18, 2027) › Purchases › Aero 14 › Something happened → Yes → 1 year → "Lines across the screen. Never dropped." → expect *May be eligible: Extended warranty*. While the override is on, a yellow "Pretend today: Dec 18, 2027" pill shows over every tab.
+5. **Turn the override off.** Paywise › Settings › "Pretend today is…" off (or tap the pill, which opens Settings). The pill should be gone. Do this after every claim run, before the next judge: the override only moves claim dates and Purchases' ended/active cover, but a demo left on Dec 18, 2027 shows the next judge's fresh purchase with its theft cover already ended.
 
 ## Blocked on me
 
@@ -170,7 +174,7 @@ Device results: `docs/spikes.md` › Results.
 - **Spec gaps:**
   - §5.5's check order should say the maker's-warranty step is for failures only (R9).
   - §6.3 has no copy for backend 4xx errors (R16).
-  - §15.5's response examples show the extended warranty limit as `null`/`claim`; the catalog value is $10,000 per item.
+  - §15.5's response examples show the extended warranty limit as `null`/`claim`; the catalog value is $10,000 per item. (Fixed later in SPEC v2.4 and `contracts/`.)
   - Discover's only source has no version date.
 - **Simulator limits:**
   - The island doesn't redraw at `staleDate` (R21).
@@ -184,6 +188,6 @@ Device results: `docs/spikes.md` › Results.
 - **Not built:** the S2 `.transient` probe (device spike).
 - **Accessibility:** in the in-app result, VoiceOver reads each line separately. The snippet and island use the exact §6.4 sentence. The judge ruled this non-blocking; it's a small follow-up.
 - **Design note for D:** What we sent (and the Sent box in the snippet) now lists every sent field as `path: value` lines under the redacted text, for example `clientDate: "2026-10-17"`. This follows §10's "exact payload". It's honest but technical; plain labels would be friendlier. In the snippet the box is 180 pt and scrolls, and whether it scrolls inside a system snippet is unverified (G2).
-- **Review follow-ups:** BSEC-2 (rate-limit key), BSEC-4 (LLM amounts vs OCR text), free-text names in claim descriptions (see Post-finish code review).
-- **Demo latency risk:** one live UI run showed the Switch copy at 6.20 s, over the 6.0 s phone timeout (the rerun showed 4.21 s), and the first `/v1/check` after a deploy or idle takes 2.5–4.0 s. Before a demo, open `/health` once and run one check to warm it. Don't push to `overnight/v1` during judging, because each push redeploys.
+- **Review follow-ups:** free-text names in claim descriptions (see Post-finish code review). BSEC-2 and BSEC-4 were fixed later (c09a431).
+- **Demo latency risk:** one live UI run showed the Switch copy at 6.20 s, over the 6.0 s phone timeout (the rerun showed 4.21 s), and the first `/v1/check` after a deploy or idle takes 2.5–4.0 s. Before a demo, open `/health` once and run one check to warm it. Don't push to the branch Render deploys (then `overnight/v1`) during judging, because each push redeploys.
 - **Tooling:** the PR #16 notes (`.bottom` region, signed extension, `devicectl` args after `--`) all held. Xcode stayed at 27.0 (27A266a) all night.

@@ -4,7 +4,7 @@
   "route": "card_extended_warranty",
   "headline": "May be eligible: Extended warranty (Freedom Unlimited).",
   "why": "The maker's 1-year warranty ended Oct 17, 2027; the extra year runs to Oct 17, 2028.",
-  "limit": {"perItemUsd": null, "perClaimUsd": null, "perAccountUsd": null, "payoutCapUsd": null, "appliesTo": "claim"},
+  "limit": {"perItemUsd": 10000, "perClaimUsd": null, "perAccountUsd": 50000, "payoutCapUsd": 1499, "appliesTo": "item"},
   "assumptions": [],
   "citations": [{"document": "Example Guide to Benefits (placeholder)", "section": "Extended Warranty Protection",
                  "versionDate": "2000-01-01", "quote": "Example quote (placeholder).", "verification": "verified"}],

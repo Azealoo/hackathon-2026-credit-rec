@@ -7,7 +7,7 @@
     "result": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["requestId", "screenType", "cart", "decision", "purchaseDraft", "sources", "timingMs"],
+      "required": ["requestId", "screenType", "cart", "decision", "purchaseDraft", "sources", "offerContext", "timingMs"],
       "properties": {
         "requestId": {"$ref": "common.schema.json#/$defs/uuid"},
         "screenType": {
@@ -24,6 +24,10 @@
           "anyOf": [{"$ref": "#/$defs/purchaseDraft"}, {"type": "null"}]
         },
         "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "offerContext": {
+          "description": "null when no checkout was read (no_checkout).",
+          "anyOf": [{"$ref": "#/$defs/offerContext"}, {"type": "null"}]
+        },
         "timingMs": {
           "type": "object",
           "additionalProperties": false,
@@ -246,6 +250,57 @@
         "purchaseDate": {"$ref": "common.schema.json#/$defs/date"},
         "cardId": {"$ref": "common.schema.json#/$defs/cardId"},
         "coverage": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/coverageEntry"}}
+      }
+    },
+    "offerContext": {
+      "description": "Public inputs for the phone's offer resolver (offers design D1). A function of the cart and data/cards.json only, so every user gets the same block for the same cart; the request never carries offer, activation, account-age or cap data. The phone may move a cash decision to another card in allowedCashPicks, only when deviceMayOverride is true (switch/cash, keep/default_best, keep/below_threshold, keep/method), and never a protection decision.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalogVersion", "amountUsd", "merchantId", "ruleCategory", "itemCategories", "paymentPath", "method",
+        "thresholdUsd", "publicRates", "allowedCashPicks", "purchaseDraftByCard", "deviceMayOverride"
+      ],
+      "properties": {
+        "catalogVersion": {"$ref": "common.schema.json#/$defs/date"},
+        "amountUsd": {"$ref": "common.schema.json#/$defs/usd"},
+        "merchantId": {"anyOf": [{"$ref": "common.schema.json#/$defs/merchantId"}, {"type": "null"}]},
+        "ruleCategory": {
+          "description": "The category category earn rules and rule-basis offers match: the merchant's catalog category, else the items' shared category.",
+          "anyOf": [{"$ref": "common.schema.json#/$defs/itemCategoryId"}, {"type": "null"}]
+        },
+        "itemCategories": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/itemCategoryId"}},
+        "paymentPath": {"type": "string", "enum": ["apple_pay", "saved_card", "card_form", "unknown"]},
+        "method": {"type": "string", "enum": ["apple_pay", "card"]},
+        "thresholdUsd": {"$ref": "common.schema.json#/$defs/usd"},
+        "publicRates": {
+          "description": "Each wallet card's public earn rate here (D4), the one decision.cash.byCard uses.",
+          "type": "object",
+          "propertyNames": {"$ref": "common.schema.json#/$defs/cardId"},
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["ratePct", "status", "ruleId"],
+            "properties": {
+              "ratePct": {"type": "number", "minimum": 0},
+              "status": {"$ref": "common.schema.json#/$defs/verification"},
+              "ruleId": {"description": "null: the card's base rate.", "type": ["string", "null"]}
+            }
+          }
+        },
+        "allowedCashPicks": {
+          "description": "Wallet cards (in wallet order) that keep every protection type the default has eligible on a qualifying item. Just the default when deviceMayOverride is false.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "common.schema.json#/$defs/cardId"}
+        },
+        "purchaseDraftByCard": {
+          "description": "The purchase [Paying with …] saves if the phone picks that card, for each card in allowedCashPicks. Empty when deviceMayOverride is false.",
+          "type": "object",
+          "propertyNames": {"$ref": "common.schema.json#/$defs/cardId"},
+          "additionalProperties": {"$ref": "#/$defs/purchaseDraft"}
+        },
+        "deviceMayOverride": {"type": "boolean"}
       }
     },
     "source": {

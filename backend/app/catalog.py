@@ -5,6 +5,10 @@ Importing this module loads and checks the file, so a bad catalog stops the back
 
 Numbers are Decimal (the JSON is parsed with parse_float=Decimal), so the engine can do money
 math without float rounding (§7.2 rule 1).
+
+schemaVersion 2 (offers design, D1-D4): earn rules gain a window and channels and stay
+unconditional. offers[], programs[], events[] and categoryAliases[] are parsed and their references
+checked here, but only the phone evaluates offers; the server never sees a user's answers.
 """
 
 import datetime as dt
@@ -25,6 +29,7 @@ SCHEMA_FILE = DATA_DIR / "cards.schema.json"
 
 Status = Literal["verified", "partial", "unverified"]
 PaymentMethod = Literal["apple_pay", "card", "any"]
+Channel = Literal["online", "in_app", "in_store", "any"]
 ProtectionType = Literal["purchase_protection", "extended_warranty", "cell_phone_protection"]
 
 
@@ -48,6 +53,29 @@ class Art(_Model):
     color: str
 
 
+class Window(_Model):
+    """Both days inclusive; None is open-ended."""
+
+    starts_on: dt.date | None
+    ends_on: dt.date | None
+    ends_on_status: Status | None = None
+
+    def contains(self, day: dt.date) -> bool:
+        return (self.starts_on is None or self.starts_on <= day) and (self.ends_on is None or day <= self.ends_on)
+
+
+class Source(_Model):
+    document: str | None
+    section: str | None
+    version_date: dt.date | None
+    url: str | None
+    quote: str | None
+
+
+class CardSource(Source):
+    checked_on: dt.date
+
+
 class EarnRule(_Model):
     id: str
     category: str | None
@@ -57,6 +85,10 @@ class EarnRule(_Model):
     cap: None
     needs_activation: bool
     status: Status
+    window: Window | None = None
+    channels: tuple[Channel, ...] = ("any",)
+    excludes: tuple[str, ...] = ()
+    sources: tuple[CardSource, ...] = ()
 
 
 class Earn(_Model):
@@ -87,18 +119,6 @@ class Claim(_Model):
     administrator: str | None
     url: str | None
     phone: str | None
-
-
-class Source(_Model):
-    document: str | None
-    section: str | None
-    version_date: dt.date | None
-    url: str | None
-    quote: str | None
-
-
-class CardSource(Source):
-    checked_on: dt.date
 
 
 class Verification(_Model):
@@ -170,6 +190,119 @@ class ItemCategory(_Model):
     theft_damage_relevant: bool
 
 
+class OfferMatch(_Model):
+    merchant_ids: tuple[str, ...] | None
+    categories: tuple[str, ...] | None
+    category_basis: Literal["rule", "items"] | None
+    exclude_merchant_ids: tuple[str, ...]
+    payment_methods: tuple[PaymentMethod, ...]
+    channels: tuple[Channel, ...]
+    excludes: tuple[str, ...] = ()
+
+
+class OfferReward(_Model):
+    kind: Literal["rate", "statement_credit", "checkout_discount", "cashback_match", "membership",
+                  "spend_bonus", "count_bonus", "partner_credit", "price_perk"]
+    rate_pct: Decimal | None
+    basis: Literal["total", "extra"] | None
+    amount_usd: Decimal | None
+    match_pct: Decimal | None
+    counts_as_cash: bool
+
+
+class OfferLimits(_Model):
+    min_spend_usd: Decimal | None
+    spend_cap_usd: Decimal | None
+    cap_period: Literal["offer_window", "calendar_quarter", "account_window", "per_booking"] | None
+    after_cap_rate_pct: Decimal | None
+    max_reward_usd: Decimal | None
+    uses_per_period: int | None
+
+
+class Precondition(_Model):
+    """One of the schema's precondition shapes; the JSON Schema checks which fields go with which kind."""
+
+    kind: Literal["activation", "enrollment", "targeted", "account_age", "acquisition_offer", "event", "link_or_portal"]
+    deadline: dt.date | None = None
+    retroactive: bool | None = None
+    how: str | None = None
+    what: str | None = None
+    months: int | None = None
+    opened_from: dt.date | None = None
+    opened_through: dt.date | None = None
+    detail: str | None = None
+    event_id: str | None = None
+
+
+class OfferDisplay(_Model):
+    short: str
+
+
+class Offer(_Model):
+    id: str
+    card_ids: tuple[str, ...]
+    program_id: str | None
+    title: str
+    evaluation: Literal["device", "hint"]
+    match: OfferMatch
+    reward: OfferReward
+    limits: OfferLimits
+    window: Window
+    requires: tuple[Precondition, ...]
+    when_unknown: Literal["exclude", "medium"]
+    exclusive_group: str | None
+    confirm_question: str | None
+    display: OfferDisplay
+    status: Status
+    sources: tuple[CardSource, ...]
+    notes: tuple[str, ...] = ()
+
+
+class Program(_Model):
+    id: str
+    name: str
+    card_ids: tuple[str, ...]
+    where_shown: str
+    card_matters: Literal["always", "in_store_and_in_app_only", "never"]
+    apple_pay: Literal["counts", "required", "may_not_count", "excluded", "unknown"]
+    stacking: Literal["adds_to_card_earn", "replaces_card_earn", "unknown"]
+    needs_add_step: bool | None
+    one_time_default: bool | None
+    layout: Literal["merchant_first", "reward_first", "sentence"] | None
+    screen_words: tuple[str, ...]
+    available_after_event_id: str | None
+    status: Status
+    sources: tuple[CardSource, ...]
+    notes: tuple[str, ...] = ()
+
+
+class EventEffects(_Model):
+    enables_offer_ids: tuple[str, ...]
+    enables_program_ids: tuple[str, ...]
+    carries_over: tuple[str, ...]
+    other_changes: tuple[str, ...]
+
+
+class Event(_Model):
+    id: str
+    card_ids: tuple[str, ...]
+    kind: Literal["issuer_migration", "issuer_transition"]
+    title: str
+    expected_on: dt.date | None
+    expected_on_status: Status
+    ask_from: dt.date | None
+    confirm_question: str
+    effects: EventEffects
+    status: Status
+    sources: tuple[CardSource, ...]
+    notes: tuple[str, ...] = ()
+
+
+class CategoryAlias(_Model):
+    phrase: str
+    category: str
+
+
 def _norm_name(name: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", name).casefold().split())
 
@@ -184,11 +317,15 @@ def _norm_domain(domain_or_url: str) -> str:
 
 
 class Catalog(_Model):
-    schema_version: Literal[1]
+    schema_version: Literal[2]
     catalog_version: dt.date
     cards: tuple[Card, ...]
     merchants: tuple[Merchant, ...]
     item_categories: tuple[ItemCategory, ...]
+    offers: tuple[Offer, ...]
+    programs: tuple[Program, ...]
+    events: tuple[Event, ...]
+    category_aliases: tuple[CategoryAlias, ...]
 
     _cards: dict[str, Card] = PrivateAttr()
     _merchants: dict[str, Merchant] = PrivateAttr()
@@ -221,9 +358,42 @@ class Catalog(_Model):
             for p in card.protections:
                 problems += [f"{card.id} {p.type}: unknown excluded category {c!r}"
                              for c in p.eligibility.excluded_categories if c not in self._categories]
+        problems += self._offer_problems()
         if problems:
             raise ValueError("; ".join(problems))
         return self
+
+    def _offer_problems(self) -> list[str]:
+        """Dangling ids in offers, programs, events and category aliases."""
+        offers = _unique("offer", self.offers, lambda o: o.id)
+        programs = _unique("program", self.programs, lambda p: p.id)
+        events = _unique("event", self.events, lambda e: e.id)
+        _unique("category alias", self.category_aliases, lambda a: _norm_name(a.phrase))
+
+        def cards(owner: str, ids) -> list[str]:
+            return [f"{owner}: unknown card {c!r}" for c in ids if c not in self._cards]
+
+        problems: list[str] = []
+        for o in self.offers:
+            problems += cards(o.id, o.card_ids)
+            problems += [f"{o.id}: unknown merchant {m!r}" for m in (o.match.merchant_ids or ()) + o.match.exclude_merchant_ids
+                         if m not in self._merchants]
+            problems += [f"{o.id}: unknown category {c!r}" for c in o.match.categories or () if c not in self._categories]
+            if o.program_id is not None and o.program_id not in programs:
+                problems.append(f"{o.id}: unknown program {o.program_id!r}")
+            problems += [f"{o.id}: unknown event {r.event_id!r}" for r in o.requires
+                         if r.kind == "event" and r.event_id not in events]
+        for p in self.programs:
+            problems += cards(p.id, p.card_ids)
+            if p.available_after_event_id is not None and p.available_after_event_id not in events:
+                problems.append(f"{p.id}: unknown event {p.available_after_event_id!r}")
+        for e in self.events:
+            problems += cards(e.id, e.card_ids)
+            problems += [f"{e.id}: unknown offer {i!r}" for i in e.effects.enables_offer_ids if i not in offers]
+            problems += [f"{e.id}: unknown program {i!r}" for i in e.effects.enables_program_ids if i not in programs]
+        problems += [f"category alias {a.phrase!r}: unknown category {a.category!r}" for a in self.category_aliases
+                     if a.category not in self._categories]
+        return problems
 
     # --- Accessors ---------------------------------------------------------------------------
 

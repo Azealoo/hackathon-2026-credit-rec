@@ -14,7 +14,7 @@ import anthropic
 import httpx2
 import pytest
 
-from app import llm
+from app import llm, middleware
 
 SCHEMA = {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a"], "additionalProperties": False}
 REQUEST = httpx2.Request("POST", "https://api.example.test/v1/messages")
@@ -56,6 +56,7 @@ def env(monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "test-key-not-real")
     monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.delenv("LLM_DAILY_CAP", raising=False)
+    monkeypatch.delenv("LLM_CLIENT_DAILY_CAP", raising=False)
     monkeypatch.delenv("LLM_INFERENCE_GEO", raising=False)
     monkeypatch.delenv("LLM_HEDGE_AFTER_S", raising=False)
     llm.reset_budget()
@@ -304,6 +305,89 @@ def test_default_cap_is_3000(monkeypatch):
     assert llm.daily_cap() == 3000
     monkeypatch.setenv("LLM_DAILY_CAP", "not-a-number")
     assert llm.daily_cap() == 3000
+
+
+def as_client(client: str | None, **overrides):
+    """call() as the request middleware would run it for `client` (RateLimit sets middleware.CLIENT)."""
+    token = middleware.CLIENT.set(client)
+    try:
+        return call(**overrides)
+    finally:
+        middleware.CLIENT.reset(token)
+
+
+def test_one_client_cannot_spend_the_shared_budget(fake, monkeypatch):
+    """Review 2026-10-17: one anonymous client used up LLM_DAILY_CAP and turned the LLM off for everyone."""
+    monkeypatch.setenv("LLM_DAILY_CAP", "10")
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "3")
+    for _ in range(3):
+        as_client("203.0.113.9")
+    with pytest.raises(llm.LLMBudgetExceeded):
+        as_client("203.0.113.9")
+    assert as_client("198.51.100.4") == {"a": "x"}  # everyone else still has the LLM
+    assert as_client(None) == {"a": "x"}  # scripts and the eval run outside a request: only the global cap
+    assert llm.calls_today() == 5 and len(fake.calls) == 5
+
+
+def test_a_hedge_counts_toward_the_clients_cap(monkeypatch):
+    monkeypatch.setenv("LLM_HEDGE_AFTER_S", "0.05")
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "3")
+    use(monkeypatch, FakeClient(script=[(0.3, None), (0.0, None)]))
+    as_client("203.0.113.9")  # call + hedge
+    as_client("203.0.113.9", hedge=False)
+    with pytest.raises(llm.LLMBudgetExceeded):
+        as_client("203.0.113.9")
+
+
+def test_client_cap_defaults_and_off(fake, monkeypatch):
+    assert llm.client_daily_cap() == 500
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "not-a-number")
+    assert llm.client_daily_cap() == 500
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "0")  # off: the global cap still applies
+    monkeypatch.setenv("LLM_DAILY_CAP", "4")
+    for _ in range(4):
+        as_client("203.0.113.9")
+    with pytest.raises(llm.LLMBudgetExceeded):
+        as_client("203.0.113.9")
+
+
+def test_client_counts_reset_on_a_new_utc_day(fake, monkeypatch):
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "1")
+    monkeypatch.setattr(llm, "_today", lambda: dt.date(2026, 10, 17))
+    as_client("203.0.113.9")
+    with pytest.raises(llm.LLMBudgetExceeded):
+        as_client("203.0.113.9")
+    monkeypatch.setattr(llm, "_today", lambda: dt.date(2026, 10, 18))
+    as_client("203.0.113.9")
+
+
+def test_client_counts_are_bounded(fake, monkeypatch):
+    monkeypatch.setattr(llm, "MAX_CLIENTS", 50)
+    for n in range(200):
+        as_client(f"2001:db8:{n:x}::/64")
+    assert len(llm._client_calls) == 50
+
+
+def test_the_global_cap_logs_one_error_when_first_hit(fake, monkeypatch, caplog):
+    monkeypatch.setenv("LLM_DAILY_CAP", "1")
+    with caplog.at_level(logging.INFO, logger="app.llm"):
+        call()
+        for _ in range(3):
+            with pytest.raises(llm.LLMBudgetExceeded):
+                call()
+    errors = [r for r in caplog.records if r.levelno == logging.ERROR]
+    assert len(errors) == 1 and "LLM_DAILY_CAP" in errors[0].getMessage()
+
+
+def test_a_client_at_its_cap_is_logged_once_without_its_address(fake, monkeypatch, caplog):
+    monkeypatch.setenv("LLM_CLIENT_DAILY_CAP", "1")
+    with caplog.at_level(logging.INFO, logger="app.llm"):
+        as_client("203.0.113.9")
+        for _ in range(3):
+            with pytest.raises(llm.LLMBudgetExceeded):
+                as_client("203.0.113.9")
+    warnings = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1 and "203.0.113" not in warnings[0]
 
 
 def test_failed_calls_count_toward_the_cap(monkeypatch):

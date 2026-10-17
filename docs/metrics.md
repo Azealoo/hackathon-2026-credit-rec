@@ -2,9 +2,11 @@
 
 SPEC §13 targets, §15.7 step 15. Aggregates only: no screenshots, OCR text or request bodies here.
 
+> **Dated:** every number here is from the Oct 15 runs below, not re-run since. Current test counts: [README Status](../README.md#status).
+
 **Runs:** Oct 15, 2026, commit `86dd685` (backend code as committed, plus the new `scripts/metrics.py`). Two `--live --rounds 5` runs at 18:50 and 18:53 PDT. Live numbers are from the build Mac (u: its network wasn't recorded).
 
-**Render** ran `86dd685` (branch `overnight/v1`, auto-deploy on; Render API, 18:50). Its environment has `PARSER_MODE=llm`, `COVERAGE_MODE=llm`, `PAY_MODE=mock`, and no `DEMO_TEST_CARD_MAP`.
+**Render** ran `86dd685` (branch `overnight/v1`, since merged into `main` and deleted; auto-deploy on; Render API, 18:50). Its environment has `PARSER_MODE=llm`, `COVERAGE_MODE=llm`, `PAY_MODE=mock`, and no `DEMO_TEST_CARD_MAP`.
 
 ```bash
 cd backend

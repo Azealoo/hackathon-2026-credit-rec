@@ -10,7 +10,7 @@ Why, in order of weight:
 1. **Credits already exist.** No new billing account, card or Google Cloud project tonight. Gemini's *paid* terms only apply once a Cloud project has an active billing account ([terms](https://ai.google.dev/gemini-api/terms)); that is extra setup and extra risk of landing on the free tier by mistake (free tier trains on prompts and allows human review).
 2. **Cleaner privacy story.** One flat default (30 days), no training. Gemini's story needs a "paid tier only" caveat.
 3. **Same capability set we need:** schema-constrained JSON on both sides, cost is pennies on both.
-4. **Latency is the only open risk, and we can measure it in 10 minutes** (see "Latency check"). If Haiku 5.5 misses 1.5 s p50, we switch the `LLM_PROVIDER` env var, not the architecture.
+4. **Latency is the only open risk, and we can measure it in 10 minutes** (see "Latency check"). If Haiku 5.5 misses 1.5 s p50, we swap the client in `backend/app/llm.py`, not the architecture. (There is no provider env var: the backend calls only Anthropic.)
 
 Gemini stays a valid choice. Nothing below says it is bad; the call is mostly setup friction and privacy simplicity.
 
@@ -55,7 +55,7 @@ temperature/top_p/top_k: leave unset (non-default values 400 on Haiku 5.5)
 - **Check `stop_reason`** before reading content: `refusal` and `max_tokens` can return HTTP 200 with no usable JSON. Treat as parse failure → rules parser.
 - **Validate in code:** schema-valid is not correct. Σ items vs total stays a code check (SPEC §15.7 step 9). The LLM never does arithmetic.
 - **Cause chips:** make `cause` a JSON-schema `enum` of the 4 chips; user confirms (`causeSource: user_confirmed`).
-- **Env:** `LLM_PROVIDER=anthropic`, `LLM_MODEL=claude-haiku-5-5`. `.env.example` keeps `LLM_API_KEY=changeme`. Never commit the key.
+- **Env:** `LLM_MODEL=claude-haiku-5-5` (the default when unset). `.env.example` keeps `LLM_API_KEY=changeme`. Never commit the key.
 - **Fallback model:** if Haiku misses "merchant + total 100%, items + condition ≥85%" on the fixtures, change `LLM_MODEL` to `claude-sonnet-5-5` (≈10-20× the price, still about a dollar) and re-measure latency.
 
 ### Latency check (do this before locking in)

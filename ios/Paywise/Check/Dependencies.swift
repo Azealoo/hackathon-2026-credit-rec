@@ -13,12 +13,19 @@ struct AppDependencies: Sendable {
     var island: any IslandPresenting
     /// `POST /v1/coverage` for the claim screens (§5.5).
     var coverage: CoverageAPI = .live()
+    /// The user's offer answers (offers design D1): device only, read by `OfferResolver` after each check.
+    var offers: OfferStore = .appGroup
     var now: @Sendable () -> Date = { .now }
     var timeZone: TimeZone = .current
     /// How long an island alert is held before `.immediate` end (§6.3: 4 s).
     var islandHold: Duration = .seconds(4)
     /// The §6.6 G2 switch fallback hold (8 s).
     var fallbackHold: Duration = .seconds(8)
+    /// A press while another runs, or this soon after its answer, reuses that answer instead of a new check
+    /// (`PressGate`): one Back Tap can fire the Shortcut twice a few seconds apart. Covers the 8 s switch fallback hold.
+    var repeatWindow: Duration = .seconds(8)
+    /// Every press of a process goes through one gate (`live` holds it).
+    var pressGate = PressGate()
     /// On-device reading gives up after this, keeping the whole intent under 30 s (§6.2).
     var readTimeout: Duration = .seconds(8)
     /// §6.2 "the intent never runs past 30 s": Pattern B's prompt is given up this long after the press, leaving 2 s
